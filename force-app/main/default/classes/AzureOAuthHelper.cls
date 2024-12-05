@@ -1,8 +1,8 @@
 public class AzureOAuthHelper {
 
-    private static final String CLIENT_ID = 'b9d0a69d-7dc4-46d5-9ff6-76026e3e484b';
-    private static final String CLIENT_SECRET = 'zeR8Q~smEpXz2F4n9YyU8MhLnZ4R~aSupCNMOdsu';
-    private static final String TENANT_ID = 'd25e697e-9987-4146-87ba-800be6fd457c';
+    private static final String CLIENT_ID = 'CLIENT_ID';
+    private static final String CLIENT_SECRET = 'CLIENT_SECRET';
+    private static final String TENANT_ID = 'TENANT_ID';
     private static final String TOKEN_URL = 'https://login.microsoftonline.com/' + TENANT_ID + '/oauth2/v2.0/token';
     
     // Get access token from Azure AD
