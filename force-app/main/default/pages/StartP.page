@@ -1,6 +1,0 @@
-<apex:page controller="MicrosoftOAuthHandler">
-    <script type="text/javascript">
-        // Redirect the user to the Microsoft OAuth authorization URL
-        window.location.href = '{!getAuthorizationUrl}';
-    </script>
-</apex:page>
