@@ -1,0 +1,15 @@
+.slds-grid {
+    margin: 1rem;
+}
+
+.slds-col {
+    border: 1px solid #d8dde6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slds-card {
+    margin-bottom: 1rem;
+}

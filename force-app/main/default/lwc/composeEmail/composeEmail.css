@@ -1,0 +1,18 @@
+.lightning-input,
+.lightning-textarea {
+    margin-bottom: 1rem;
+}
+
+.lightning-button {
+    background-color: #1a73e8;
+    color: #ffffff;
+    border: none;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+.lightning-button:hover {
+    background-color: #1665c1;
+}
