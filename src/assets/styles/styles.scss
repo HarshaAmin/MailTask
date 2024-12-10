@@ -1,0 +1,68 @@
+@import "@fortawesome/fontawesome-free/css/all.css";
+
+.container-custom {
+  max-width: 1700px;
+}
+
+.app-sidemenu {
+  border-right: 1px solid lightgray;
+  width: 20%;
+}
+
+.home-body {
+  height: 100vh;
+  display: flex;
+}
+
+.wrapper-mail-section {
+  border: 1px solid lightgrey;
+  border-radius: 5px;
+  height: max-content;
+  margin: 10px;
+  width: 100%;
+  padding: 10px 25px;
+}
+
+ul.sidebar-menu-items {
+  list-style: none;
+  font-size: 20px;
+  padding: 0;
+}
+
+ul.sidebar-menu-items {
+  list-style: none;
+  font-size: 20px;
+  padding: 0;
+}
+
+.email-list-section {
+  border: 1px solid lightgray;
+  border-radius: 5px;
+  width: 35%;
+  overflow: scroll;
+}
+
+.email-section {
+  border: 1px solid lightgray;
+  border-radius: 5px;
+  width: 64%;
+}
+
+.mail-section {
+  display: flex;
+  gap: 1%;
+}
+
+.email-header-p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 120px;
+}
+
+.email-preview-p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 220px;
+}

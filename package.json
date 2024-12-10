@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "description": "Salesforce App",
+  "main": "src/main.ts",
   "scripts": {
     "lint": "eslint **/{aura,lwc}/**/*.js",
     "test": "npm run test:unit",
@@ -15,7 +16,7 @@
     "postinstall": "husky install",
     "precommit": "lint-staged",
     "ng": "ng",
-    "start": "ng serve",
+    "start": "node src/server/server.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development"
   },
@@ -28,34 +29,42 @@
     "@angular/platform-browser": "^17.0.0",
     "@angular/platform-browser-dynamic": "^17.0.0",
     "@angular/router": "^17.0.0",
+    "@fortawesome/angular-fontawesome": "^1.0.0",
+    "@fortawesome/fontawesome-free": "^6.7.1",
+    "@fortawesome/fontawesome-svg-core": "^6.7.1",
+    "@fortawesome/free-brands-svg-icons": "^6.7.1",
+    "@fortawesome/free-regular-svg-icons": "^6.7.1",
+    "@fortawesome/free-solid-svg-icons": "^6.7.1",
+    "bootstrap": "^5.3.3",
+    "dotenv": "^16.4.7",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {
+    "@angular-devkit/build-angular": "^17.0.5",
+    "@angular/cli": "^17.0.5",
+    "@angular/compiler-cli": "^17.0.0",
     "@lwc/eslint-plugin-lwc": "^1.1.2",
     "@prettier/plugin-xml": "^3.2.2",
     "@salesforce/eslint-config-lwc": "^3.2.3",
     "@salesforce/eslint-plugin-aura": "^2.0.0",
     "@salesforce/eslint-plugin-lightning": "^1.0.0",
     "@salesforce/sfdx-lwc-jest": "^5.1.0",
+    "@types/jasmine": "~5.1.0",
     "eslint": "^9.9.1",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-jest": "^28.8.1",
     "husky": "^9.1.5",
-    "lint-staged": "^15.1.0",
-    "prettier": "^3.1.0",
-    "prettier-plugin-apex": "^2.0.1",
-    "@angular-devkit/build-angular": "^17.0.5",
-    "@angular/cli": "^17.0.5",
-    "@angular/compiler-cli": "^17.0.0",
-    "@types/jasmine": "~5.1.0",
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "lint-staged": "^15.1.0",
+    "prettier": "^3.1.0",
+    "prettier-plugin-apex": "^2.0.1",
     "typescript": "~5.2.2"
   },
   "lint-staged": {
@@ -65,5 +74,6 @@
     "**/{aura,lwc}/**/*.js": [
       "eslint"
     ]
-  }
+  },
+  "license": "ISC"
 }
