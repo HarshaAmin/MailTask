@@ -3,5 +3,6 @@
     <apiVersion>62.0</apiVersion>
     <availableInTouch>false</availableInTouch>
     <confirmationTokenRequired>false</confirmationTokenRequired>
-    <label>AzureOAuthPage</label>
+    <description>Default Lightning Platform In Maintenance page</description>
+    <label>InMaintenance</label>
 </ApexPage>

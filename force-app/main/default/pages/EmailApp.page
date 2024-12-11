@@ -1,0 +1,34 @@
+<apex:page contenttype="text/html">
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>SendTech</title>
+      <base href="/resource/AngularAppNew/" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <link
+        rel="icon"
+        type="image/x-icon"
+        href="/resource/AngularAppNew/favicon.ico"
+      />
+      <!-- Link to the CSS file from the Static Resource -->
+      <link
+        rel="stylesheet"
+        href="/resource/AngularAppNew/styles-5INURTSO.css"
+      />
+    </head>
+    <body>
+      <!-- Root Angular component -->
+      <app-root></app-root>
+
+      <!-- Link to the JavaScript files -->
+      <script
+        src="/resource/AngularAppNew/polyfills-FFHMD2TL.js"
+        type="module"
+      ></script>
+      <script
+        src="/resource/AngularAppNew/main-SNIGPT4N.js"
+        type="module"
+      ></script>
+    </body>
+  </html>
+</apex:page>
