@@ -1,11 +1,12 @@
 <div class="container">
   <h1>Salesforce Data</h1>
 
-  <!-- Login/Logout and Display Error -->
+  <!-- Display Error Message -->
   <div *ngIf="errorMessage" class="alert alert-danger">
     {{ errorMessage }}
   </div>
 
+  <!-- Login/Logout -->
   <div>
     <button
       *ngIf="!salesforceService.isAuthenticated()"
@@ -18,27 +19,65 @@
       Logout
     </button>
   </div>
-
-  <!-- Display Records -->
-  <button *ngIf="salesforceService.isAuthenticated()" (click)="loadEmails()">
-    Load Records
-  </button>
   <div *ngIf="emails">
-    <pre>{{ emails | json }}</pre>
-  </div>
+    <div class="outlook-dashboard">
+      <!-- Sidebar with navigation options -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h2>Outlook</h2>
+        </div>
+        <div class="sidebar-options">
+          <button (click)="loadEmails()">Inbox</button>
+          <button>Sent</button>
+          <button>Drafts</button>
+          <button>Trash</button>
+        </div>
+      </div>
 
-  <div *ngIf="records">
-    <h3>Salesforce Records (Account)</h3>
-    <pre>{{ records | json }}</pre>
-  </div>
+      <!-- Main content area -->
+      <div class="main-content">
+        <!-- Header with user info -->
+        <div class="header">
+          <div class="user-info">
+            <h3>{{ userInfo?.name }}</h3>
+            <p>{{ userInfo?.email }}</p>
+          </div>
+          <button (click)="onLogout()">Logout</button>
+        </div>
 
-  <!-- Display User Info -->
-  <button *ngIf="salesforceService.isAuthenticated()" (click)="loadUserInfo()">
-    Load User Info
-  </button>
+        <!-- Email list or message preview -->
+        <div class="content-wrapper">
+          <div class="email-list">
+            <div *ngIf="emails.length === 0" class="no-emails">
+              <p>No emails to display.</p>
+            </div>
 
-  <div *ngIf="userInfo">
-    <h3>User Info</h3>
-    <pre>{{ userInfo | json }}</pre>
+            <div
+              *ngFor="let email of emails"
+              class="email-item"
+              (click)="viewEmailDetails(email)"
+            >
+              <div class="email-subject">{{ email.subject }}</div>
+              <div class="email-sender">{{ email.sender }}</div>
+              <div class="email-date">
+                {{ email.receivedDateTime | date: "short" }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Email details view -->
+          <div *ngIf="selectedEmail" class="email-details">
+            <h3>{{ selectedEmail?.subject }}</h3>
+            <p><strong>From:</strong> {{ selectedEmail?.sender }}</p>
+            <p>
+              <strong>Received:</strong>
+              {{ selectedEmail?.receivedDateTime | date: "short" }}
+            </p>
+            <div [innerHTML]="selectedEmail?.body"></div>
+            <!-- Displaying email body -->
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
