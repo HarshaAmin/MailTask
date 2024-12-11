@@ -1,0 +1,7 @@
+<apex:page controller="OAuthMicrosoftHandler">
+    <script type="text/javascript">
+        // Ensure the URL is dynamically injected from Salesforce Apex controller
+        var authUrl = '{!authorizationUrl}';
+        window.location.href = authUrl; // Redirect to the authorization URL
+    </script>
+</apex:page>

@@ -1,0 +1,44 @@
+<div class="container">
+  <h1>Salesforce Data</h1>
+
+  <!-- Login/Logout and Display Error -->
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div>
+    <button
+      *ngIf="!salesforceService.isAuthenticated()"
+      (click)="onLogin('your-access-token')"
+    >
+      Login
+    </button>
+
+    <button *ngIf="salesforceService.isAuthenticated()" (click)="onLogout()">
+      Logout
+    </button>
+  </div>
+
+  <!-- Display Records -->
+  <button *ngIf="salesforceService.isAuthenticated()" (click)="loadEmails()">
+    Load Records
+  </button>
+  <div *ngIf="emails">
+    <pre>{{ emails | json }}</pre>
+  </div>
+
+  <div *ngIf="records">
+    <h3>Salesforce Records (Account)</h3>
+    <pre>{{ records | json }}</pre>
+  </div>
+
+  <!-- Display User Info -->
+  <button *ngIf="salesforceService.isAuthenticated()" (click)="loadUserInfo()">
+    Load User Info
+  </button>
+
+  <div *ngIf="userInfo">
+    <h3>User Info</h3>
+    <pre>{{ userInfo | json }}</pre>
+  </div>
+</div>

@@ -1,0 +1,23 @@
+<apex:page
+  controller="AzureOAuthController"
+  showHeader="false"
+  sidebar="false"
+  standardStylesheets="false"
+>
+  <script>
+    // Redirect the user to Azure's authorization URL
+    function initiateOAuthFlow() {
+      var authUrl = "{!authUrl}"; // Generated in the controller
+      console.log("Redirecting to:", authUrl);
+      window.location.href = authUrl;
+    }
+  </script>
+
+  <h1>Connect to Azure</h1>
+  <apex:form>
+    <apex:commandButton
+      value="Login with Azure"
+      onclick="initiateOAuthFlow(); return false;"
+    />
+  </apex:form>
+</apex:page>

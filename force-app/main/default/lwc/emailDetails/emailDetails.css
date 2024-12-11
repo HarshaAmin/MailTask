@@ -1,0 +1,14 @@
+.slds-card {
+    background-color: #eef3f8;
+}
+
+.email-details {
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+    font-size: 0.875rem;
+    color: #2a3a4e;
+    line-height: 1.5;
+}
+
+.email-details b {
+    color: #1a73e8;
+}
