@@ -15,12 +15,12 @@ public class OutlookEmailService {
                 
                     // Make sure this method is static
                     private static String getAccessToken() {
-                        String clientId = 'b9d0a69d-7dc4-46d5-9ff6-76026e3e484b';  // Replace with your Client ID
-                        String clientSecret = 'zeR8Q~smEpXz2F4n9YyU8MhLnZ4R~aSupCNMOdsu';  // Replace with your Client Secret
-                        String tenantId = 'd25e697e-9987-4146-87ba-800be6fd457c';  // Replace with your Azure Tenant ID
-                        String tokenEndpoint = 'https://login.microsoftonline.com/' + tenantId + '/oauth2/v2.0/token';
+                        String clientId = 'clientId';  // Replace with your Client ID
+                        String clientSecret = 'clientSecret';  // Replace with your Client Secret
+                        String tenantId = 'tenantId';  // Replace with your Azure Tenant ID
+                        String tokenEndpoint = 'end/' + tenantId + '/oauth2/v2.0/token';
                         String body = 'client_id=' + clientId +
-                                      '&scope=https://graph.microsoft.com/.default' + // Using .default scope for app permissions
+                                      '&scope=sdsdt' + // Using .default scope for app permissions
                                       '&client_secret=' + clientSecret +
                                       '&grant_type=client_credentials';
                 
