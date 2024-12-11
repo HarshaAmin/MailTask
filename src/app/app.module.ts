@@ -1,16 +1,13 @@
-// app.module.ts
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
-import { OAuthModule } from 'angular-oauth2-oidc';
-import { AppComponent } from './app.component';
+import { AppComponent } from './app.component'; // Ensure the correct path
+import { HttpClientModule } from '@angular/common/http'; 
+import { SalesforceService } from '../services/salesforce.service'; // Correct path to your service
 
 @NgModule({
   declarations: [AppComponent],
-  imports: [BrowserModule, HttpClientModule, OAuthModule.forRoot()],
-  providers: [],
-  bootstrap: [AppComponent],
+  imports: [BrowserModule,HttpClientModule,],
+  providers: [SalesforceService],
+  bootstrap: [AppComponent]
 })
-export class AppModule {
-  constructor() {}
-}
+export class AppModule {}
