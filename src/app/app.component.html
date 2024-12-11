@@ -20,9 +20,12 @@
   </div>
 
   <!-- Display Records -->
-  <button *ngIf="salesforceService.isAuthenticated()" (click)="loadRecords()">
+  <button *ngIf="salesforceService.isAuthenticated()" (click)="loadEmails()">
     Load Records
   </button>
+  <div *ngIf="emails">
+    <pre>{{ emails | json }}</pre>
+  </div>
 
   <div *ngIf="records">
     <h3>Salesforce Records (Account)</h3>

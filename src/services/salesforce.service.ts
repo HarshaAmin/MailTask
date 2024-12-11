@@ -8,7 +8,17 @@ import { environment } from '../environments/environment';
   providedIn: 'root',
 })
 export class SalesforceService {
+  private apiUrl = 'https://novigosolutionspvtltd2-dev-ed.develop.my.site.com/services/apexrest/getEmails';
   private accessToken: string | null = null;
+
+  getUserEmails() {
+    return this.http.get(this.apiUrl, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('salesforceToken')}`,
+      },
+      responseType: 'text', // Since Apex is returning a string
+    });
+  }
 
   constructor(private http: HttpClient) {
     // On app initialization, check if there's a token in localStorage

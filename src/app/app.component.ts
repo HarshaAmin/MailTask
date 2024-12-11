@@ -9,6 +9,7 @@ export class AppComponent implements OnInit {
   records: any;
   userInfo: any;
   errorMessage: string | null = null;
+  emails: any;
 
   constructor(public salesforceService: SalesforceService) {}
 
@@ -73,4 +74,18 @@ export class AppComponent implements OnInit {
     this.records = null;  // Clear records on logout
     this.userInfo = null; // Clear user info on logout
   }
+  
+
+  loadEmails() {
+    this.salesforceService.getUserEmails().subscribe(
+      (data) => {
+        console.log('Emails loaded:', data);
+        this.emails = data;
+      },
+      (error) => {
+        console.error('Error loading emails:', error);
+      }
+    );
+  }
+
 }
