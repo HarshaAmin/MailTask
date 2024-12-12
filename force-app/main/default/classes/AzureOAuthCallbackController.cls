@@ -25,14 +25,12 @@ public with sharing class AzureOAuthCallbackController {
   public PageReference processOAuthResponse(String authorizationCode) {
     // Set your Azure OAuth token endpoint and other necessary details
 
-    // // Set your Azure OAuth token endpoint and other necessary details
-    //         String clientId = 'b9d0a69d-7dc4-46d5-9ff6-76026e3e484b';
-    // String clientSecret = 'zeR8Q~smEpXz2F4n9YyU8MhLnZ4R~aSupCNMOdsu';
-    // String redirectUri = 'https://novigosolutionspvtltd2-dev-ed--c.develop.vf.force.com/apex/UserDashboard';
-    // String tokenUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
-
     String clientId = '';
     String clientSecret = '';
+
+    // Set your Azure OAuth token endpoint and other necessary details
+    //         String clientId = 'b9d0a69d-7dc4-46d5-9ff6-76026e3e484b';
+    // String clientSecret = 'zeR8Q~smEpXz2F4n9YyU8MhLnZ4R~aSupCNMOdsu';
     String redirectUri = 'https://novigosolutionspvtltd2-dev-ed--c.develop.vf.force.com/apex/UserDashboard';
     String tokenUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 

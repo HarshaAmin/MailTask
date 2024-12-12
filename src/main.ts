@@ -8,7 +8,8 @@ if (environment.production) {
   enableProdMode();
 }
 
-platformBrowserDynamic().bootstrapModule(AppModule)
-  .catch(err => {
+platformBrowserDynamic()
+  .bootstrapModule(AppModule)
+  .catch((err) => {
     console.error('Angular bootstrap failed:', err);
   });

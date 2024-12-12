@@ -2,13 +2,11 @@ public class AzureOAuthController {
   public String authUrl { get; set; }
 
   public AzureOAuthController() {
-    String clientId = 'clientId';
-    String redirectUri = 'https://novigosolutionspvtltd2-dev-ed--c.develop.vf.force.com/apex/AzureOAuthCallback'; // Your callback page
-    String scope = 'openid profile email'; // Scope for Azure OAuth
+    String clientId = '';
     // Define the OAuth authorization URL (replace with actual details)
     // String clientId = 'b9d0a69d-7dc4-46d5-9ff6-76026e3e484b';
-    // String redirectUri = 'https://novigosolutionspvtltd2-dev-ed--c.develop.vf.force.com/apex/AzureOAuthCallback';  // Your callback page
-    // String scope = 'openid profile email';  // Scope for Azure OAuth
+    String redirectUri = 'https://novigosolutionspvtltd2-dev-ed--c.develop.vf.force.com/apex/AzureOAuthCallback'; // Your callback page
+    String scope = 'openid profile email'; // Scope for Azure OAuth
     String authorizationUrl =
       'https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=' +
       clientId +

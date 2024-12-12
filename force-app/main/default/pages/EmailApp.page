@@ -1,4 +1,4 @@
-<apex:page contenttype="text/html">
+<apex:page showHeader="false" sidebar="false" contenttype="text/html">
   <html lang="en">
     <head>
       <meta charset="utf-8" />
@@ -13,7 +13,7 @@
       <!-- Link to the CSS file from the Static Resource -->
       <link
         rel="stylesheet"
-        href="/resource/AngularAppNew/styles-5INURTSO.css"
+        href="/resource/AngularAppNew/styles-CW5SLSSK.css"
       />
     </head>
     <body>
@@ -26,7 +26,7 @@
         type="module"
       ></script>
       <script
-        src="/resource/AngularAppNew/main-SNIGPT4N.js"
+        src="/resource/AngularAppNew/main-XNXZ2NMP.js"
         type="module"
       ></script>
     </body>

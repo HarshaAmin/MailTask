@@ -14,6 +14,7 @@ export class AppComponent implements OnInit {
   emails: any;
   accessToken: string = ''; // Store the access token
   selectedEmail: any = null;
+  uEmail = 'SendTech@novigosolutions.com';
 
   constructor(
     public salesforceService: SalesforceService,
