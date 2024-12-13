@@ -17,37 +17,39 @@ app.post("/authenticate", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    console.log(
-      username,
-      " ",
-      password,
-      " ",
-      process.env["CLIENT_ID"],
-      " ",
-      process.env["CLIENT_SECRET"]
-    );
-
-    this.https;
     const response = await axios.post(
-      "https://login.salesforce.com/services/oauth2/authorize",
+      "https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/oauth2/authorize",
+      null,
       {
-        username: username,
-        password: password,
-        client_id: process.env["CLIENT_ID"],
-        client_secret: process.env["CLIENT_SECRET"]
-      },
-      {
+        params: {
+          grant_type: "client_credentials",
+          username: username,
+          password: password,
+          client_id: process.env["CLIENT_ID"],
+          client_secret: process.env["CLIENT_SECRET"]
+        },
         headers: {
           "Content-Type": "application/json"
         }
       }
     );
-    res.json(response.data);
+    res.json({ data: response.data });
     console.log("response", response.data);
+
+    // const response = await axios.post(
+    //   "https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/oauth2/token",
+    //   null,
+    //   {
+    //     grant_type: "client_credentials",
+    //     client_id: process.env["CLIENT_ID"],
+    //     client_secret: process.env["CLIENT_SECRET"]
+    //   }
+    // );
+    // res.json(response.data);
+    // console.log("response", response.data);
   } catch (error) {
-    res
-      .status(error.status)
-      .json({ error: "Internal Error!", message: error.message });
+    console.log(error.status);
+    res.status(400).json({ error: "Internal Error!", message: error.message });
   }
 });
 
