@@ -23,6 +23,16 @@ public class OutlookEmailService {
     public String bodyPreview;
     @AuraEnabled
     public String receivedDateTime;
+    @AuraEnabled
+    public String status;
+    @AuraEnabled
+    public String id;
+    @AuraEnabled
+    public String isRead;
+    @AuraEnabled
+    public String isFlagged;
+    @AuraEnabled
+    public String isPinged;
   }
 
   // Static method to get the Access Token
@@ -66,15 +76,126 @@ public class OutlookEmailService {
     }
   }
 
-  // Method to fetch emails for a user
   @AuraEnabled(cacheable=true)
-  public static Response getUserEmails(String userId) {
+  public static Object updateEmails(String messageId, String requestBody) {
+    Response resp = new Response();
+    String accessToken = getAccessToken();
+
+    String endpoint =
+      'https://graph.microsoft.com/v1.0/me/messages/' + messageId;
+    // String endpoint =
+    //   'https://graph.microsoft.com/v1.0/users/' +
+    //   userId +
+    //   '/messages';
+
+    HttpRequest req = new HttpRequest();
+    req.setEndpoint(endpoint);
+    req.setMethod('PATCH');
+    req.setHeader('Authorization', 'Bearer ' + accessToken);
+    req.setHeader('Content-Type', 'application/json');
+    req.setHeader('Accept', 'application/json');
+    req.setBody(requestBody);
+
+    Http http = new Http();
+    HttpResponse res = http.send(req);
+
+    if (res.getStatusCode() != 200) {
+      throw new CustomException('Email updated successfully: ' + res.getBody());
+    }
+    return res.getBody();
+  }
+
+  @AuraEnabled(cacheable=true)
+  public static Response getSentEmails(String userId, String folder) {
     Response resp = new Response();
     String accessToken = getAccessToken();
 
     String endpoint =
       'https://graph.microsoft.com/v1.0/users/' +
       userId +
+      '/mailFolders/' +
+      folder +
+      '/messages';
+    // String endpoint =
+    //   'https://graph.microsoft.com/v1.0/users/' +
+    //   userId +
+    //   '/messages';
+
+    HttpRequest req = new HttpRequest();
+    req.setEndpoint(endpoint);
+    req.setMethod('GET');
+    req.setHeader('Authorization', 'Bearer ' + accessToken);
+    req.setHeader('Content-Type', 'application/json');
+    req.setHeader('Accept', 'application/json');
+
+    Http http = new Http();
+    HttpResponse res = http.send(req);
+
+    if (res.getStatusCode() != 200) {
+      throw new CustomException('Error fetching emails: ' + res.getBody());
+    }
+
+    Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(
+      res.getBody()
+    );
+    List<Object> messages = (List<Object>) responseBody.get('value');
+
+    List<Email> emailList = new List<Email>();
+
+    for (Object msg : messages) {
+      Map<String, Object> msgMap = (Map<String, Object>) msg;
+
+      Email email = new Email();
+      email.subject = (String) msgMap.get('subject');
+
+      Map<String, Object> sender = (Map<String, Object>) msgMap.get('sender');
+      if (!folder.equalsIgnoreCase('Drafts')) {
+        email.sender = (String) ((Map<String, Object>) sender.get(
+            'emailAddress'
+          ))
+          .get('address');
+      }
+      email.bodyPreview = (String) msgMap.get('bodyPreview');
+      email.receivedDateTime = (String) msgMap.get('receivedDateTime');
+      email.status = msgMap.get('isRead') == true ? 'read' : 'unread';
+      email.id = (String) msgMap.get('id');
+      email.isRead = '';
+      email.isFlagged = '';
+      email.isPinged = '';
+
+      emailList.add(email);
+      emailList.add(email);
+      //email.flagStatus = msgMap.get('flagStatus')==true?'Flagged':'Not Flagged';
+      //email.id = (String) msgMap.get('id');
+      // email.isRead: string,
+      // email.isFlagged: string,
+      // email.isPinged: string,
+    }
+
+    resp.emailList = emailList;
+    return resp;
+  }
+
+  // Method to fetch emails for a user
+  @AuraEnabled(cacheable=true)
+  public static Response getUserEmails(
+    String userId,
+    String folder,
+    String action
+  ) {
+    Response resp = new Response();
+    String accessToken = getAccessToken();
+
+    // String endpoint =
+    //   'https://graph.microsoft.com/v1.0/users/' +
+    //   userId +
+    //   '/messages';
+
+    String endpoint =
+      'https://graph.microsoft.com/v1.0/users/' +
+      userId +
+      '/mailFolders/' +
+      folder +
       '/messages';
 
     HttpRequest req = new HttpRequest();
@@ -110,6 +231,12 @@ public class OutlookEmailService {
 
       email.bodyPreview = (String) msgMap.get('bodyPreview');
       email.receivedDateTime = (String) msgMap.get('receivedDateTime');
+      email.status = msgMap.get('isRead') == true ? 'read' : 'unread';
+      //email.flagStatus = msgMap.get('flagStatus')==true?'Flagged':'Not Flagged';
+      email.id = (String) msgMap.get('id');
+      email.isRead = '';
+      email.isFlagged = '';
+      email.isPinged = '';
 
       emailList.add(email);
     }

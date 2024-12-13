@@ -8,7 +8,8 @@ export const environment = {
     clientSecret:
       '8B671E68B5D8679368FE2C97B813DDA073DA4714564622B02D8CC38A11D37EF0',
     redirectUri: 'https://novigosolutionspvtltd2-dev-ed.develop.my.site.com',
-    apiVersion: 'v62.0' // Use the latest version
+    apiVersion: 'v62.0', // Use the latest version,
+    salesforceApiBaseUrl:'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest'
   }
 };
   

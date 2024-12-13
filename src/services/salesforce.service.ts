@@ -5,14 +5,18 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SalesforceService {
-  private apiUrl =
+  private getEmailsUrl =
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/getEmails';
+  private getSentEmailsUrl =
+    'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/getSentEmails'; // Update with the correct endpoint
+
   private accessToken: string | null = null;
 
   constructor(private http: HttpClient) {
+    // Try to load the access token from localStorage when service is initialized
     const savedToken = localStorage.getItem('accessToken');
     if (savedToken) {
       this.accessToken = savedToken;
@@ -26,13 +30,10 @@ export class SalesforceService {
   setAccessToken(token: string): void {
     this.accessToken = token;
     localStorage.setItem('accessToken', token);
-    console.log(
-      'Access token set and saved to localStorage:',
-      this.accessToken
-    );
+    console.log('Access token set and saved to localStorage:', this.accessToken);
   }
 
-  // Check if user is authenticated
+  // Check if user is authenticated (i.e., has a valid access token)
   isAuthenticated(): boolean {
     return this.accessToken !== null;
   }
@@ -44,26 +45,45 @@ export class SalesforceService {
     console.log('Access token cleared from localStorage');
   }
 
-  // Get user emails
-  getUserEmails(): Observable<string> {
+  // Get sent emails from Salesforce (GET request)
+  getSentEmails(): Observable<any> {
     return this.http
-      .get(this.apiUrl, {
+      .get(this.getSentEmailsUrl, {
         headers: { Authorization: `Bearer ${this.accessToken}` },
-        responseType: 'text'
+        responseType: 'json',
       })
       .pipe(
         catchError((error) => {
           if (error.status === 401 && localStorage.getItem('refreshToken')) {
             return this.refreshAccessToken().pipe(
-              switchMap(() => this.getUserEmails())
+              switchMap(() => this.getSentEmails()) // Retry after token refresh
             );
           }
-          return throwError(error);
+          return throwError(error); // Propagate the error
         })
       );
   }
 
-  // Get records from Salesforce
+  // Get user emails from Salesforce (GET request)
+  getUserEmails(): Observable<any> {
+    return this.http
+      .get(this.getEmailsUrl, {
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+        responseType: 'json',
+      })
+      .pipe(
+        catchError((error) => {
+          if (error.status === 401 && localStorage.getItem('refreshToken')) {
+            return this.refreshAccessToken().pipe(
+              switchMap(() => this.getUserEmails()) // Retry after token refresh
+            );
+          }
+          return throwError(error); // Propagate the error
+        })
+      );
+  }
+
+  // Get records (any Salesforce object) from Salesforce (GET request)
   getRecords(objectName: string): Observable<any> {
     if (!this.isAuthenticated()) {
       return throwError(() => new Error('Access token is not set!'));
@@ -71,22 +91,22 @@ export class SalesforceService {
 
     const url = `${environment.salesforce.loginUrl}/services/data/${environment.salesforce.apiVersion}/sobjects/${objectName}`;
     const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`
+      Authorization: `Bearer ${this.accessToken}`,
     });
 
     return this.http.get(url, { headers }).pipe(
       catchError((error) => {
         if (error.status === 401 && localStorage.getItem('refreshToken')) {
           return this.refreshAccessToken().pipe(
-            switchMap(() => this.getRecords(objectName))
+            switchMap(() => this.getRecords(objectName)) // Retry after token refresh
           );
         }
-        return throwError(error);
+        return throwError(error); // Propagate the error
       })
     );
   }
 
-  // Refresh the access token
+  // Refresh the access token using the stored refresh token
   private refreshAccessToken(): Observable<any> {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
@@ -104,14 +124,14 @@ export class SalesforceService {
     return this.http
       .post(url, body.toString(), {
         headers: new HttpHeaders({
-          'Content-Type': 'application/x-www-form-urlencoded'
-        })
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }),
       })
       .pipe(
         switchMap((response: any) => {
           this.setAccessToken(response.access_token);
-          console.log('acces token is ' + response);
-          return response;
+          console.log('Access token refreshed:', response.access_token);
+          return response; // Return the response containing the new access token
         }),
         catchError((error) => {
           console.error('Error refreshing access token:', error);
@@ -123,21 +143,21 @@ export class SalesforceService {
       );
   }
 
-  // Get user info
+  // Get user info (e.g., username, email) from Salesforce
   getUserInfo(): Observable<any> {
     const url = `${environment.salesforce.loginUrl}/services/oauth2/userinfo`;
     const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`
+      Authorization: `Bearer ${this.accessToken}`,
     });
 
     return this.http.get(url, { headers }).pipe(
       catchError((error) => {
         if (error.status === 401 && localStorage.getItem('refreshToken')) {
           return this.refreshAccessToken().pipe(
-            switchMap(() => this.getUserInfo())
+            switchMap(() => this.getUserInfo()) // Retry after token refresh
           );
         }
-        return throwError(error);
+        return throwError(error); // Propagate the error
       })
     );
   }

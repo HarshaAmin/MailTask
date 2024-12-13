@@ -5,6 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Responsive Outlook-like UI</title>
     <style>
+      .email-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #d1d5db;
+        padding: 10px 0;
+      }
+
+      .email-actions button {
+        margin-left: 5px;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .email-actions button:hover {
+        background-color: #f3f4f6;
+      }
+
+      .email-actions button:active {
+        background-color: #e5e7eb;
+      }
+
+      .filter-buttons button {
+        margin-right: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        background-color: #f3f4f6;
+        border-radius: 4px;
+      }
+
+      .filter-buttons button.active {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(232, 5, 5, 0.5); /* Semi-transparent background */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background: rgb(40, 4, 124);
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 500px;
+        width: 100%;
+      }
+
+      .close-button {
+        margin-top: 10px;
+        background-color: rgba(0, 0, 0, 0.215);
+        color: rgb(11, 11, 11);
+        border: none;
+        padding: 10px;
+      }
+
       body {
         margin: 0;
         font-family: Arial, sans-serif;
@@ -120,6 +187,51 @@
         color: #6b7280;
       }
 
+      /* New Compose button */
+      .compose-button {
+        padding: 0.5rem 1rem;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .compose-button:hover {
+        background-color: #45a049;
+      }
+
+      /* Modal Styles for Composing Email */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        max-width: 600px;
+        width: 100%;
+      }
+
+      .close-button {
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 0.5rem;
+        margin-top: 1rem;
+      }
+
       @media (max-width: 768px) {
         .container {
           flex-direction: column;
@@ -147,15 +259,17 @@
           <img src="/resource/AngularAppNew/logo.png" alt="Logo" class="logo" />
           <h2>Outlook</h2>
         </div>
-        <button>Inbox</button>
-        <button>Sent</button>
-        <button>Drafts</button>
-        <button>Trash</button>
+        <button (click)="loadInbox()">Inbox</button>
+        <button (click)="loadSent()">Sent</button>
+        <button (click)="loadDraft()">Draft</button>
+        <button (click)="loadTrash()">Trash</button>
+        <button class="compose-button" (click)="openComposeModal()">
+          Compose
+        </button>
       </div>
 
       <!-- Main Content -->
       <div class="main-content">
-        <!-- Header -->
         <div class="header">
           <div class="logo-section">
             <img
@@ -168,41 +282,126 @@
               <p>{{ uEmail }}</p>
             </div>
           </div>
-          <button class="btn btn-danger">Logout</button>
         </div>
 
-        <!-- Content Wrapper -->
         <div class="content-wrapper">
-          <!-- Email List -->
           <div class="email-list">
-            <div *ngIf="emails.length === 0" class="no-emails">
+            <div class="filter-buttons">
+              <button
+                (click)="filterEmails('all')"
+                [class.active]="selectedFilter === 'all'"
+              >
+                All
+              </button>
+              <button
+                (click)="filterEmails('read')"
+                [class.active]="selectedFilter === 'read'"
+              >
+                Read
+              </button>
+              <button
+                (click)="filterEmails('unread')"
+                [class.active]="selectedFilter === 'unread'"
+              >
+                Unread
+              </button>
+            </div>
+            <div *ngIf="filteredEmails.length === 0" class="no-emails">
               <p>No emails to display.</p>
             </div>
             <div
-              *ngFor="let email of emails"
+              *ngFor="let email of filteredEmails"
               class="email-item"
               (click)="viewEmailDetails(email)"
             >
-              <div class="email-subject">{{ email.subject }}</div>
-              <div class="email-sender">{{ email.sender }}</div>
-              <div class="email-date">
-                {{ email.receivedDateTime | date: "short" }}
+              <div class="email-header">
+                <div>
+                  <div class="email-subject">{{ email.subject }}</div>
+                  <div class="email-sender">{{ email.sender }}</div>
+                  <div class="email-date">
+                    {{ email.receivedDateTime | date: "short" }}
+                  </div>
+                  <div *ngIf="email.status === 'unread'" class="email-status">
+                    Unread
+                  </div>
+                </div>
+                <div class="email-actions">
+                  <button (click)="toggleRead(email)">
+                    {{
+                      email.status === "read"
+                        ? "Mark as Unread"
+                        : "Mark as Read"
+                    }}
+                  </button>
+                  <button (click)="toggleFlag(email)">
+                    {{ email.isFlagged ? "Unflag" : "Flag" }}
+                  </button>
+                  <button (click)="togglePing(email)">
+                    {{ email.isPinged ? "Unpin" : "Pin" }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Email Details -->
           <div *ngIf="selectedEmail" class="email-details">
-            <h3>{{ selectedEmail?.subject }}</h3>
-            <p><strong>From:</strong> {{ selectedEmail?.sender }}</p>
+            <h3>{{ selectedEmail.subject }}</h3>
+            <p><strong>From:</strong> {{ selectedEmail.sender }}</p>
             <p>
               <strong>Received:</strong>
-              {{ selectedEmail?.receivedDateTime | date: "short" }}
+              {{ selectedEmail.receivedDateTime | date: "short" }}
             </p>
-            <div [innerHTML]="selectedEmail?.body"></div>
+            <div [innerHTML]="selectedEmail.bodyPreview"></div>
           </div>
         </div>
       </div>
+
+      <!-- Compose Email Modal -->
+      <div
+        *ngIf="isComposeModalOpen"
+        class="modal"
+        (click)="closeComposeModal()"
+      >
+        <!-- <div class="modal-content" (click)="$event.stopPropagation()">
+          <h3>Compose Email</h3>
+          <form (submit)="sendEmail()">
+            <div>
+              <label for="to">To:</label>
+              <input type="email" id="to" name="to" [(ngModel)]="email.to" required />
+            </div>
+            <div>
+              <label for="subject">Subject:</label>
+              <input type="text" id="subject" name="subject" [(ngModel)]="email.subject" required />
+            </div>
+            <div>
+              <label for="body">Body:</label>
+              <textarea id="body" name="body" [(ngModel)]="email.bodyPreview" rows="4" required></textarea>
+            </div>
+            <div>
+              <button type="submit">Send</button>
+            </div>
+          </form>
+          <button class="close-button" (click)="closeComposeModal()">Close</button>
+        </div> -->
+        <h1>This is popup modal example</h1>
+      </div>
     </div>
+    <script>
+      // Example JavaScript to manage modal open and close
+      function openComposeModal() {
+        document.getElementById("composeModal").style.visibility = "visible";
+      }
+
+      function closeComposeModal() {
+        document.getElementById("composeModal").style.visibility = "hidden";
+      }
+
+      function sendEmail(event) {
+        event.preventDefault();
+        // Add email sending logic
+        closeComposeModal();
+        alert("Email sent!");
+      }
+    </script>
   </body>
 </html>
