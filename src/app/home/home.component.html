@@ -1,16 +1,31 @@
 <div class="home-body">
   <div class="app-sidemenu">
-    <app-side-menu></app-side-menu>
+    <app-side-menu
+      (openEmailModalEmitter)="openEmailModal = $event"
+    ></app-side-menu>
   </div>
   <div class="wrapper-mail-section">
     <h3 class="my-3">Email Dashboad</h3>
     <div class="mail-section">
       <div class="email-list-section px-2">
-        <app-email-list></app-email-list>
+        <app-email-list
+          [emails]="emails"
+          [filteredEmails]="filteredEmails"
+          (selectedEmail)="selectedEmail = $event"
+          [accessToken]="accessToken"
+        ></app-email-list>
       </div>
       <div class="email-section p-3">
-        <app-email></app-email>
+        <app-email [selectedEmail]="selectedEmail"></app-email>
       </div>
+    </div>
+    <div
+      [ngClass]="{ 'hide-block': !openEmailModal }"
+      class="send-mail-section"
+    >
+      <app-send-mail
+        (openEmailModalEmitter)="openEmailModal = $event"
+      ></app-send-mail>
     </div>
   </div>
 </div>

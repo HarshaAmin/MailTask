@@ -1,12 +1,34 @@
 @import "@fortawesome/fontawesome-free/css/all.css";
 
+body {
+  font-size: 10px;
+}
+
+.nav-container {
+  background: #212b86;
+}
+
+.bg-light {
+  background-color: transparent !important;
+}
+
 .container-custom {
-  max-width: 1700px;
+  max-width: 1330px;
+}
+
+.nav-logo {
+  color: #fff;
+  display: flex;
+  align-items: center;
 }
 
 .app-sidemenu {
   border-right: 1px solid lightgray;
   width: 20%;
+
+  & a {
+    font-size: 15px;
+  }
 }
 
 .home-body {
@@ -38,8 +60,7 @@ ul.sidebar-menu-items {
 .email-list-section {
   border: 1px solid lightgray;
   border-radius: 5px;
-  width: 35%;
-  overflow: scroll;
+  width: max-content;
 }
 
 .email-section {
@@ -57,12 +78,81 @@ ul.sidebar-menu-items {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 120px;
+  width: 150px;
 }
 
 .email-preview-p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 220px;
+  width: 180px;
+  font-size: 15px;
+}
+
+.email-body-preview {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 180px;
+  font-size: 12px;
+}
+
+.dropdown-toggle::after {
+  display: none;
+}
+
+.email-item-top-right,
+.email-item-mid-right {
+  display: none;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.email-item-top,
+.email-item-mid {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.email-item {
+  padding: 5px;
+  cursor: pointer;
+
+  &:not(:last-child) {
+    border-bottom: 0.5px solid lightgray;
+  }
+
+  &:hover {
+    & .email-item-top-right {
+      display: flex;
+    }
+    & .email-item-mid-right {
+      display: flex;
+    }
+  }
+}
+
+.pagination-section {
+  display: flex;
+  justify-content: space-between;
+}
+
+.bold-text {
+  font-weight: bold;
+}
+
+.send-email-modal {
+  pointer-events: auto;
+  background: #00000047;
+}
+
+.close-btn {
+  cursor: pointer;
+}
+
+.hide-block {
+  display: none;
+  visibility: hidden;
 }

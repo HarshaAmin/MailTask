@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-email',
@@ -7,5 +7,7 @@ import { Component } from '@angular/core';
   templateUrl: './email.component.html'
 })
 export class EmailComponent {
+  uEmail = 'SendTech@novigosolutions.com';
 
+  @Input() selectedEmail: any;
 }

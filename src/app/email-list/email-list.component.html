@@ -1,28 +1,59 @@
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col">Subject</th>
-      <th scope="col">Body Preview</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>
-        <div class="h5 email-header-p">Mail header is here</div>
-      </td>
-      <td>
-        <p class="email-preview-p">
-          Lorem Ipsum has been the industry's standard dummy text ever since the
-          1500s, when an unknown printer took a galley of type and scrambled it
-          to make a type
-        </p>
-      </td>
-      <td>
-        <button class="btn">
-          <i class="fa-solid fa-trash"></i>
-        </button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+@if (emailsToShow.length) {
+  <div class="email-list-block">
+    @for (email of emailsToShow; track $index) {
+      <div class="email-item" (click)="selectedEmailClick(email)">
+        <div class="email-item-top">
+          <div class="email-item-top-left">
+            <p class="email-header-p m-0">{{ email.sender }}</p>
+          </div>
+          <div class="email-item-top-right">
+            @if (email.status === "unread") {
+              <i
+                class="fa-regular fa-envelope"
+                (click)="changeStatus(email)"
+              ></i>
+            }
+            @if (email.status === "read") {
+              <i
+                class="fa-regular fa-envelope-open"
+                (click)="changeStatus(email)"
+              ></i>
+            }
+            <i class="fa-regular fa-flag"></i>
+            <i class="fa-solid fa-thumbtack"></i>
+          </div>
+        </div>
+        <div class="email-item-mid">
+          <div class="email-item-mid-left">
+            <p
+              [ngClass]="{ 'bold-text': email.status === 'unread' }"
+              class="email-preview-p m-0"
+            >
+              {{ email.subject }}
+            </p>
+          </div>
+          <div class="email-item-mid-right">
+            <i class="fa-solid fa-trash"></i>
+          </div>
+        </div>
+        <div class="email-item-bottom">
+          <p class="email-body-preview m-0">
+            {{ email.bodyPreview }}
+          </p>
+          <p>{{ showDateTime(email.receivedDateTime) }}</p>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="pagination-section">
+    <button title="previous" class="btn" (click)="renderEmails('previous')">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <button title="next" class="btn" (click)="renderEmails('next')">
+      <i class="fa-solid fa-arrow-right"></i>
+    </button>
+  </div>
+} @else {
+  <p>Loading emails...</p>
+}

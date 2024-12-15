@@ -34,19 +34,6 @@ app.post("/authenticate", async (req, res) => {
       }
     );
     res.json({ data: response.data });
-    console.log("response", response.data);
-
-    // const response = await axios.post(
-    //   "https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/oauth2/token",
-    //   null,
-    //   {
-    //     grant_type: "client_credentials",
-    //     client_id: process.env["CLIENT_ID"],
-    //     client_secret: process.env["CLIENT_SECRET"]
-    //   }
-    // );
-    // res.json(response.data);
-    // console.log("response", response.data);
   } catch (error) {
     console.log(error.status);
     res.status(400).json({ error: "Internal Error!", message: error.message });

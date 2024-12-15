@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 
 @Component({
   selector: 'app-side-menu',
@@ -6,4 +6,12 @@ import { Component } from '@angular/core';
   imports: [],
   templateUrl: './side-menu.component.html'
 })
-export class SideMenuComponent {}
+export class SideMenuComponent {
+  @Output() openEmailModalEmitter = new EventEmitter<boolean>(false);
+
+  constructor() {}
+
+  openEmailModal() {
+    this.openEmailModalEmitter.emit(true);
+  }
+}
