@@ -87,6 +87,7 @@ ul.sidebar-menu-items {
   text-overflow: ellipsis;
   width: 180px;
   font-size: 15px;
+  color: #212b86;
 }
 
 .email-body-preview {
@@ -155,4 +156,10 @@ ul.sidebar-menu-items {
 .hide-block {
   display: none;
   visibility: hidden;
+}
+
+.fa-envelope {
+  &::before {
+    color: #212b86;
+  }
 }
