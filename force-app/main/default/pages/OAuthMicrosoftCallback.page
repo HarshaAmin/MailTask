@@ -1,0 +1,18 @@
+<apex:page controller="OAuthMicrosoftHandler">
+    <script type="text/javascript">
+        // Get the authorization code from the URL
+        var urlParams = new URLSearchParams(window.location.search);
+        var authorizationCode = urlParams.get('code');
+        
+        if (authorizationCode) {
+            // Send the authorization code to the Apex controller to exchange for an access token
+            alert("Authorization Code: " + authorizationCode);
+
+            // Optionally, redirect or trigger an action after receiving the code
+            // Here we will trigger the Apex method to process the code and get the token
+            window.location.href = "/apex/OAuthMicrosoftHandler?code=" + authorizationCode;
+        } else {
+            alert("Authorization code is missing!");
+        }
+    </script>
+</apex:page>

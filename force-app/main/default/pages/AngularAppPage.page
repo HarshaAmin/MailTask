@@ -1,0 +1,8 @@
+<apex:page>
+  <h1>Welcome to the Angular App!</h1>
+  <div id="angular-app"></div>
+
+  <script
+    src="https://novigosolutionspvtltd2-dev-ed--c.develop.vf.force.com/resource/MyAngularApp/main-XACKM5CF.js"
+  ></script>
+</apex:page>

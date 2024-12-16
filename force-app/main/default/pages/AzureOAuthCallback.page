@@ -1,0 +1,13 @@
+<apex:page
+  controller="AzureOAuthCallbackController"
+  showHeader="false"
+  sidebar="false"
+>
+  <h1>Processing OAuth Response...</h1>
+  <script>
+    // Optionally, redirect the user to another page
+    window.onload = function () {
+      window.location.href = "/apex/UserDashboard"; // Redirect after processing
+    };
+  </script>
+</apex:page>

@@ -1,0 +1,12 @@
+.lightning-datatable {
+    border: none;
+}
+
+.slds-card {
+    background-color: #f4f6f9;
+}
+
+.slds-card__header {
+    font-weight: bold;
+    color: #2a3a4e;
+}

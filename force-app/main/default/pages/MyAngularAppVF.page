@@ -1,0 +1,3 @@
+<apex:page showHeader="false" sidebar="false">
+  <iframe src="{!$Resource.MyAngularApp}/index.html"></iframe>
+</apex:page>

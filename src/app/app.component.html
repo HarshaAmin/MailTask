@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Responsive Outlook-like UI</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      .sentiment-feedback {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .suggestions {
+        margin-top: 10px;
+        background-color: #f9f9f9;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+
+      .suggestions ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .suggestions li {
+        margin: 5px 0;
+        cursor: pointer;
+      }
+
+      .suggestions li:hover {
+        background-color: #eee;
+      }
+
+      /* Basic container setup */
+      .container {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+
+      .sidebar {
+        flex: 0 0 250px;
+        padding: 10px;
+        background-color: #f4f4f4;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 20px;
+      }
+
+      .sidebar button {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: none;
+        background-color: #ddd;
+        cursor: pointer;
+      }
+
+      .sidebar button:hover {
+        background-color: #ccc;
+      }
+
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: #fff;
+        padding: 20px;
+        width: 500px;
+        border-radius: 8px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .email-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .email-actions button {
+        margin-left: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          flex: 0 0 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <img src="/resource/AngularAppNew/logo.png" alt="Logo" class="logo" />
+          <h2>Outlook</h2>
+        </div>
+        <button (click)="loadInbox()">Inbox</button>
+        <button (click)="loadSent()">Sent</button>
+        <button (click)="loadDraft()">Draft</button>
+        <button (click)="loadTrash()">Trash</button>
+        <button class="btn-primary compose-button" (click)="openComposeModal()">
+          Compose
+        </button>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="header">
+          <div class="logo-section">
+            <img
+              src="/resource/AngularAppNew/logo.png"
+              alt="User Logo"
+              class="logo"
+            />
+            <div>
+              <h3>Send Tech</h3>
+              <p>{{ uEmail }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-wrapper">
+          <div class="email-list">
+            <div class="filter-buttons">
+              <button
+                (click)="filterEmails('all')"
+                [class.active]="selectedFilter === 'all'"
+              >
+                All
+              </button>
+              <button
+                (click)="filterEmails('read')"
+                [class.active]="selectedFilter === 'read'"
+              >
+                Read
+              </button>
+              <button
+                (click)="filterEmails('unread')"
+                [class.active]="selectedFilter === 'unread'"
+              >
+                Unread
+              </button>
+            </div>
+            <div *ngIf="filteredEmails.length === 0" class="no-emails">
+              <p>No emails to display.</p>
+            </div>
+            <div
+              *ngFor="let email of filteredEmails"
+              class="email-item"
+              (click)="viewEmailDetails(email)"
+            >
+              <div class="email-header">
+                <div>
+                  <div class="email-subject">{{ email.subject }}</div>
+                  <div class="email-sender">{{ email.sender }}</div>
+                  <div class="email-date">
+                    {{ email.receivedDateTime | date: "short" }}
+                  </div>
+                  <div *ngIf="email.status === 'unread'" class="email-status">
+                    Unread
+                  </div>
+                </div>
+                <div class="email-actions">
+                  <button (click)="toggleRead(email)" class="action-button">
+                    <i
+                      class="fas"
+                      [ngClass]="
+                        email.status === 'read'
+                          ? 'fa-envelope-open active'
+                          : 'fa-envelope inactive'
+                      "
+                    ></i>
+                  </button>
+                  <button (click)="toggleFlag(email)" class="action-button">
+                    <i
+                      class="fas"
+                      [ngClass]="
+                        email.isFlagged ? 'fa-flag active' : 'fa-flag inactive'
+                      "
+                    ></i>
+                  </button>
+                  <button (click)="togglePing(email)" class="action-button">
+                    <i
+                      class="fas"
+                      [ngClass]="
+                        email.isPinged
+                          ? 'fa-thumbtack active'
+                          : 'fa-thumbtack inactive'
+                      "
+                    ></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="selectedEmail" class="email-details">
+            <h3>{{ selectedEmail.subject }}</h3>
+            <p><strong>From:</strong> {{ selectedEmail.sender }}</p>
+            <p>
+              <strong>Received:</strong>
+              {{ selectedEmail.receivedDateTime | date: "short" }}
+            </p>
+            <div [innerHTML]="selectedEmail.bodyPreview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compose Email Modal -->
+    <div *ngIf="isComposeModalOpen" class="modal" (click)="closeComposeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>Compose Email</h3>
+        <form (ngSubmit)="sendEmail()">
+          <div class="form-group">
+            <label for="to">To:</label>
+            <input
+              type="email"
+              id="to"
+              name="to"
+              [(ngModel)]="email.to"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="subject">Subject:</label>
+            <input
+              type="text"
+              id="subject"
+              name="subject"
+              [(ngModel)]="email.subject"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="body">Body:</label>
+            <textarea
+              id="body"
+              name="body"
+              [(ngModel)]="email.bodyPreview"
+              (ngModelChange)="onInputChange($event)"
+              rows="5"
+              cols="40"
+              placeholder="Start typing your email"
+            ></textarea>
+            <button (click)="correctGrammar()">Correct Grammar</button>
+
+            <div *ngIf="correctedText">
+              <h3>Corrected Text:</h3>
+              <p>{{ correctedText }}</p>
+            </div>
+            <div *ngIf="errorMessage" style="color: red">
+              {{ errorMessage }}
+            </div>
+
+            <!-- 
+            {{sentimentAnalysis}}
+
+            Suggestions is : {{ suggestions }} -->
+            <!-- Sentiment Feedback -->
+            <!-- <div *ngIf="sentimentAnalysis">
+              <p>Sentiment: {{ sentimentAnalysis.sentimentLabel }}</p>
+              <p>Score: {{ sentimentAnalysis.sentimentScore }}</p>
+            </div> -->
+
+            <div *ngIf="suggestions.length > 0" style="margin-top: 10px">
+              <h4>Suggestions:</h4>
+              <ul>
+                <li
+                  *ngFor="let suggestion of suggestions"
+                  (click)="selectSuggestion(suggestion)"
+                  style="cursor: pointer"
+                >
+                  {{ suggestion }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- <div *ngIf="suggestions && suggestions.length > 0">
+              <p>Suggestions:</p>
+              <ul>
+                <li *ngFor="let suggestion of suggestions">{{ suggestion }}</li>
+              </ul>
+            </div> -->
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Send</button>
+            <label for="attach" class="btn-secondary attach-btn"
+              >Attach File
+              <input
+                type="file"
+                id="attach"
+                name="attach"
+                (change)="onFileSelected($event)"
+              />
+            </label>
+          </div>
+        </form>
+        <button class="close-button" (click)="closeComposeModal()">
+          Close
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Example Angular component methods to handle modal and form submissions
+      function sendEmail(event) {
+        event.preventDefault();
+        // Add email sending logic
+        closeComposeModal();
+        alert("Email sent!");
+      }
+
+      function closeComposeModal() {
+        document.getElementById("composeModal").style.visibility = "hidden";
+      }
+    </script>
+  </body>
+</html>
