@@ -4,24 +4,30 @@ import { Observable, throwError, of } from 'rxjs';
 import { catchError, switchMap, map, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { forkJoin } from 'rxjs';
-import { SentimentResponse, SuggestionsResponse } from '../app/suggestion.interface';
+import {
+  SentimentResponse,
+  SuggestionsResponse
+} from '../app/suggestion.interface';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class SalesforceService {
-
-  private openAIapiUrl = 'https://api-inference.huggingface.co/models/vennify/t5-base-grammar-correction'; 
+  private baseUrl =
+    'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailService';
+  private openAIapiUrl =
+    'https://api-inference.huggingface.co/models/vennify/t5-base-grammar-correction';
   private openAIapiKey = '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'; // Replace with your OpenAI API Key
-
 
   private getEmailsUrl =
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/getEmails';
   private getSentEmailsUrl =
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/getSentEmails';
 
-  private apiUrl = 'https://api-inference.huggingface.co/models/bert-base-uncased';
-  private apiUrlSentiment = 'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment';
+  private apiUrl =
+    'https://api-inference.huggingface.co/models/bert-base-uncased';
+  private apiUrlSentiment =
+    'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment';
 
   private accessToken: string | null = null;
 
@@ -35,57 +41,60 @@ export class SalesforceService {
     }
   }
 
-  
-
-
   setAccessToken(token: string): void {
     this.accessToken = token;
     localStorage.setItem('accessToken', token);
-    console.log('Access token set and saved to localStorage:', this.accessToken);
+    console.log(
+      'Access token set and saved to localStorage:',
+      this.accessToken
+    );
   }
 
   getSentimentAnalysis(input: string): Observable<SentimentResponse> {
     const headers = new HttpHeaders({
-      'Authorization': `Bearer ${environment.huggingFaceApiKey}`, // Use environment variable for the API key
+      Authorization: `Bearer ${environment.huggingFaceApiKey}` // Use environment variable for the API key
     });
     const url = `${this.apiUrlSentiment}`;
 
-    return this.http.post<SentimentResponse>(url, { inputs: input }, { headers }).pipe(
-      tap((response) => {
-        console.log('Sentiment response:', response);
-      }),
-      catchError((error) => {
-        console.error('Error getting sentiment:', error);
-        return throwError(() => new Error('Error getting sentiment.'));
-      })
-    );
+    return this.http
+      .post<SentimentResponse>(url, { inputs: input }, { headers })
+      .pipe(
+        tap((response) => {
+          console.log('Sentiment response:', response);
+        }),
+        catchError((error) => {
+          console.error('Error getting sentiment:', error);
+          return throwError(() => new Error('Error getting sentiment.'));
+        })
+      );
   }
 
   getSuggestions(input: string): Observable<SuggestionsResponse> {
     const headers = new HttpHeaders({
-      'Authorization': `Bearer ${environment.huggingFaceApiKey}`, // Use environment variable for the API key
+      Authorization: `Bearer ${environment.huggingFaceApiKey}` // Use environment variable for the API key
     });
 
     const body = { inputs: input + ' [MASK].' };
 
-    return this.http.post<SuggestionsResponse>(this.apiUrl, body, { headers }).pipe(
-      tap((response) => {
-        console.log('Suggestions response:', response);
-      }),
-      catchError((error) => {
-        console.error('Error getting suggestions:', error);
-        return throwError(() => new Error('Error getting suggestions.'));
-      })
-    );
+    return this.http
+      .post<SuggestionsResponse>(this.apiUrl, body, { headers })
+      .pipe(
+        tap((response) => {
+          console.log('Suggestions response:', response);
+        }),
+        catchError((error) => {
+          console.error('Error getting suggestions:', error);
+          return throwError(() => new Error('Error getting suggestions.'));
+        })
+      );
   }
 
-
   correctGrammar(input: string): Observable<string> {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = '';
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.openAIapiKey}`,
+      Authorization: `Bearer ${this.openAIapiKey}`
     });
 
     // const body = {
@@ -127,11 +136,12 @@ export class SalesforceService {
     );
   }
 
-  categorizeEmails(emailList: { subject: string; body: string }[]): Observable<any> {
+  categorizeEmails(
+    emailList: { subject: string; body: string }[]
+  ): Observable<any> {
     return this.http.post(this.apiUrl, { emails: emailList });
   }
 
-  
   isAuthenticated(): boolean {
     return this.accessToken !== null;
   }
@@ -143,20 +153,34 @@ export class SalesforceService {
   }
 
   getSentEmails(): Observable<any> {
-    return this.http.get(this.getSentEmailsUrl, {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    }).pipe(
-      catchError((error) => this.handleAuthError(error, this.getSentEmails()))
-    );
+    return this.http
+      .get(this.getSentEmailsUrl, {
+        headers: { Authorization: `Bearer ${this.accessToken}` }
+      })
+      .pipe(
+        catchError((error) => this.handleAuthError(error, this.getSentEmails()))
+      );
   }
 
-  getUserEmails(): Observable<any> {
-    return this.http.get(this.getEmailsUrl, {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    }).pipe(
-      catchError((error) => this.handleAuthError(error, this.getUserEmails()))
+  sendEmail(to: string, subject: string, body: string): Observable<any> {
+    const payload = { toAddress: to, subject, bodyContent: body };
+    return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(
+      map((response) => response),
+      catchError((error) => {
+        console.error('Error correcting grammar:', error);
+        return throwError(() => new Error('Failed to correct grammar.'));
+      })
     );
+    return this.http.post(`${this.baseUrl}/sendEmail`, payload);
   }
+
+  // getUserEmails(): Observable<any> {
+  //   return this.http.get(this.getEmailsUrl, {
+  //     headers: { Authorization: `Bearer ${this.accessToken}` },
+  //   }).pipe(
+  //     catchError((error) => this.handleAuthError(error, this.getUserEmails()))
+  //   );
+  // }
 
   getRecords(objectName: string): Observable<any> {
     if (!this.isAuthenticated()) {
@@ -165,12 +189,16 @@ export class SalesforceService {
 
     const url = `${environment.salesforce.loginUrl}/services/data/${environment.salesforce.apiVersion}/sobjects/${objectName}`;
     const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`,
+      Authorization: `Bearer ${this.accessToken}`
     });
 
-    return this.http.get(url, { headers }).pipe(
-      catchError((error) => this.handleAuthError(error, this.getRecords(objectName)))
-    );
+    return this.http
+      .get(url, { headers })
+      .pipe(
+        catchError((error) =>
+          this.handleAuthError(error, this.getRecords(objectName))
+        )
+      );
   }
 
   private refreshAccessToken(): Observable<any> {
@@ -190,8 +218,8 @@ export class SalesforceService {
     return this.http
       .post(url, body.toString(), {
         headers: new HttpHeaders({
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }),
+          'Content-Type': 'application/x-www-form-urlencoded'
+        })
       })
       .pipe(
         switchMap((response: any) => {
@@ -202,12 +230,17 @@ export class SalesforceService {
         catchError((error) => {
           console.error('Error refreshing access token:', error);
           this.clearAccessToken();
-          return throwError(() => new Error('Session expired, please log in again.'));
+          return throwError(
+            () => new Error('Session expired, please log in again.')
+          );
         })
       );
   }
 
-  private handleAuthError(error: any, retryFn: Observable<any>): Observable<any> {
+  private handleAuthError(
+    error: any,
+    retryFn: Observable<any>
+  ): Observable<any> {
     if (error.status === 401 && localStorage.getItem('refreshToken')) {
       return this.refreshAccessToken().pipe(
         switchMap(() => retryFn) // Retry the original function after token refresh
@@ -219,11 +252,13 @@ export class SalesforceService {
   getUserInfo(): Observable<any> {
     const url = `${environment.salesforce.loginUrl}/services/oauth2/userinfo`;
     const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`,
+      Authorization: `Bearer ${this.accessToken}`
     });
 
-    return this.http.get(url, { headers }).pipe(
-      catchError((error) => this.handleAuthError(error, this.getUserInfo()))
-    );
+    return this.http
+      .get(url, { headers })
+      .pipe(
+        catchError((error) => this.handleAuthError(error, this.getUserInfo()))
+      );
   }
 }

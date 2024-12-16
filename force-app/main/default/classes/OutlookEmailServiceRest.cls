@@ -58,7 +58,10 @@ global with sharing class OutlookEmailServiceRest {
       // Get request body for the specified action
       String body = getActionBody(action);
       if (String.isBlank(body)) {
-        return createErrorResponse('Invalid action specified', 400);
+        return createErrorResponse(
+          'Invalid action specified for ' + action + ' and body is ' + body,
+          400
+        );
       }
 
       // Call the service to update the email
@@ -81,6 +84,70 @@ global with sharing class OutlookEmailServiceRest {
     return responseWrapper;
   }
 
+  @HttpPost
+  global static ResponseWrapper sendEmail() {
+    ResponseWrapper responseWrapper = new ResponseWrapper();
+    try {
+      RestRequest reqContext = RestContext.request;
+      String requestBody = reqContext.requestBody.toString();
+
+      // Deserialize the JSON body into a Map or a specific class
+      Map<String, Object> params = (Map<String, Object>) JSON.deserializeUntyped(
+        requestBody
+      );
+
+      // Extract parameters
+      String toAddress = (String) params.get('toAddress');
+      String subject = (String) params.get('subject');
+      String bodyContent = (String) params.get('bodyContent');
+
+      String accessToken = OutlookEmailService.getAccessToken();
+      String endpoint = 'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/sendMail';
+
+      // Construct the email payload
+      Map<String, Object> emailPayload = new Map<String, Object>();
+      emailPayload.put(
+        'message',
+        new Map<String, Object>{
+          'subject' => subject,
+          'body' => new Map<String, Object>{
+            'contentType' => 'Text',
+            'content' => bodyContent
+          },
+          'toRecipients' => new List<Object>{
+            new Map<String, Object>{
+              'emailAddress' => new Map<String, Object>{
+                'address' => toAddress
+              }
+            }
+          }
+        }
+      );
+      emailPayload.put('saveToSentItems', 'true');
+
+      HttpRequest req = new HttpRequest();
+      req.setEndpoint(endpoint);
+      req.setMethod('POST');
+      req.setHeader('Authorization', 'Bearer ' + accessToken);
+      req.setHeader('Content-Type', 'application/json');
+      req.setBody(JSON.serialize(emailPayload));
+
+      Http http = new Http();
+      HttpResponse res = http.send(req);
+      responseWrapper = new ResponseWrapper(
+        'success',
+        null,
+        200,
+        res.getBody() + ' ' + JSON.serialize(emailPayload)
+      );
+    } catch (Exception e) {
+      return createErrorResponse(
+        'Email Failed to Send: ' + e.getMessage(),
+        500
+      );
+    }
+    return responseWrapper;
+  }
   // Helper function to construct the request body based on action
   private static String getActionBody(String action) {
     switch on action {
@@ -113,6 +180,6 @@ global with sharing class OutlookEmailServiceRest {
     String errorMessage,
     Integer statusCode
   ) {
-    return new ResponseWrapper('error', null, statusCode, errorMessage);
+    return new ResponseWrapper('error ', null, statusCode, errorMessage);
   }
 }

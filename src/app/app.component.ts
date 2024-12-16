@@ -2,7 +2,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { SalesforceService } from '../services/salesforce.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import { SentimentResponse, SuggestionsResponse } from '../app/suggestion.interface'; 
+import {
+  SentimentResponse,
+  SuggestionsResponse
+} from '../app/suggestion.interface';
 import { Observable, throwError } from 'rxjs';
 
 interface Email {
@@ -12,9 +15,9 @@ interface Email {
   bodyPreview: string;
   status: string;
   id: string;
-  isRead: string;
-  isFlagged: string;
-  isPinged: string;
+  isRead: boolean;
+  flagStatus: string;
+  categories: string[];
 }
 
 @Component({
@@ -32,6 +35,8 @@ export class AppComponent implements OnInit, OnDestroy {
   successMessage: string | null = null;
   emails: any[] = [];
   filteredEmails: any[] = [];
+
+  emailtoSend = { to: '', subject: '', bodyPreview: '' };
 
   accessToken: string = '';
   selectedEmail: Email | null = null;
@@ -56,7 +61,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     this.loadEmails('Inbox');
-    
+
     document.addEventListener('keydown', this.handleEscapeKey.bind(this));
   }
 
@@ -66,7 +71,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   markAsRead(email: Email): void {
     email.status = 'read';
-    this.filterEmails(this.selectedFilter); 
+    this.filterEmails(this.selectedFilter);
   }
 
   handleEscapeKey(event: KeyboardEvent): void {
@@ -83,10 +88,28 @@ export class AppComponent implements OnInit, OnDestroy {
     this.isComposeModalOpen = false;
   }
 
-  sendEmail(): void {
-    const { to, subject, bodyPreview } = this.email;
-    console.log('Sending email:', { to, subject, bodyPreview });
-    this.closeComposeModal();
+  // sendEmail(): void {
+  //   const { to, subject, bodyPreview } = this.email;
+  //   console.log('Sending email:', { to, subject, bodyPreview });
+  //   this.closeComposeModal();
+  // }
+
+  sendEmail() {
+    this.salesforceService
+      .sendEmail(
+        this.emailtoSend.to,
+        this.emailtoSend.subject,
+        this.emailtoSend.bodyPreview
+      )
+      .subscribe(
+        (response) => {
+          console.log('Email sent successfully! ' + JSON.stringify(response));
+          console.log('Email sent successfully! ' + response);
+        },
+        (error) => {
+          console.error('Error:', JSON.stringify(error));
+        }
+      );
   }
 
   loadEmails(folder: string = 'Inbox'): void {
@@ -99,43 +122,48 @@ export class AppComponent implements OnInit, OnDestroy {
 
     const userId = 'Send.Tech@novigo-solutions.com';
 
-    this.http.get(`${endpoint}?userId=${userId}&folder=${folder}`, { headers }).subscribe(
-      (data: any) => {
-        console.log('Emails loaded:', data);
-        this.emails = data.emails;
-        this.filteredEmails = data.emails;
-        // this.salesforceService.categorizeEmails(this.emails).subscribe((response) => {
-        //   this.categories = response.categories;
-        // });
-        const endpointCategory = `${environment.salesforce.salesforceApiBaseUrl}/services/apexrest/api/parse-emails`;
-        this.http.post(endpointCategory, data.emails, { headers }).subscribe(
-          (data: any) => {
-            console.log('Emails loaded:', data);
-            console.log('Categories:', data); // Assuming the response is an array or object of categories
-            this.categories = data;
-          },
-          (error) => {
-            console.error('Error loading emails:', error);
-            this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
-          }
-        );
-        
-      },
-      (error) => {
-        console.error('Error loading emails:', error);
-        this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
-      }
-    );
+    this.http
+      .get(`${endpoint}?userId=${userId}&folder=${folder}`, { headers })
+      .subscribe(
+        (data: any) => {
+          console.log('Emails loaded:', data);
+          this.emails = data.emails;
+          this.filteredEmails = data.emails;
+          // this.salesforceService.categorizeEmails(this.emails).subscribe((response) => {
+          //   this.categories = response.categories;
+          // });
+          const endpointCategory = `${environment.salesforce.salesforceApiBaseUrl}/services/apexrest/api/parse-emails`;
+          this.http.post(endpointCategory, data.emails, { headers }).subscribe(
+            (data: any) => {
+              console.log('Emails loaded:', data);
+              console.log('Categories:', data); // Assuming the response is an array or object of categories
+              this.categories = data;
+            },
+            (error) => {
+              console.error('Error loading emails:', error);
+              this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
+            }
+          );
+        },
+        (error) => {
+          console.error('Error loading emails:', error);
+          this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
+        }
+      );
   }
 
   filterEmails(filter: string): void {
     this.selectedFilter = filter;
     if (filter === 'read') {
-      this.filteredEmails = this.emails.filter(email => email.status === 'read');
+      this.filteredEmails = this.emails.filter(
+        (email) => email.status === 'read'
+      );
     } else if (filter === 'unread') {
-      this.filteredEmails = this.emails.filter(email => email.status === 'unread');
+      this.filteredEmails = this.emails.filter(
+        (email) => email.status === 'unread'
+      );
     } else {
-      this.filteredEmails = this.emails; 
+      this.filteredEmails = this.emails;
     }
   }
 
@@ -150,17 +178,17 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log('Email status changed:', email);
   }
 
-  toggleFlag(email: any): void {
-    email.isFlagged = !email.isFlagged;
-    this.updateEmail(email, email.isFlagged ? 'flag' : 'unflag');
-    console.log('Email flag changed:', email);
-  }
+  // toggleFlag(email: any): void {
+  //   email.isFlagged = !email.isFlagged;
+  //   this.updateEmail(email.Id, email.isFlagged ? 'flag' : 'unflag');
+  //   console.log('Email flag changed:', email);
+  // }
 
-  togglePing(email: any): void {
-    email.isPinged = !email.isPinged;
-    this.updateEmail(email.Id, email.isPinged ? 'pin' : 'unpin');
-    console.log('Email pin status changed:', email);
-  }
+  // togglePin(email: any): void {
+  //   email.isPinged = !email.isPinged;
+  //   this.updateEmail(email.Id, email.isPinged ? 'pin' : 'unpin');
+  //   console.log('Email pin status changed:', email);
+  // }
 
   loadDraft(): void {
     console.log('Load Draft functionality');
@@ -180,18 +208,17 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-
   correctGrammar(): void {
     console.log('Entering correctGrammar method...');
-    
+
     if (!this.email.bodyPreview.trim()) {
       console.log('No text entered for grammar correction.');
       this.errorMessage = 'Please enter some text to correct.';
       return;
     }
-  
+
     console.log('Text to correct:', this.email.bodyPreview);
-  
+
     this.salesforceService.correctGrammar(this.email.bodyPreview).subscribe({
       next: (response) => {
         console.log('Grammar correction response:', response);
@@ -201,92 +228,94 @@ export class AppComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error during grammar correction:', err);
         this.errorMessage = 'Failed to correct grammar. Please try again.';
-      },
+      }
     });
-  
+
     console.log('Exiting correctGrammar method...');
   }
-  
-
-
 
   onInputChange(event: any): void {
     const inputText = this.email.bodyPreview.trim();
-  
+
     // Clear previous analysis if no input
     if (inputText.length === 0) {
       this.sentimentAnalysis = null;
       this.suggestions = [];
       return;
     }
-  
+
     // Call analyzeText to fetch sentiment and suggestions
     this.analyzeText(inputText);
   }
-  
+
   async analyzeText(text: string) {
     try {
-      const accessToken = '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';  // Replace with your token
-      
+      const accessToken = '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'; // Replace with your token
+
       // Request for sentiment analysis
-      const sentimentResponse = await fetch('https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`, // Include the access token in the header
-        },
-        body: JSON.stringify({ text }),
-      });
-  
+      const sentimentResponse = await fetch(
+        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}` // Include the access token in the header
+          },
+          body: JSON.stringify({ text })
+        }
+      );
+
       if (!sentimentResponse.ok) {
         throw new Error('Failed to fetch sentiment analysis');
       }
-  
+
       const sentimentData = await sentimentResponse.json();
-  
-      const inputData = '{ inputs: '+text + ' [MASK].}';
+
+      const inputData = '{ inputs: ' + text + ' [MASK].}';
 
       // Request for suggestions
-      const suggestionResponse = await fetch('https://api-inference.huggingface.co/models/bert-base-uncased', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`, // Include the access token here as well
-        },
-        body: inputData,
-      });
-  
+      const suggestionResponse = await fetch(
+        'https://api-inference.huggingface.co/models/bert-base-uncased',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}` // Include the access token here as well
+          },
+          body: inputData
+        }
+      );
+
       if (!suggestionResponse.ok) {
         throw new Error('Failed to fetch suggestions');
       }
-  
+
       const suggestionsData = await suggestionResponse.json();
-  
+
       console.log('Sentiment Data:', sentimentData);
       console.log('Suggestions Data:', suggestionsData);
-  
+
       this.suggestions = suggestionsData.map((item: any) => item.token_str);
-      console.log('this.suggestions Data: with type ',typeof suggestionsData.suggestions+' value ' +this.suggestions);
-      
+      console.log(
+        'this.suggestions Data: with type ',
+        typeof suggestionsData.suggestions + ' value ' + this.suggestions
+      );
+
       //this.suggestions = suggestionsData.suggestions || [];
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Error fetching analysis:', error.message);  // Safely accessing `message`
+        console.error('Error fetching analysis:', error.message); // Safely accessing `message`
         this.errorMessage = `Analysis failed: ${error.message}`;
       } else {
-        console.error('Unknown error:', error);  // In case the error is not an instance of Error
+        console.error('Unknown error:', error); // In case the error is not an instance of Error
         this.errorMessage = `Analysis failed: An unknown error occurred.`;
       }
     }
   }
-  
-  
 
   selectSuggestion(suggestion: string): void {
     this.email.bodyPreview += ` ${suggestion}`;
   }
-
-  
 
   updateEmail(emailId: string, action: string) {
     const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/*`;
@@ -309,29 +338,36 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   generateAccessToken(): void {
-    const tokenUrl = 'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/oauth2/token';
-    const clientId = '3MVG9PwZx9R6_UreJ7pGOqAjPactZ4PlE.3xrcLSvO1smOsk4K0cCDaCjEJdqUDyaUXwtYrEElDjSAxRVfMy9';
-    const clientSecret = '8B671E68B5D8679368FE2C97B813DDA073DA4714564622B02D8CC38A11D37EF0';
+    const tokenUrl =
+      'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/oauth2/token';
+    const clientId =
+      '3MVG9PwZx9R6_UreJ7pGOqAjPactZ4PlE.3xrcLSvO1smOsk4K0cCDaCjEJdqUDyaUXwtYrEElDjSAxRVfMy9';
+    const clientSecret =
+      '8B671E68B5D8679368FE2C97B813DDA073DA4714564622B02D8CC38A11D37EF0';
 
     const body = new URLSearchParams();
     body.set('grant_type', 'client_credentials');
     body.set('client_id', clientId);
     body.set('client_secret', clientSecret);
 
-    this.http.post(tokenUrl, body.toString(), {
-      headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' })
-    }).subscribe(
-      (response: any) => {
-        this.accessToken = response.access_token;
-        console.log('Access token generated:', this.accessToken);
-        localStorage.setItem('accessToken', this.accessToken);
-        this.salesforceService.setAccessToken(this.accessToken);
-      },
-      (error) => {
-        console.error('Failed to generate access token:', error);
-        this.errorMessage = 'Failed to generate access token';
-      }
-    );
+    this.http
+      .post(tokenUrl, body.toString(), {
+        headers: new HttpHeaders({
+          'Content-Type': 'application/x-www-form-urlencoded'
+        })
+      })
+      .subscribe(
+        (response: any) => {
+          this.accessToken = response.access_token;
+          console.log('Access token generated:', this.accessToken);
+          localStorage.setItem('accessToken', this.accessToken);
+          this.salesforceService.setAccessToken(this.accessToken);
+        },
+        (error) => {
+          console.error('Failed to generate access token:', error);
+          this.errorMessage = 'Failed to generate access token';
+        }
+      );
   }
 
   loadUserInfo(): void {
@@ -367,5 +403,4 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log('Loading Sent emails...');
     this.loadEmails('SentItems');
   }
-
 }

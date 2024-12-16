@@ -28,11 +28,11 @@ public class OutlookEmailService {
     @AuraEnabled
     public String Id;
     @AuraEnabled
-    public String isRead;
+    public Boolean isRead;
     @AuraEnabled
-    public String isFlagged;
+    public String flagStatus;
     @AuraEnabled
-    public String isPinged;
+    public List<String> categories;
   }
 
   public class CategorizationResponse {
@@ -40,13 +40,13 @@ public class OutlookEmailService {
   }
 
   // Static method to get the Access Token
-  private static String getAccessToken() {
+  public static String getAccessToken() {
     //  String clientId = 'b9d0a69d-7dc4-46d5-9ff6-76026e3e484b';  // Replace with your Client ID
     // String clientSecret = 'zeR8Q~smEpXz2F4n9YyU8MhLnZ4R~aSupCNMOdsu';  // Replace with your Client Secret
     // String tenantId = 'd25e697e-9987-4146-87ba-800be6fd457c';  // Replace with your Azure Tenant ID
-    String clientId = ''; // Replace with your Client ID
-    String clientSecret = ''; // Replace with your Client Secret
-    String tenantId = ''; // Replace with your Azure Tenant ID
+    // String clientId = ''; // Replace with your Client ID
+    // String clientSecret = ''; // Replace with your Client Secret
+    // String tenantId = ''; // Replace with your Azure Tenant ID
     String tokenEndpoint =
       'https://login.microsoftonline.com/' +
       tenantId +
@@ -86,7 +86,12 @@ public class OutlookEmailService {
     String accessToken = getAccessToken();
 
     String endpoint =
-      'https://graph.microsoft.com/v1.0/me/messages/' + messageId;
+      'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/messages/' +
+      messageId;
+    //String endpoint = 'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/messages/' + messageId;
+
+    // String endpoint =
+    //   'https://graph.microsoft.com/v1.0/user/Send.Tech@novigo-solutions.com/messages/' + messageId;
     // String endpoint =
     //   'https://graph.microsoft.com/v1.0/users/' +
     //   userId +
@@ -163,9 +168,33 @@ public class OutlookEmailService {
       email.receivedDateTime = (String) msgMap.get('receivedDateTime');
       email.status = msgMap.get('isRead') == true ? 'read' : 'unread';
       email.Id = (String) msgMap.get('id');
-      email.isRead = '';
-      email.isFlagged = '';
-      email.isPinged = '';
+      Object isReadObject = msgMap.get('isRead');
+      if (isReadObject instanceof Boolean) {
+        email.isRead = (Boolean) isReadObject;
+      } else {
+        email.isRead = false; // Default value
+      }
+
+      Object flagObject = msgMap.get('flag');
+      if (flagObject instanceof Map<String, Object>) {
+        Map<String, Object> flagMap = (Map<String, Object>) flagObject;
+        email.flagStatus = (String) flagMap.get('flagStatus'); // Extract the flag status
+      } else {
+        // Handle error or invalid case
+        System.debug('Invalid flag data');
+      }
+
+      // Object categoriesObject = msgMap.get('categories');
+      // if (categoriesObject instanceof List<Object>) {
+      //   // Cast the categoriesObject to a List of Object
+      //   List<Object> categoriesList = (List<Object>) categoriesObject;
+      //   email.categories = categoriesList;
+      // } else {
+      //   // Handle error or invalid categoriesObject case
+      //   System.debug('Invalid categories data, categoriesObject is not a List');
+      // }
+
+      //email.isRead = (Boolean) msgMap.get('isRead');
 
       emailList.add(email);
       //email.flagStatus = msgMap.get('flagStatus')==true?'Flagged':'Not Flagged';
@@ -179,74 +208,75 @@ public class OutlookEmailService {
     return resp;
   }
 
-  // Method to fetch emails for a user
-  @AuraEnabled(cacheable=true)
-  public static Response getUserEmails(
-    String userId,
-    String folder,
-    String action
-  ) {
-    Response resp = new Response();
-    String accessToken = getAccessToken();
+  // // Method to fetch emails for a user
+  // @AuraEnabled(cacheable=true)
+  // public static Response getUserEmails(
+  //   String userId,
+  //   String folder,
+  //   String action
+  // ) {
+  //   Response resp = new Response();
+  //   String accessToken = getAccessToken();
 
-    // String endpoint =
-    //   'https://graph.microsoft.com/v1.0/users/' +
-    //   userId +
-    //   '/messages';
+  //   // String endpoint =
+  //   //   'https://graph.microsoft.com/v1.0/users/' +
+  //   //   userId +
+  //   //   '/messages';
 
-    String endpoint =
-      'https://graph.microsoft.com/v1.0/users/' +
-      userId +
-      '/mailFolders/' +
-      folder +
-      '/messages';
+  //   String endpoint =
+  //     'https://graph.microsoft.com/v1.0/users/' +
+  //     userId +
+  //     '/mailFolders/' +
+  //     folder +
+  //     '/messages';
 
-    HttpRequest req = new HttpRequest();
-    req.setEndpoint(endpoint);
-    req.setMethod('GET');
-    req.setHeader('Authorization', 'Bearer ' + accessToken);
-    req.setHeader('Content-Type', 'application/json');
-    req.setHeader('Accept', 'application/json');
+  //   HttpRequest req = new HttpRequest();
+  //   req.setEndpoint(endpoint);
+  //   req.setMethod('GET');
+  //   req.setHeader('Authorization', 'Bearer ' + accessToken);
+  //   req.setHeader('Content-Type', 'application/json');
+  //   req.setHeader('Accept', 'application/json');
 
-    Http http = new Http();
-    HttpResponse res = http.send(req);
+  //   Http http = new Http();
+  //   HttpResponse res = http.send(req);
 
-    if (res.getStatusCode() != 200) {
-      throw new CustomException('Error fetching emails: ' + res.getBody());
-    }
+  //   if (res.getStatusCode() != 200) {
+  //     throw new CustomException('Error fetching emails: ' + res.getBody());
+  //   }
 
-    Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(
-      res.getBody()
-    );
-    List<Object> messages = (List<Object>) responseBody.get('value');
+  //   Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(
+  //     res.getBody()
+  //   );
+  //   List<Object> messages = (List<Object>) responseBody.get('value');
 
-    List<Email> emailList = new List<Email>();
+  //   List<Email> emailList = new List<Email>();
 
-    for (Object msg : messages) {
-      Map<String, Object> msgMap = (Map<String, Object>) msg;
+  //   for (Object msg : messages) {
+  //     Map<String, Object> msgMap = (Map<String, Object>) msg;
 
-      Email email = new Email();
-      email.subject = (String) msgMap.get('subject');
+  //     Email email = new Email();
+  //     email.subject = (String) msgMap.get('subject');
 
-      Map<String, Object> sender = (Map<String, Object>) msgMap.get('sender');
-      email.sender = (String) ((Map<String, Object>) sender.get('emailAddress'))
-        .get('address');
+  //     Map<String, Object> sender = (Map<String, Object>) msgMap.get('sender');
+  //     email.sender = (String) ((Map<String, Object>) sender.get('emailAddress'))
+  //       .get('address');
 
-      email.bodyPreview = (String) msgMap.get('bodyPreview');
-      email.receivedDateTime = (String) msgMap.get('receivedDateTime');
-      email.status = msgMap.get('isRead') == true ? 'read' : 'unread';
-      //email.flagStatus = msgMap.get('flagStatus')==true?'Flagged':'Not Flagged';
-      email.Id = (String) msgMap.get('id');
-      email.isRead = '';
-      email.isFlagged = '';
-      email.isPinged = '';
+  //     email.bodyPreview = (String) msgMap.get('bodyPreview');
+  //     email.receivedDateTime = (String) msgMap.get('receivedDateTime');
+  //     email.status = msgMap.get('isRead') == true ? 'read' : 'unread';
+  //     //email.flagStatus = msgMap.get('flagStatus')==true?'Flagged':'Not Flagged';
+  //     email.Id = (String) msgMap.get('id');
+  //     String isReadString = (String) msgMap.get('isRead');
+  //     email.isRead = (isReadString != null && isReadString.toLowerCase() == 'true');
+  //     email.isFlagged = '';
+  //     email.isPinged = '';
 
-      emailList.add(email);
-    }
+  //     emailList.add(email);
+  //   }
 
-    resp.emailList = emailList;
-    return resp;
-  }
+  //   resp.emailList = emailList;
+  //   return resp;
+  // }
 
   @future(callout=true)
   public static void categorizeEmailsAsync(String emailsJson) {

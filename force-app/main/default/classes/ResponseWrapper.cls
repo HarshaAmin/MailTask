@@ -14,5 +14,7 @@ global class ResponseWrapper {
   ) {
     this.status = status;
     this.emails = emails;
+    this.statusCode = statusCode;
+    this.message = message;
   }
 }

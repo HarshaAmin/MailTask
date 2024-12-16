@@ -194,34 +194,38 @@
                   </div>
                 </div>
                 <div class="email-actions">
-                  <button (click)="toggleRead(email)" class="action-button">
+                  <button class="action-button">
                     <i
                       class="fas"
-                      [ngClass]="
-                        email.status === 'read'
-                          ? 'fa-envelope-open active'
-                          : 'fa-envelope inactive'
-                      "
+                      [ngClass]="{
+                        'fa-envelope-open': email.isRead,
+                        'fa-envelope': !email.isRead,
+                        active: email.isRead,
+                        inactive: !email.isRead
+                      }"
                     ></i>
                   </button>
-                  <button (click)="toggleFlag(email)" class="action-button">
+
+                  <button class="action-button">
                     <i
                       class="fas"
-                      [ngClass]="
-                        email.isFlagged ? 'fa-flag active' : 'fa-flag inactive'
-                      "
+                      [ngClass]="{
+                        'fa-flag active': email.flagStatus === 'flagged',
+                        'fa-flag inactive': email.flagStatus === 'notFlagged'
+                      }"
                     ></i>
                   </button>
-                  <button (click)="togglePing(email)" class="action-button">
-                    <i
-                      class="fas"
-                      [ngClass]="
-                        email.isPinged
-                          ? 'fa-thumbtack active'
-                          : 'fa-thumbtack inactive'
-                      "
-                    ></i>
-                  </button>
+
+                  <!-- <button class="action-button">
+  <i
+    class="fas"
+    [ngClass]="{
+      'fa-thumbtack': email.categories.includes('Pinned'),
+      'fa-thumbtack active': email.categories.includes('Pinned'),
+      'fa-thumbtack inactive': !email.categories.includes('Pinned')
+    }"
+  ></i>
+</button> -->
                 </div>
               </div>
             </div>
@@ -251,7 +255,7 @@
               type="email"
               id="to"
               name="to"
-              [(ngModel)]="email.to"
+              [(ngModel)]="emailtoSend.to"
               required
             />
           </div>
@@ -261,7 +265,7 @@
               type="text"
               id="subject"
               name="subject"
-              [(ngModel)]="email.subject"
+              [(ngModel)]="emailtoSend.subject"
               required
             />
           </div>
@@ -271,13 +275,17 @@
             <textarea
               id="body"
               name="body"
-              [(ngModel)]="email.bodyPreview"
+              [(ngModel)]="emailtoSend.bodyPreview"
               (ngModelChange)="onInputChange($event)"
               rows="5"
               cols="40"
               placeholder="Start typing your email"
             ></textarea>
-            <button (click)="correctGrammar()">Correct Grammar</button>
+            <button type="button" (click)="correctGrammar()">
+              Correct Grammar
+            </button>
+
+            <!-- <button (click)="correctGrammar()">Correct Grammar</button> -->
 
             <div *ngIf="correctedText">
               <h3>Corrected Text:</h3>
@@ -343,7 +351,7 @@
         event.preventDefault();
         // Add email sending logic
         closeComposeModal();
-        alert("Email sent!");
+        //alert("Email sent!");
       }
 
       function closeComposeModal() {
