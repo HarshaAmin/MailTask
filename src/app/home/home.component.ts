@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { SideMenuComponent } from '../side-menu/side-menu.component';
 import { EmailListComponent } from '../email-list/email-list.component';
 import { EmailComponent } from '../email/email.component';
@@ -32,7 +32,7 @@ interface Email {
   ],
   templateUrl: './home.component.html'
 })
-export class HomeComponent {
+export class HomeComponent implements AfterViewInit {
   records: any;
   userInfo: any;
   errorMessage: string | null = null;
@@ -43,9 +43,12 @@ export class HomeComponent {
   accessToken: string = '';
   selectedEmail: Email | null = null;
   openEmailModal: boolean = false;
+  currentTypeSelection: string = 'all';
+  currentCategorySelection: string = "primary";
 
   selectedFilter = 'all'; // Default filter
   uEmail = 'SendTech@novigosolutions.com'; // Default email if needed
+  socialItem;
 
   constructor(
     private commonService: CommonService,
@@ -68,6 +71,17 @@ export class HomeComponent {
     // Add event listener for ESC key to close compose modal
 
     window.addEventListener('resize', this.detectResize.bind(this));
+  }
+
+  ngAfterViewInit(): void {
+    this.socialItem = document.querySelectorAll(".social-item");
+    this.socialItem.forEach((item: HTMLElement) => item.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.socialItem.forEach(item => item.classList.remove("active"));
+      item.classList.add("active");
+      this.currentCategorySelection = item.id;
+    }));
   }
 
   detectResize(_event: Event) {
@@ -257,5 +271,22 @@ export class HomeComponent {
     console.log('User logged out');
     this.records = null;
     this.userInfo = null;
+  }
+
+  toggleType(type) {
+    if (type === "all") {
+      this.filteredEmails = this.emails;
+    } else {
+      this.filteredEmails = this.emails.filter((email) => email.status === type);
+    }
+    this.currentTypeSelection = type;
+  }
+
+  get getCurrentType() {
+    const firstLetter = this.currentTypeSelection.charAt(0);
+    const firstLetterCap = firstLetter.toUpperCase();
+    const remainingLetters = this.currentTypeSelection.slice(1);
+    const capitalizedWord = firstLetterCap + remainingLetters;
+    return capitalizedWord;
   }
 }

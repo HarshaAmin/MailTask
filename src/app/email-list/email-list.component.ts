@@ -1,5 +1,6 @@
 import { NgClass } from '@angular/common';
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
@@ -35,27 +36,30 @@ export class EmailListComponent implements OnInit, OnChanges {
   startIndex: number = 0;
   endIndex: number = 0;
   emailQty: number = 5;
+
   @Output() selectedEmail = new EventEmitter<Email>();
 
   @Input() emails: Email[] = [];
   @Input() filteredEmails: Email[] = [];
   @Input() accessToken: string;
+  @Input() currentTypeSelection: string;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private cd: ChangeDetectorRef) { }
 
   ngOnInit(): void {
-    console.log(this.filteredEmails.length);
     this.generateNoOfPages();
   }
 
+
+
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('fsdsdfdsfdsfdsf');
     if (changes['filteredEmails']) {
       this.generateNoOfPages();
     }
   }
 
   generateNoOfPages() {
+    this.pageIndex = 0;
     this.pages = Math.ceil(this.filteredEmails.length / this.emailQty);
 
     this.startIndex = this.pageIndex * this.emailQty;
@@ -65,7 +69,6 @@ export class EmailListComponent implements OnInit, OnChanges {
       this.startIndex,
       this.endIndex
     );
-    console.log(this.pageIndex, this.pages, this.pageIndex >= this.pages);
   }
 
   renderEmails(action: string) {
@@ -97,7 +100,9 @@ export class EmailListComponent implements OnInit, OnChanges {
     }
   }
 
-  changeStatus(email: any): void {
+  changeStatus(email: any, event: Event, index: number): void {
+    event.preventDefault();
+    event.stopPropagation();
     email.status = email.status === 'unread' ? 'read' : 'unread';
     this.updateEmails(email, email.status);
   }

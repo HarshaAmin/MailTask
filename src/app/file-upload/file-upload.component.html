@@ -1,0 +1,50 @@
+<div class="center">
+  <div class="upload-section">
+    <div class="upload-section-left">
+      <ngx-file-drop
+        dropZoneLabel="Drop files here"
+        (onFileDrop)="dropped($event)"
+        (onFileOver)="fileOver($event)"
+        (onFileLeave)="fileLeave($event)"
+      >
+        <ng-template
+          ngx-file-drop-content-tmp
+          let-openFileSelector="openFileSelector"
+        >
+          <p class="m-0">Drop files here</p>
+          <button
+            class="hide-block"
+            type="button"
+            id="actual-upload-btn"
+            (click)="openFileSelector()"
+          >
+            Browse Files
+          </button>
+        </ng-template>
+      </ngx-file-drop>
+    </div>
+    <div class="mx-3"><p class="m-0">OR</p></div>
+    <div class="upload-section-right">
+      <button class="btn btn-primary" (click)="uploadFile()">
+        Upload File
+      </button>
+    </div>
+  </div>
+
+  <!-- <div class="upload-table">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody class="upload-name-style">
+        <tr *ngFor="let item of files">
+          <td>
+            <strong>{{ item.relativePath }}</strong>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div> -->
+</div>

@@ -38,6 +38,8 @@
     "angular-oauth2-oidc": "^17.0.2",
     "bootstrap": "^5.3.3",
     "dotenv": "^16.4.7",
+    "jquery": "^3.7.1",
+    "ngx-file-drop": "^16.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.2"
@@ -53,6 +55,7 @@
     "@salesforce/eslint-plugin-lightning": "^1.0.0",
     "@salesforce/sfdx-lwc-jest": "^5.1.0",
     "@types/jasmine": "~5.1.0",
+    "@types/jquery": "^2.0.47",
     "eslint": "^9.9.1",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-jest": "^28.8.1",

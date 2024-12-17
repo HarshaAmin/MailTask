@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Output } from '@angular/core';
+import { FileUploadComponent } from '../file-upload/file-upload.component';
 
 @Component({
   selector: 'app-side-menu',
   standalone: true,
-  imports: [],
+  imports: [FileUploadComponent],
   templateUrl: './side-menu.component.html'
 })
 export class SideMenuComponent {

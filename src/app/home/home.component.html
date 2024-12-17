@@ -6,11 +6,80 @@
   </div>
   <div class="wrapper-mail-section">
     <h3 class="my-3">Email Dashboad</h3>
+    <!-- <div class="d-flex gap-3 my-3 align-items-center">
+      <h5 class="m-0"></h5>
+      <div class="btn-group" role="group" aria-label="actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="toggleType('all')"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="toggleType('read')"
+        >
+          Read
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="toggleType('unread')"
+        >
+          Unread
+        </button>
+      </div>
+    </div> -->
+    <div class="social-group">
+      <div class="social-item active" id="primary">
+        <div class="social-items-header">
+          <i class="fa-regular fa-comment"></i>
+          <p class="m-0">Primary</p>
+        </div>
+        <div class="bottom"></div>
+      </div>
+      <div class="social-item" id="promotions">
+        <div class="social-items-header">
+          <i class="fa-solid fa-rectangle-ad"></i>
+          <p class="m-0">Promotions</p>
+        </div>
+        <div class="bottom"></div>
+      </div>
+      <div class="social-item" id="social">
+        <div class="social-items-header">
+          <i class="fa-brands fa-bluesky"></i>
+          <p class="m-0">Social</p>
+        </div>
+        <div class="bottom"></div>
+      </div>
+      <div class="social-item" id="updates">
+        <div class="social-items-header">
+          <i class="fa-solid fa-exclamation"></i>
+          <p class="m-0">Updates</p>
+        </div>
+        <div class="bottom"></div>
+      </div>
+    </div>
+
+    <div class="dropdown-wrapper">
+      <div class="dropdown">
+        <span>{{ getCurrentType }}</span>
+        <div class="dropdown-content">
+          <p (click)="toggleType('all')">All</p>
+          <p (click)="toggleType('read')">Read</p>
+          <p (click)="toggleType('unread')">Unread</p>
+        </div>
+      </div>
+    </div>
+
     <div class="mail-section">
-      <div class="email-list-section px-2">
+      <div class="email-list-section p-2">
         <app-email-list
           [emails]="emails"
           [filteredEmails]="filteredEmails"
+          [currentTypeSelection]="currentTypeSelection"
           (selectedEmail)="selectedEmail = $event"
           [accessToken]="accessToken"
         ></app-email-list>

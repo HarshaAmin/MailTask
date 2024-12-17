@@ -1,6 +1,6 @@
 @if (emailsToShow.length) {
   <div class="email-list-block">
-    @for (email of emailsToShow; track $index) {
+    @for (email of emailsToShow; let idx = $index; track $index) {
       <div class="email-item" (click)="selectedEmailClick(email)">
         <div class="email-item-top">
           <div class="email-item-top-left">
@@ -10,13 +10,13 @@
             @if (email.status === "unread") {
               <i
                 class="fa-regular fa-envelope"
-                (click)="changeStatus(email)"
+                (click)="changeStatus(email, $event, idx)"
               ></i>
             }
             @if (email.status === "read") {
               <i
                 class="fa-regular fa-envelope-open"
-                (click)="changeStatus(email)"
+                (click)="changeStatus(email, $event, idx)"
               ></i>
             }
             <i class="fa-regular fa-flag"></i>
