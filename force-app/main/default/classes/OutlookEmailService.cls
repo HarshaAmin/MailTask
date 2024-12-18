@@ -44,9 +44,9 @@ public class OutlookEmailService {
     //  String clientId = 'b9d0a69d-7dc4-46d5-9ff6-76026e3e484b';  // Replace with your Client ID
     // String clientSecret = 'zeR8Q~smEpXz2F4n9YyU8MhLnZ4R~aSupCNMOdsu';  // Replace with your Client Secret
     // String tenantId = 'd25e697e-9987-4146-87ba-800be6fd457c';  // Replace with your Azure Tenant ID
-    // String clientId = ''; // Replace with your Client ID
-    // String clientSecret = ''; // Replace with your Client Secret
-    // String tenantId = ''; // Replace with your Azure Tenant ID
+    String clientId = ''; // Replace with your Client ID
+    String clientSecret = ''; // Replace with your Client Secret
+    String tenantId = ''; // Replace with your Azure Tenant ID
     String tokenEndpoint =
       'https://login.microsoftonline.com/' +
       tenantId +

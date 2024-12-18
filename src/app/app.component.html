@@ -9,112 +9,327 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
     />
     <style>
-      .sentiment-feedback {
-        margin-top: 10px;
-        font-size: 14px;
-        color: #333;
-      }
-
-      .suggestions {
-        margin-top: 10px;
-        background-color: #f9f9f9;
-        padding: 10px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-      }
-
-      .suggestions ul {
-        list-style-type: none;
+      /* General reset */
+      * {
+        margin: 0;
         padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, sans-serif;
       }
 
-      .suggestions li {
-        margin: 5px 0;
-        cursor: pointer;
-      }
-
-      .suggestions li:hover {
-        background-color: #eee;
-      }
-
-      /* Basic container setup */
+      /* Container for the layout */
       .container {
         display: flex;
-        min-height: 100vh;
         flex-direction: row;
+        height: 100vh;
+      }
+
+      .sidebar.btn-primary {
+        background-color: #0078d4;
+        font-weight: bold;
+        border-radius: 5px;
+        padding: 12px;
+        margin-top: 10px;
+      }
+      /* Sidebar styles */
+      .sidebar {
+        width: 250px;
+        background-color: #2d3e50;
+        color: #0000;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
         justify-content: space-between;
       }
 
-      .sidebar {
-        flex: 0 0 250px;
+      .sidebar-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .logo {
+        width: 40px;
+        margin-bottom: 10px;
+      }
+
+      .sidebar h2 {
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+      .button{
+        text-align: center;
+        border: none;
         padding: 10px;
-        background-color: #f4f4f4;
+        width: 100%;
+        margin-bottom: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      .sidebar button {
+        background-color: #ffff;
+        text-align: center;
+        border: none;
+        padding: 10px;
+        width: 100%;
+        margin-bottom: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .sidebar button:hover {
+        background-color: #ffff;
       }
 
       .main-content {
         flex: 1;
         padding: 20px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
       }
 
-      .sidebar button {
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .logo-section {
+        display: flex;
+        align-items: center;
+      }
+
+      .logo-section img {
+        width: 40px;
+        margin-right: 10px;
+      }
+
+      .content-wrapper {
+        display: flex;
+        flex-direction: row; /* Arrange email list and details side-by-side */
+        flex: 5;
+      }
+      
+      .email-list {
+        flex: 2; /* Take half of the space */
+        overflow-y: auto; /* Scroll if needed */
+        border-right: 1px solid #ccc; /* Optional: Adds a separation */
+        padding-right: 10px;
+      }
+      .compose-email{
+        flex: 2; /* Take half of the space */
+        overflow-y: auto; /* Scroll if needed */
+        border-right: 1px solid #ccc; /* Optional: Adds a separation */
+        padding-right: 10px;
+      }
+      
+      .email-details {
+        flex: 3; /* Take the remaining space */
+        padding-left: 10px;
+        overflow-y: auto; /* Scroll for long content */
+      }
+      
+
+      .email-item:hover {
+        background-color: #f0f0f0;
+      }
+
+      .email-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         width: 100%;
-        padding: 10px;
-        margin: 5px 0;
-        border: none;
-        background-color: #ddd;
-        cursor: pointer;
       }
 
-      .sidebar button:hover {
-        background-color: #ccc;
+      .email-subject {
+        font-weight: bold;
       }
 
+      .email-status {
+        color: red;
+        font-size: 0.9rem;
+      }
       .modal {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
+        background: rgba(0, 0, 0, 0.5);
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: rgba(0, 0, 0, 0.5);
       }
-
+      
+      .modal-container {
+        position: relative;
+        /* Ensure modal is positioned properly */
+        display: inline-block;
+      }
+      
       .modal-content {
-        background-color: #fff;
+        background-color: white;
         padding: 20px;
-        width: 500px;
         border-radius: 8px;
+        width: 400px;
+      }
+      
+
+      .close-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: red;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50%;
+        cursor: pointer;
       }
 
-      .form-group {
-        margin-bottom: 15px;
-      }
-
-      .form-actions {
+      .email-footer {
         display: flex;
         justify-content: space-between;
-      }
-
-      .email-item {
-        display: flex;
-        justify-content: space-between;
+        align-items: center;
         padding: 10px;
-        border-bottom: 1px solid #ddd;
+        border-top: 1px solid #ddd;
+        background-color: #f9f9f9;
+        border-radius: 0 0 8px 8px;
+      }
+      
+      .actions,
+      .formatting-options,
+      .attachments {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 5px 10px;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+      
+      button:hover {
+        background-color: #e0e0e0;
+      }
+      
+      .btn-send {
+        background-color: #1a73e8;
+        color: white;
+        font-weight: bold;
+        padding: 8px 15px;
+      }
+      
+      .btn-send:hover {
+        background-color: #185abc;
+      }
+      
+      .btn-draft,
+      .btn-discard {
+        color: #555;
+      }
+      
+      .btn-format i,
+      .btn-attach i,
+      .btn-emoji i,
+      .btn-schedule i {
+        font-size: 1.2rem;
+        color: #555;
+      }
+      
+      .btn-format:hover i,
+      .btn-attach:hover i,
+      .btn-emoji:hover i,
+      .btn-schedule:hover i {
+        color: #1a73e8;
+      }
+      
+      .textarea-container-modal {
+        position: relative;
+        width: 100%;
+      }
+      
+      textarea {
+        position: relative;
+        z-index: 2;
+        background: transparent;
+        color: black;
+        font-size: 1rem;
+        line-height: 1.5;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        overflow: auto;
+      }
+      
+      .mirror-textarea {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow: hidden;
+        pointer-events: none;
+        width: 100%;
+        height: 100%;
+        font-size: 1rem;
+        line-height: 1.5;
+        padding: 10px;
+        border: 1px solid transparent; /* Invisible border to align with textarea */
+        color: transparent;
+      }
+      
+      .content-text {
+        color: #ffffff; /* Visible input text */
+      }
+      
+      .inline-suggestion {
+        position: absolute;
+        color: gray;
+        font-size: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 4px;
+        padding: 2px 4px;
+        z-index: 3;
       }
 
-      .email-actions button {
-        margin-left: 5px;
-      }
+      
+     
 
+      
+      textarea::placeholder {
+        color: #ccc;
+      }
+      
+     
+
+      /* Media Queries for Responsiveness */
       @media (max-width: 768px) {
         .container {
           flex-direction: column;
         }
 
         .sidebar {
-          flex: 0 0 100%;
+          width: 100%;
+          padding: 10px;
+        }
+
+        .main-content {
+          padding: 10px;
         }
       }
     </style>
@@ -131,14 +346,13 @@
         <button (click)="loadSent()">Sent</button>
         <button (click)="loadDraft()">Draft</button>
         <button (click)="loadTrash()">Trash</button>
-        <button class="btn-primary compose-button" (click)="openComposeModal()">
-          Compose
-        </button>
+        <button class="btn-primary" style="background-color: #0078d4;" (click)="openCompose()">Compose</button>
+
       </div>
 
       <!-- Main Content -->
       <div class="main-content">
-        <div class="header">
+        <!-- <div class="header">
           <div class="logo-section">
             <img
               src="/resource/AngularAppNew/logo.png"
@@ -150,9 +364,10 @@
               <p>{{ uEmail }}</p>
             </div>
           </div>
-        </div>
+        </div> -->
 
         <div class="content-wrapper">
+          <!-- Email List -->
           <div class="email-list">
             <div class="filter-buttons">
               <button
@@ -174,9 +389,7 @@
                 Unread
               </button>
             </div>
-            <div *ngIf="filteredEmails.length === 0" class="no-emails">
-              <p>No emails to display.</p>
-            </div>
+        
             <div
               *ngFor="let email of filteredEmails"
               class="email-item"
@@ -184,17 +397,15 @@
             >
               <div class="email-header">
                 <div>
-                  <div class="email-subject">{{ email.subject }}</div>
-                  <div class="email-sender">{{ email.sender }}</div>
+                  <br/>
+                  <div class="email-subject">{{ email.subject }}</div><br/>
+                  <div class="email-sender">{{ email.sender }}</div><br/>
                   <div class="email-date">
                     {{ email.receivedDateTime | date: "short" }}
-                  </div>
-                  <div *ngIf="email.status === 'unread'" class="email-status">
-                    Unread
-                  </div>
+                  </div><br/>
                 </div>
                 <div class="email-actions">
-                  <button class="action-button">
+                  <button class="action-button" (click)="toggleRead(email)">
                     <i
                       class="fas"
                       [ngClass]="{
@@ -206,7 +417,7 @@
                     ></i>
                   </button>
 
-                  <button class="action-button">
+                  <button class="action-button" (click)="toggleFlag(email)">
                     <i
                       class="fas"
                       [ngClass]="{
@@ -230,133 +441,132 @@
               </div>
             </div>
           </div>
-
-          <div *ngIf="selectedEmail" class="email-details">
-            <h3>{{ selectedEmail.subject }}</h3>
-            <p><strong>From:</strong> {{ selectedEmail.sender }}</p>
-            <p>
-              <strong>Received:</strong>
-              {{ selectedEmail.receivedDateTime | date: "short" }}
-            </p>
-            <div [innerHTML]="selectedEmail.bodyPreview"></div>
+        
+          <!-- Email Details or Compose Form -->
+          <div *ngIf="isComposeMode; else emailDetails" class="compose-email">
+            <h3>Compose Email</h3>
+            <form (ngSubmit)="sendEmail()">
+              <div class="form-group">
+                <label for="to">To:</label>
+                <input
+                  type="email"
+                  id="to"
+                  name="to"
+                  [(ngModel)]="emailtoSend.to"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input
+                  type="text"
+                  id="subject"
+                  name="subject"
+                  [(ngModel)]="emailtoSend.subject"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="body">Body:</label>
+                <div class="textarea-container-modal">
+                  <!-- Mirror Div for Positioning -->
+                  <div class="mirror-textarea">
+                    <span class="content-text">
+                      {{ emailtoSend.bodyPreview.substring(0, cursorPosition) }}
+                    </span>
+                    <span
+                      *ngIf="inlineSuggestion"
+                      class="inline-suggestion"
+                      >{{ inlineSuggestion }}</span
+                    >
+                  </div>
+                
+                  <!-- Actual Textarea -->
+                  <textarea
+                    id="body"
+                    name="body"
+                    rows="12"
+                    cols="40"
+                    placeholder="Start typing your email"
+                    [(ngModel)]="emailtoSend.bodyPreview"
+                    (input)="onInputChange($event)"
+                    (keydown)="onKeyDown($event)"
+                    (keyup)="trackCursorPosition($event)"
+                    #textarea
+                  ></textarea>
+                </div>
+                
+                
+            <div class="actions">
+              <button class="btn-send" type="submit">Send</button>
+              <button class="btn-draft" type="button" >Save as Draft</button>
+              <button class="btn-discard" type="button" >Discard</button>
+            </div>
+          
+            <!-- Formatting Options -->
+            <div class="formatting-options">
+              <button class="btn-format" title="Bold"><i class="fas fa-bold"></i></button>
+              <button class="btn-format" title="Italic"><i class="fas fa-italic"></i></button>
+              <button class="btn-format" title="Underline"><i class="fas fa-underline"></i></button>
+              <button class="btn-format" title="Text Color"><i class="fas fa-palette"></i></button>
+            </div>
+          
+            <!-- Attachments -->
+            <div class="attachments">
+              <!-- Hidden File Input -->
+              <input
+                type="file"
+                id="file-input"
+                name="attach"
+                (change)="onFileSelected($event)"
+                style="display: none;"
+              />
+            
+              <!-- Button to trigger file input -->
+              <button
+                type="button"
+                class="btn-attach"
+                title="Attach Files"
+                (click)="triggerFileInput()"
+              >
+                <i class="fas fa-paperclip"></i>
+              </button>
+            
+              <button class="btn-emoji" title="Add Emoji">
+                <i class="fas fa-smile"></i>
+              </button>
+              <button class="btn-schedule" title="Schedule Email">
+                <i class="fas fa-clock"></i>
+              </button>
+            </div>
+            
+              </div>
+              <button class="btn-primary" type="submit">Send</button>
+            </form>
           </div>
+        
+          <!-- Email Details -->
+          <ng-template #emailDetails>
+            <div *ngIf="selectedEmail" class="email-details">
+              <br/><br/><br/>
+              <h3>{{ selectedEmail.subject }}</h3>
+              <br/><br/>
+              <p><strong>From:</strong> {{ selectedEmail.sender }}</p>
+              <br/><br/>
+              <p>
+                <strong>Received:</strong>
+                {{ selectedEmail.receivedDateTime | date: "short" }}
+              </p>
+              <br/><br/>
+              <div [innerHTML]="selectedEmail.bodyPreview"></div>
+            </div>
+          </ng-template>
         </div>
+        
       </div>
     </div>
 
     <!-- Compose Email Modal -->
-    <div *ngIf="isComposeModalOpen" class="modal" (click)="closeComposeModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <h3>Compose Email</h3>
-        <form (ngSubmit)="sendEmail()">
-          <div class="form-group">
-            <label for="to">To:</label>
-            <input
-              type="email"
-              id="to"
-              name="to"
-              [(ngModel)]="emailtoSend.to"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="subject">Subject:</label>
-            <input
-              type="text"
-              id="subject"
-              name="subject"
-              [(ngModel)]="emailtoSend.subject"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="body">Body:</label>
-            <textarea
-              id="body"
-              name="body"
-              [(ngModel)]="emailtoSend.bodyPreview"
-              (ngModelChange)="onInputChange($event)"
-              rows="5"
-              cols="40"
-              placeholder="Start typing your email"
-            ></textarea>
-            <button type="button" (click)="correctGrammar()">
-              Correct Grammar
-            </button>
-
-            <!-- <button (click)="correctGrammar()">Correct Grammar</button> -->
-
-            <div *ngIf="correctedText">
-              <h3>Corrected Text:</h3>
-              <p>{{ correctedText }}</p>
-            </div>
-            <div *ngIf="errorMessage" style="color: red">
-              {{ errorMessage }}
-            </div>
-
-            <!-- 
-            {{sentimentAnalysis}}
-
-            Suggestions is : {{ suggestions }} -->
-            <!-- Sentiment Feedback -->
-            <!-- <div *ngIf="sentimentAnalysis">
-              <p>Sentiment: {{ sentimentAnalysis.sentimentLabel }}</p>
-              <p>Score: {{ sentimentAnalysis.sentimentScore }}</p>
-            </div> -->
-
-            <div *ngIf="suggestions.length > 0" style="margin-top: 10px">
-              <h4>Suggestions:</h4>
-              <ul>
-                <li
-                  *ngFor="let suggestion of suggestions"
-                  (click)="selectSuggestion(suggestion)"
-                  style="cursor: pointer"
-                >
-                  {{ suggestion }}
-                </li>
-              </ul>
-            </div>
-
-            <!-- <div *ngIf="suggestions && suggestions.length > 0">
-              <p>Suggestions:</p>
-              <ul>
-                <li *ngFor="let suggestion of suggestions">{{ suggestion }}</li>
-              </ul>
-            </div> -->
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Send</button>
-            <label for="attach" class="btn-secondary attach-btn"
-              >Attach File
-              <input
-                type="file"
-                id="attach"
-                name="attach"
-                (change)="onFileSelected($event)"
-              />
-            </label>
-          </div>
-        </form>
-        <button class="close-button" (click)="closeComposeModal()">
-          Close
-        </button>
-      </div>
-    </div>
-
-    <script>
-      // Example Angular component methods to handle modal and form submissions
-      function sendEmail(event) {
-        event.preventDefault();
-        // Add email sending logic
-        closeComposeModal();
-        //alert("Email sent!");
-      }
-
-      function closeComposeModal() {
-        document.getElementById("composeModal").style.visibility = "hidden";
-      }
-    </script>
+    
   </body>
 </html>

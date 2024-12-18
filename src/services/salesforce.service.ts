@@ -17,7 +17,7 @@ export class SalesforceService {
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailService';
   private openAIapiUrl =
     'https://api-inference.huggingface.co/models/vennify/t5-base-grammar-correction';
-  private openAIapiKey = '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'; // Replace with your OpenAI API Key
+  private openAIapiKey = ''; // Replace with your OpenAI API Key
 
   private getEmailsUrl =
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/getEmails';
@@ -162,8 +162,10 @@ export class SalesforceService {
       );
   }
 
-  sendEmail(to: string, subject: string, body: string): Observable<any> {
-    const payload = { toAddress: to, subject, bodyContent: body };
+  sendEmail(to: string, subject: string, body: string,fileName:string,
+    fileType:string,
+    base64Content:string): Observable<any> {
+    const payload = { toAddress: to, subject, bodyContent: body ,fileName:fileName,fileType:fileType,base64Content:base64Content};
     return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(
       map((response) => response),
       catchError((error) => {
@@ -171,7 +173,7 @@ export class SalesforceService {
         return throwError(() => new Error('Failed to correct grammar.'));
       })
     );
-    return this.http.post(`${this.baseUrl}/sendEmail`, payload);
+    //return this.http.post(`${this.baseUrl}/sendEmail`, payload);
   }
 
   // getUserEmails(): Observable<any> {

@@ -85,69 +85,86 @@ global with sharing class OutlookEmailServiceRest {
   }
 
   @HttpPost
-  global static ResponseWrapper sendEmail() {
+global static ResponseWrapper sendEmail() {
     ResponseWrapper responseWrapper = new ResponseWrapper();
     try {
-      RestRequest reqContext = RestContext.request;
-      String requestBody = reqContext.requestBody.toString();
+        RestRequest reqContext = RestContext.request;
+        String requestBody = reqContext.requestBody.toString();
 
-      // Deserialize the JSON body into a Map or a specific class
-      Map<String, Object> params = (Map<String, Object>) JSON.deserializeUntyped(
-        requestBody
-      );
+        // Deserialize the JSON body into a Map
+        Map<String, Object> params = (Map<String, Object>) JSON.deserializeUntyped(requestBody);
 
-      // Extract parameters
-      String toAddress = (String) params.get('toAddress');
-      String subject = (String) params.get('subject');
-      String bodyContent = (String) params.get('bodyContent');
+        // Extract parameters
+        String toAddress = (String) params.get('toAddress');
+        String subject = (String) params.get('subject');
+        String bodyContent = (String) params.get('bodyContent');
+        String fileName = (String) params.get('fileName');
+        String fileType = (String) params.get('fileType');
+        String base64Content = (String) params.get('base64Content');
+        String accessToken = OutlookEmailService.getAccessToken();
+        String endpoint = 'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/sendMail';
 
-      String accessToken = OutlookEmailService.getAccessToken();
-      String endpoint = 'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/sendMail';
-
-      // Construct the email payload
-      Map<String, Object> emailPayload = new Map<String, Object>();
-      emailPayload.put(
-        'message',
-        new Map<String, Object>{
-          'subject' => subject,
-          'body' => new Map<String, Object>{
-            'contentType' => 'Text',
-            'content' => bodyContent
-          },
-          'toRecipients' => new List<Object>{
-            new Map<String, Object>{
-              'emailAddress' => new Map<String, Object>{
-                'address' => toAddress
-              }
+        // Construct the email payload
+        Map<String, Object> message = new Map<String, Object>{
+            'subject' => subject,
+            'body' => new Map<String, Object>{
+                'contentType' => 'Text',
+                'content' => bodyContent
+            },
+            'toRecipients' => new List<Object>{
+                new Map<String, Object>{
+                    'emailAddress' => new Map<String, Object>{
+                        'address' => toAddress
+                    }
+                }
             }
-          }
+        };
+
+        // Attachments are added if base64Content exists
+        if (String.isNotBlank(base64Content)) {
+            message.put('attachments', new List<Object>{
+                new Map<String, Object>{
+                    '@odata.type' => '#microsoft.graph.fileAttachment',
+                    'name' => fileName,
+                    'contentType' => fileType,
+                    'contentBytes' => base64Content
+                }
+            });
         }
-      );
-      emailPayload.put('saveToSentItems', 'true');
 
-      HttpRequest req = new HttpRequest();
-      req.setEndpoint(endpoint);
-      req.setMethod('POST');
-      req.setHeader('Authorization', 'Bearer ' + accessToken);
-      req.setHeader('Content-Type', 'application/json');
-      req.setBody(JSON.serialize(emailPayload));
+        // Final payload
+        Map<String, Object> emailPayload = new Map<String, Object>{
+            'message' => message,
+            'saveToSentItems' => true
+        };
 
-      Http http = new Http();
-      HttpResponse res = http.send(req);
-      responseWrapper = new ResponseWrapper(
-        'success',
-        null,
-        200,
-        res.getBody() + ' ' + JSON.serialize(emailPayload)
-      );
+        // Prepare HTTP request
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(endpoint);
+        req.setMethod('POST');
+        req.setHeader('Authorization', 'Bearer ' + accessToken);
+        req.setHeader('Content-Type', 'application/json');
+        req.setBody(JSON.serialize(emailPayload));
+
+        // Send the request
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+
+        // Return success response
+        responseWrapper = new ResponseWrapper(
+            res.getStatus(),
+            null,
+            res.getStatusCode(),
+            res.getBody()
+        );
+
     } catch (Exception e) {
-      return createErrorResponse(
-        'Email Failed to Send: ' + e.getMessage(),
-        500
-      );
+        return createErrorResponse('Email Failed to Send: ' + e.getMessage(), 500);
     }
+
     return responseWrapper;
-  }
+}
+
   // Helper function to construct the request body based on action
   private static String getActionBody(String action) {
     switch on action {
