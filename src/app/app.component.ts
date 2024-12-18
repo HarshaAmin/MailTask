@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy ,ViewChild, ElementRef } from '@angular/core';
-
+//import DOMPurify from 'dompurify';
 import { SalesforceService } from '../services/salesforce.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
@@ -34,12 +34,14 @@ export class AppComponent implements OnInit, OnDestroy {
   private fileType: string = '';
   private base64Content: string = '';
 
+  suggestionPosition: { top: number; left: number } | null = null;
+  suggestions: string[] = [];
+
+
 isComposeMode: boolean = false;
   correctedText = '';
   sentimentAnalysis: SentimentResponse | null = null;
-  suggestions: string[] = [];
   inlineSuggestion: string | null = null; // Example inline suggestion
-  suggestionPosition: { top: number; left: number } = { top: 0, left: 0 };
   cursorPosition: number = 0; // Declare cursorPosition to track the cursor index
 
   currentHighScoreSuggestion: string = ''; // Best suggestion to apply
@@ -49,7 +51,7 @@ isComposeMode: boolean = false;
   successMessage: string | null = null;
   emails: any[] = [];
   filteredEmails: any[] = [];
-
+  showDropdown = false;
   emailtoSend = { to: '', subject: '', bodyPreview: '' };
 
   accessToken: string = '';
@@ -60,7 +62,9 @@ isComposeMode: boolean = false;
   uEmail = 'SendTech@novigosolutions.com';
   userInput: string = '';
   categories: string[] = [];
-
+  isBold = false;
+  isItalic = false;
+  isUnderline = false;
   constructor(
     public salesforceService: SalesforceService,
     private http: HttpClient
@@ -79,8 +83,224 @@ isComposeMode: boolean = false;
     document.addEventListener('keydown', this.handleEscapeKey.bind(this));
   }
 
+  onContentEditableInput(event: Event) {
+    const target = event.target as HTMLElement;
+    this.emailtoSend.bodyPreview = target.innerHTML.trim();
+    const inputText = this.emailtoSend.bodyPreview;
+
+    // Clear previous analysis if no input
+    if (inputText.length === 0) {
+      this.inlineSuggestion = '';
+      return;
+    }
+
+    this.analyzeText(inputText);
+  }
+
+  async analyzeText(text: string) {
+    try {
+      const accessToken = ''; // Replace with your token
+
+      // Request for sentiment analysis
+      const sentimentResponse = await fetch(
+        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ text }),
+        }
+      );
+
+      if (!sentimentResponse.ok) {
+        throw new Error('Failed to fetch sentiment analysis');
+      }
+
+      const sentimentData = await sentimentResponse.json();
+
+      // Request for suggestions
+      const inputData = `{ inputs: '${text} [MASK].' }`;
+      const suggestionResponse = await fetch(
+        'https://api-inference.huggingface.co/models/bert-base-uncased',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: inputData,
+        }
+      );
+
+      if (!suggestionResponse.ok) {
+        throw new Error('Failed to fetch suggestions');
+      }
+
+      const suggestionsData = await suggestionResponse.json();
+
+      this.suggestions = suggestionsData.map((item: any) => text + ' ' + item.token_str);
+      this.currentHighScoreSuggestion = this.suggestions[0];
+      this.inlineSuggestion = this.currentHighScoreSuggestion.replace(text, '');
+
+      // Set suggestion position dynamically
+      this.setSuggestionPosition();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error fetching analysis:', error.message); // Safely accessing `message`
+        this.errorMessage = `Analysis failed: ${error.message}`;
+      } else {
+        console.error('Unknown error:', error); // In case it's not an instance of Error
+        this.errorMessage = `Analysis failed: An unknown error occurred.`;
+      }
+    }
+    
+  }
+
+  setSuggestionPosition() {
+    // Placeholder logic for positioning the suggestion, update according to your layout
+    this.suggestionPosition = { top: 50, left: 100 };
+  }
+
+  insertAtCursor(suggestion: string) {
+    const textarea = document.getElementById('body') as HTMLElement;
+    const selection = window.getSelection();
+  
+    if (selection) {
+      // Get the current selection range
+      const range = selection.getRangeAt(0);
+      
+      // Remove any selected text (if any)
+      range.deleteContents();
+      
+      // Create a text node with the suggestion
+      const suggestionNode = document.createTextNode(suggestion);
+  
+      // Insert the suggestion at the cursor position
+      range.insertNode(suggestionNode);
+  
+      // Move the cursor after the inserted suggestion
+      range.setStartAfter(suggestionNode);
+      range.setEndAfter(suggestionNode);
+  
+      // Update the selection to reflect the new cursor position
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      // Optionally, scroll the contenteditable div to keep the cursor visible
+      textarea.scrollTop = textarea.scrollHeight;
+    }
+  }
+  
+  
+  
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Tab' && this.inlineSuggestion) {
+      event.preventDefault();
+      this.insertAtCursor(this.inlineSuggestion);
+      this.inlineSuggestion = ''; // Reset suggestion after applying
+    }
+  }
+
+  trackCursorPosition(event: KeyboardEvent) {
+    const selection = window.getSelection();
+    const range = selection?.getRangeAt(0);
+    if (range) {
+      this.cursorPosition = range.endOffset;
+    }
+  }
+
+  toggleBold(event: Event) {
+    document.execCommand('bold');
+  }
+
+  toggleItalic(event: Event) {
+    document.execCommand('italic');
+  }
+
+  toggleUnderline(event: Event) {
+    document.execCommand('underline');
+  }
+
+  triggerFileInput() {
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    fileInput?.click();
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files ? input.files[0] : null;
+    // Handle file upload logic
+  }
+
   ngOnDestroy(): void {
     document.removeEventListener('keydown', this.handleEscapeKey.bind(this));
+  }
+
+  toggleDropdown() {
+    this.showDropdown = !this.showDropdown;
+  }
+  
+  // triggerFileInput() {
+  //   const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  //   if (fileInput) {
+  //     fileInput.click();
+  //   }
+  // }
+  
+  // onFileSelected(event: any) {
+  //   // Handle file selection logic
+  //   const file = event.target.files[0];
+  //   console.log('File selected:', file);
+  // }
+  
+  addEmoji() {
+    console.log('Add Emoji clicked');
+    // Implement emoji picker logic
+  }
+  
+  scheduleEmail() {
+    console.log('Schedule Email clicked');
+    // Implement email scheduling logic
+  }
+  // Toggle bold formatting
+  // toggleBold(event: Event) {
+  //   event.preventDefault();
+  //   this.isBold = !this.isBold;
+  //   this.applyTextFormatting();
+  // }
+
+  // // Toggle italic formatting
+  // toggleItalic(event: Event) {
+  //   event.preventDefault();
+  //   this.isItalic = !this.isItalic;
+  //   this.applyTextFormatting();
+  // }
+
+  // // Toggle underline formatting
+  // toggleUnderline(event: Event) {
+  //   event.preventDefault();
+  //   this.isUnderline = !this.isUnderline;
+  //   this.applyTextFormatting();
+  // }
+
+  // Apply formatting to the selected text
+  applyTextFormatting() {
+    const div = document.querySelector('#body') as HTMLElement;
+
+    if (this.isBold) {
+      document.execCommand('bold');
+    }
+
+    if (this.isItalic) {
+      document.execCommand('italic');
+    }
+
+    if (this.isUnderline) {
+      document.execCommand('underline');
+    }
   }
 
   markAsRead(email: Email): void {
@@ -233,34 +453,38 @@ openCompose() {
   //     // Handle the file selection here
   //   }
   // }
-
-
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0]; // Get the selected file
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const base64String = reader.result?.toString().split(',')[1]; // Extract base64 content
-
-        if (!base64String) {
-          console.error('Failed to read Base64 content.');
-          return;
-        }
-
-        // Store file data
-        this.fileName = file.name;
-        this.fileType = file.type;
-        this.base64Content = base64String;
-
-        console.log('File ready to be sent:', this.fileName, this.fileType);
-      };
-
-      reader.readAsDataURL(file); // Convert file to Base64
-    }
+  changeTextColor() {
+    console.log('Change text color functionality not implemented yet.');
   }
+  
+
+  // onFileSelected(event: Event) {
+  //   const input = event.target as HTMLInputElement;
+
+  //   if (input.files && input.files.length > 0) {
+  //     const file = input.files[0]; // Get the selected file
+      
+  //     const reader = new FileReader();
+
+  //     reader.onload = () => {
+  //       const base64String = reader.result?.toString().split(',')[1]; // Extract base64 content
+
+  //       if (!base64String) {
+  //         console.error('Failed to read Base64 content.');
+  //         return;
+  //       }
+
+  //       // Store file data
+  //       this.fileName = file.name;
+  //       this.fileType = file.type;
+  //       this.base64Content = base64String;
+
+  //       console.log('File ready to be sent:', this.fileName, this.fileType);
+  //     };
+
+  //     reader.readAsDataURL(file); // Convert file to Base64
+  //   }
+  // }
 
   correctGrammar(): void {
     console.log('Entering correctGrammar method...');
@@ -288,21 +512,7 @@ openCompose() {
     console.log('Exiting correctGrammar method...');
   }
 
-  onInputChange(event: any): void {
-    const textarea = event.target as HTMLTextAreaElement;
-    const inputText = this.emailtoSend.bodyPreview.trim();
-
-    // Clear previous analysis if no input
-    if (inputText.length === 0) {
-      this.sentimentAnalysis = null;
-      this.suggestions = [];
-      this.inlineSuggestion = '';
-      return;
-    }
-    //this.fetchSuggestions(inputText);
-    // Call analyzeText to fetch sentiment and suggestions
-    this.analyzeText(inputText);
-  }
+  
 
   fetchSuggestions(inputValue: string) {
     if (!inputValue) {
@@ -313,31 +523,7 @@ openCompose() {
 
   }
 
-  // trackCursorPosition(event: KeyboardEvent) {
-  //   const textarea = event.target as HTMLTextAreaElement;
-
-  //   const { selectionStart } = textarea;
-  //   const inputText = textarea.value.substring(0, selectionStart);
-
-  //   // Calculate cursor position
-  //   const position = this.calculateCursorPosition(textarea, inputText);
-
-  //   // Update position
-  //   this.suggestionPosition = position;
-  // }
-
-  trackCursorPosition(event: KeyboardEvent) {
-    const textarea = event.target as HTMLTextAreaElement;
-
-    // Get the current cursor position in the textarea
-    const cursorIndex = textarea.selectionStart || 0;
-
-    // Update the cursorPosition property
-    this.cursorPosition = cursorIndex;
-
-    // Calculate the suggestion position
-    this.calculateSuggestionPosition(textarea);
-  }
+  
 
   calculateSuggestionPosition(textarea: HTMLTextAreaElement) {
     const textBeforeCursor = textarea.value.substring(0, textarea.selectionStart);
@@ -377,105 +563,14 @@ openCompose() {
 
     document.body.removeChild(ghostDiv);
   }
+ 
   
-  // Handle Tab key press
-  // onKeyDown(event: KeyboardEvent) {
-  //   if (event.key === 'Tab' && this.currentHighScoreSuggestion) {
-  //     event.preventDefault(); // Prevent default Tab behavior
-
-  //     // Apply the suggestion to the body
-  //     this.emailtoSend.bodyPreview = this.currentHighScoreSuggestion;
-
-  //     // Clear inline suggestion after applying
-  //     this.inlineSuggestion = '';
-  //   }
-  // }
-
-  onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Tab' && this.currentHighScoreSuggestion) {
-      event.preventDefault();
-      this.emailtoSend.bodyPreview += this.inlineSuggestion;
-      this.inlineSuggestion = '';
-    }
-  }
-
-  async analyzeText(text: string) {
-    try {
-      const accessToken = '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'; // Replace with your token
-
-      // Request for sentiment analysis
-      const sentimentResponse = await fetch(
-        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}` // Include the access token in the header
-          },
-          body: JSON.stringify({ text })
-        }
-      );
-
-      if (!sentimentResponse.ok) {
-        throw new Error('Failed to fetch sentiment analysis');
-      }
-
-      const sentimentData = await sentimentResponse.json();
-
-      const inputData = '{ inputs: ' + text + ' [MASK].}';
-
-      // Request for suggestions
-      const suggestionResponse = await fetch(
-        'https://api-inference.huggingface.co/models/bert-base-uncased',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}` // Include the access token here as well
-          },
-          body: inputData
-        }
-      );
-
-      if (!suggestionResponse.ok) {
-        throw new Error('Failed to fetch suggestions');
-      }
-
-      const suggestionsData = await suggestionResponse.json();
-
-      console.log('Sentiment Data:', sentimentData);
-      console.log('Suggestions Data:', suggestionsData);
-
-      this.suggestions = suggestionsData.map((item: any) => text+' '+item.token_str);
-      console.log(
-        'this.suggestions Data: with type ',
-        typeof suggestionsData.suggestions + ' value ' + this.suggestions
-      );
-
-      
-    // Display the highest scored suggestion inline
-    this.currentHighScoreSuggestion = this.suggestions[0]; // Mock scoring logic
-    this.inlineSuggestion = this.currentHighScoreSuggestion.replace(
-      text,
-      ''
-    );
-
-
-      //this.suggestions = suggestionsData.suggestions || [];
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error('Error fetching analysis:', error.message); // Safely accessing `message`
-        this.errorMessage = `Analysis failed: ${error.message}`;
-      } else {
-        console.error('Unknown error:', error); // In case the error is not an instance of Error
-        this.errorMessage = `Analysis failed: An unknown error occurred.`;
-      }
-    }
-  }
 
   selectSuggestion(suggestion: string): void {
     this.emailtoSend.bodyPreview += ` ${suggestion}`;
   }
+
+  
 
   updateEmail(emailId: string, action: string) {
     const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/*`;
@@ -501,9 +596,9 @@ openCompose() {
     const tokenUrl =
       'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/oauth2/token';
     const clientId =
-      '';
+      '3MVG9PwZx9R6_UreJ7pGOqAjPactZ4PlE.3xrcLSvO1smOsk4K0cCDaCjEJdqUDyaUXwtYrEElDjSAxRVfMy9';
     const clientSecret =
-      '';
+      '8B671E68B5D8679368FE2C97B813DDA073DA4714564622B02D8CC38A11D37EF0';
 
     const body = new URLSearchParams();
     body.set('grant_type', 'client_credentials');
@@ -530,10 +625,10 @@ openCompose() {
       );
   }
 
-  triggerFileInput() {
-    const fileInput = document.getElementById('file-input') as HTMLInputElement;
-    fileInput.click();
-  }
+  // triggerFileInput() {
+  //   const fileInput = document.getElementById('file-input') as HTMLInputElement;
+  //   fileInput.click();
+  // }
   loadUserInfo(): void {
     console.log('Attempting to load user info...');
     if (!this.salesforceService.isAuthenticated()) {

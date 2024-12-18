@@ -203,7 +203,12 @@
         border-radius: 0 0 8px 8px;
       }
       
-      .actions,
+      .actions1{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+      }
       .formatting-options,
       .attachments {
         display: flex;
@@ -299,13 +304,16 @@
       
       .inline-suggestion {
         position: absolute;
-        color: gray;
-        font-size: 0.9rem;
-        background-color: rgba(255, 255, 255, 0.8);
+        background-color: #f0f0f0;
+        padding: 4px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        color: #333;
         border-radius: 4px;
-        padding: 2px 4px;
-        z-index: 3;
+        z-index: 9999;
+        pointer-events: none;
       }
+      
 
       
      
@@ -315,8 +323,44 @@
         color: #ccc;
       }
       
-     
-
+      .rich-text-area {
+        width: 100%;
+        height: 200px; /* Set the desired height */
+        border: 1px solid #ccc; /* Border to resemble a textarea */
+        padding: 10px 10px; /* Padding inside the content area */
+        box-sizing: border-box; /* Ensure padding doesn't affect width/height */
+        overflow-y: auto; /* Allow vertical scrolling */
+        white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
+        word-wrap: break-word; /* Wrap long words to the next line */
+        font-family: inherit; /* Use the same font as the parent */
+        font-size: inherit; /* Match the parent's font size */
+        line-height: 1.5; /* Adjust line spacing for readability */
+        outline: none; /* Remove default focus styles */
+        resize: none; /* Prevent resizing (optional) */
+      }
+      
+      .email-actions {
+        display: flex;
+        gap: 10px; /* Adjust spacing between buttons */
+        align-items: center; /* Align buttons vertically */
+        padding: 10px 0; /* Add some padding if needed */
+        border-top: 1px solid #ddd; /* Optional: Separator line */
+        margin-top: 10px; /* Add spacing from above content */
+      }
+      
+      .btn-action {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem; /* Adjust size of icons */
+        color: #555; /* Default icon color */
+        transition: color 0.2s;
+      }
+      
+      .btn-action:hover {
+        color: #007bff; /* Change color on hover */
+      }
+      
       /* Media Queries for Responsiveness */
       @media (max-width: 768px) {
         .container {
@@ -448,102 +492,77 @@
             <form (ngSubmit)="sendEmail()">
               <div class="form-group">
                 <label for="to">To:</label>
-                <input
-                  type="email"
-                  id="to"
-                  name="to"
-                  [(ngModel)]="emailtoSend.to"
-                  required
-                />
+                <input type="email" id="to" name="to" [(ngModel)]="emailtoSend.to" required />
               </div>
               <div class="form-group">
                 <label for="subject">Subject:</label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  [(ngModel)]="emailtoSend.subject"
-                  required
-                />
+                <input type="text" id="subject" name="subject" [(ngModel)]="emailtoSend.subject" required />
               </div>
               <div class="form-group">
                 <label for="body">Body:</label>
                 <div class="textarea-container-modal">
                   <!-- Mirror Div for Positioning -->
                   <div class="mirror-textarea">
-                    <span class="content-text">
+                    <!-- <span class="content-text">
                       {{ emailtoSend.bodyPreview.substring(0, cursorPosition) }}
+                    </span> -->
+                    <span *ngIf="inlineSuggestion" class="inline-suggestion"
+                      [style.top.px]="suggestionPosition?.top" 
+                      [style.left.px]="suggestionPosition?.left">
+                      {{ inlineSuggestion }}
                     </span>
-                    <span
-                      *ngIf="inlineSuggestion"
-                      class="inline-suggestion"
-                      >{{ inlineSuggestion }}</span
-                    >
                   </div>
-                
-                  <!-- Actual Textarea -->
-                  <textarea
-                    id="body"
-                    name="body"
-                    rows="12"
-                    cols="40"
-                    placeholder="Start typing your email"
-                    [(ngModel)]="emailtoSend.bodyPreview"
-                    (input)="onInputChange($event)"
-                    (keydown)="onKeyDown($event)"
-                    (keyup)="trackCursorPosition($event)"
-                    #textarea
-                  ></textarea>
+          
+                  <!-- Actual Rich Text Editor (content-editable div) -->
+                  <div 
+  contenteditable="true" 
+  id="body" 
+  class="rich-text-area"
+  (input)="onContentEditableInput($event)"
+  (keydown)="onKeyDown($event)"
+  (keyup)="trackCursorPosition($event)"
+  #textarea>
+</div>
+
+
                 </div>
-                
-                
-            <div class="actions">
-              <button class="btn-send" type="submit">Send</button>
-              <button class="btn-draft" type="button" >Save as Draft</button>
-              <button class="btn-discard" type="button" >Discard</button>
-            </div>
           
-            <!-- Formatting Options -->
-            <div class="formatting-options">
-              <button class="btn-format" title="Bold"><i class="fas fa-bold"></i></button>
-              <button class="btn-format" title="Italic"><i class="fas fa-italic"></i></button>
-              <button class="btn-format" title="Underline"><i class="fas fa-underline"></i></button>
-              <button class="btn-format" title="Text Color"><i class="fas fa-palette"></i></button>
-            </div>
+                <div class="actions">
+                  <button class="btn-send" type="submit">Send</button>
+                  <button class="btn-draft" type="button">Save as Draft</button>
+                  <button class="btn-discard" type="button">Discard</button>
+                </div>
           
-            <!-- Attachments -->
-            <div class="attachments">
-              <!-- Hidden File Input -->
-              <input
-                type="file"
-                id="file-input"
-                name="attach"
-                (change)="onFileSelected($event)"
-                style="display: none;"
-              />
-            
-              <!-- Button to trigger file input -->
-              <button
-                type="button"
-                class="btn-attach"
-                title="Attach Files"
-                (click)="triggerFileInput()"
-              >
-                <i class="fas fa-paperclip"></i>
-              </button>
-            
-              <button class="btn-emoji" title="Add Emoji">
-                <i class="fas fa-smile"></i>
-              </button>
-              <button class="btn-schedule" title="Schedule Email">
-                <i class="fas fa-clock"></i>
-              </button>
-            </div>
-            
+                <!-- Formatting Options -->
+                <div class="body-actions">
+                  <button class="btn-action" title="Bold" type="button" (click)="toggleBold($event)">
+                    <i class="fas fa-bold"></i>
+                  </button>
+                  <button class="btn-action" title="Italic" type="button" (click)="toggleItalic($event)">
+                    <i class="fas fa-italic"></i>
+                  </button>
+                  <button class="btn-action" title="Underline" type="button" (click)="toggleUnderline($event)">
+                    <i class="fas fa-underline"></i>
+                  </button>
+                  <button class="btn-action" title="Attach Files" type="button" (click)="triggerFileInput()">
+                    <i class="fas fa-paperclip"></i>
+                  </button>
+                  <input type="file" id="file-input" style="display: none;" (change)="onFileSelected($event)" />
+                  <button class="btn-action" title="Add Emoji" type="button" (click)="addEmoji()">
+                    <i class="fas fa-smile"></i>
+                  </button>
+                  <button class="btn-action" title="Text Color" type="button" (click)="changeTextColor()">
+                    <i class="fas fa-palette"></i>
+                  </button>
+                  <button class="btn-action" title="Schedule Email" type="button">
+                    <i class="fas fa-clock"></i>
+                  </button>
+                </div>
               </div>
-              <button class="btn-primary" type="submit">Send</button>
             </form>
           </div>
+          
+          
         
           <!-- Email Details -->
           <ng-template #emailDetails>
