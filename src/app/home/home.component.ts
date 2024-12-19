@@ -8,6 +8,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { SendMailComponent } from '../send-mail/send-mail.component';
 import { NgClass } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 interface Email {
   subject: string;
@@ -42,16 +43,15 @@ export class HomeComponent implements AfterViewInit {
   openSendEmailModal: boolean = false;
   accessToken: string = '';
   selectedEmail: Email | null = null;
-  openEmailModal: boolean = false;
   currentTypeSelection: string = 'all';
-  currentCategorySelection: string = "primary";
+  currentCategorySelection: string = 'primary';
 
   selectedFilter = 'all'; // Default filter
   uEmail = 'SendTech@novigosolutions.com'; // Default email if needed
   socialItem;
 
   constructor(
-    private commonService: CommonService,
+    public commonService: CommonService,
     public salesforceService: SalesforceService,
     private http: HttpClient
   ) {
@@ -69,23 +69,19 @@ export class HomeComponent implements AfterViewInit {
     //this.loadUserInfo();
 
     // Add event listener for ESC key to close compose modal
-
-    window.addEventListener('resize', this.detectResize.bind(this));
   }
 
   ngAfterViewInit(): void {
-    this.socialItem = document.querySelectorAll(".social-item");
-    this.socialItem.forEach((item: HTMLElement) => item.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.socialItem.forEach(item => item.classList.remove("active"));
-      item.classList.add("active");
-      this.currentCategorySelection = item.id;
-    }));
-  }
-
-  detectResize(_event: Event) {
-    this.commonService.isNative = window.innerWidth <= 870 ? true : false;
+    this.socialItem = document.querySelectorAll('.social-item');
+    this.socialItem.forEach((item: HTMLElement) =>
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.socialItem.forEach((item) => item.classList.remove('active'));
+        item.classList.add('active');
+        this.currentCategorySelection = item.id;
+      })
+    );
   }
 
   markAsRead(email: Email): void {
@@ -155,29 +151,6 @@ export class HomeComponent implements AfterViewInit {
     // Implement your logic to pin or unpin an email
     email.isPinged = !email.isPinged;
     console.log('Email pin status changed:', email);
-  }
-
-  updateEmails(email: any, action: string): void {
-    const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/updateEmails/`;
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`,
-      'Content-Type': 'application/json'
-    });
-
-    const userId = this.userInfo?.email || 'Send.Tech@novigo-solutions.com';
-
-    this.http
-      .get(`${endpoint}?messageId=${email.id}&action=${action}`, { headers })
-      .subscribe(
-        (data: any) => {
-          console.log('Emails updated successfully:', data);
-          this.successMessage = `Email updated successfully: ${action}`;
-        },
-        (error) => {
-          console.error('Error updating email:', error);
-          this.errorMessage = `Error updating email: ${error.message || 'Unknown error'}`;
-        }
-      );
   }
 
   generateAccessToken(): void {
@@ -274,10 +247,12 @@ export class HomeComponent implements AfterViewInit {
   }
 
   toggleType(type) {
-    if (type === "all") {
+    if (type === 'all') {
       this.filteredEmails = this.emails;
     } else {
-      this.filteredEmails = this.emails.filter((email) => email.status === type);
+      this.filteredEmails = this.emails.filter(
+        (email) => email.status === type
+      );
     }
     this.currentTypeSelection = type;
   }
@@ -288,5 +263,16 @@ export class HomeComponent implements AfterViewInit {
     const remainingLetters = this.currentTypeSelection.slice(1);
     const capitalizedWord = firstLetterCap + remainingLetters;
     return capitalizedWord;
+  }
+
+  selectedEmailToggle(e) {
+    this.selectedEmail = e;
+    this.commonService.openEmailModal = false;
+    this.commonService.toggleEmailSection = true;
+  }
+
+  openEmailModal() {
+    this.commonService.openEmailModal = true;
+    this.commonService.toggleEmailSection = true;
   }
 }

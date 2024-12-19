@@ -1,13 +1,10 @@
-import {
-  AfterViewInit,
-  Component,
-  EventEmitter,
-  Input,
-  Output
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import $ from 'jquery';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
+import { NgxFileDropEntry } from 'ngx-file-drop';
+import { SalesforceService } from '../../shared/services/salesforce.service';
+import { CommonService } from '../../shared/services/common.service';
 
 @Component({
   selector: 'app-send-mail',
@@ -15,47 +12,42 @@ import { FileUploadComponent } from '../file-upload/file-upload.component';
   imports: [FormsModule, FileUploadComponent],
   templateUrl: './send-mail.component.html'
 })
-export class SendMailComponent implements AfterViewInit {
-  email = { to: '', subject: '', bodyPreview: '' };
-  @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
+export class SendMailComponent {
+  email = { to: '', subject: '', body: '' };
+  inlineSuggestion: string | null = null;
+  files: NgxFileDropEntry[] = [];
+  suggestions: string[] = [];
+  currentHighScoreSuggestion: string = '';
+  cursorPosition: number = 0;
+  suggestionPosition: { top: number; left: number } | null = null;
 
+  @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
   @Input() openSendEmailModal: boolean = false;
 
-  constructor() {
+  constructor(
+    private salesforceService: SalesforceService,
+    private commonService: CommonService
+  ) {
     document.addEventListener('keydown', this.handleEscapeKey.bind(this));
   }
 
-  ngAfterViewInit(): void {
-    const childNodes = (<HTMLScriptElement[]>(
-      (<any>document.querySelector('.mail-body-textArea'))
-    ))?.['childNodes'];
-
-    let count = 0;
-
-    const setWidth = setInterval(() => {
-      if (childNodes[3]) {
-        childNodes[1].setStyle({ width: '100%' });
-        childNodes[2].setStyle({ width: '100%' });
-        childNodes[2].childNodes[0].setStyle({
-          width: '100%',
-          outline: 'unset',
-          fontSize: '1rem'
-        });
-        clearInterval(setWidth);
-        childNodes[2].childNodes[0].addEventListener(
-          'keyup',
-          () => (this.email.bodyPreview = childNodes[2].childNodes[0].innerHTML)
-        );
-      }
-      count++;
-      if (count > 5) clearInterval(setWidth);
-    }, 1000);
-  }
-
   sendEmail(): void {
-    const { to, subject, bodyPreview } = this.email;
-    console.log('Sending email:', { to, subject, bodyPreview });
-    this.closeComposeModal(); // Close modal after sending
+    this.salesforceService
+      .sendEmail({
+        ...this.email,
+        fileName: this.files?.[0]?.['fileName'] || '',
+        fileType: this.files?.[0]?.['fileType'] || '',
+        base64Content: this.files?.[0]?.['base64Content'] || ''
+      })
+      .subscribe(
+        (response) => {
+          console.log('Email sent successfully! ' + JSON.stringify(response));
+          console.log('Email sent successfully! ' + response);
+        },
+        (error) => {
+          console.error('Error:', JSON.stringify(error));
+        }
+      );
   }
 
   handleEscapeKey(event: KeyboardEvent): void {
@@ -73,14 +65,37 @@ export class SendMailComponent implements AfterViewInit {
   }
 
   openEmailModal() {
+    this.commonService.openEmailModal = false;
+    this.commonService.toggleEmailSection = false;
+
     this.openEmailModalEmitter.emit(false);
   }
 
-  handleClick() {
-    var curPos = $('#to').prop('selectionStart');
-    let x = $('#to').val();
-    let text_to_insert = 'sanath';
-    // console.log(x.slice(0, curPos), x.slice(curPos), curPos, x.val());
-    $('#to').val(x.slice(0, curPos) + text_to_insert + x.slice(curPos));
+  handleClick(e: Event) {
+    this.email.body = e.target['innerHTML'];
+  }
+
+  handleKeyPress(e: Event) {
+    const textarea = document.getElementById('bodyPreview');
+    const cursorPos = textarea['selectionStart'];
+    const cursorEnd = textarea['selectionEnd'];
+    console.log(cursorPos, cursorEnd);
+  }
+
+  setSuggestionPosition() {
+    // Placeholder logic for positioning the suggestion, update according to your layout
+    this.suggestionPosition = { top: 50, left: 100 };
+  }
+
+  toggleBold(event: Event) {
+    document.execCommand('bold');
+  }
+
+  toggleItalic(event: Event) {
+    document.execCommand('italic');
+  }
+
+  toggleUnderline(event: Event) {
+    document.execCommand('underline');
   }
 }

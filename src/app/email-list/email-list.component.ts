@@ -44,13 +44,14 @@ export class EmailListComponent implements OnInit, OnChanges {
   @Input() accessToken: string;
   @Input() currentTypeSelection: string;
 
-  constructor(private http: HttpClient, private cd: ChangeDetectorRef) { }
+  constructor(
+    private http: HttpClient,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.generateNoOfPages();
   }
-
-
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['filteredEmails']) {
@@ -100,32 +101,47 @@ export class EmailListComponent implements OnInit, OnChanges {
     }
   }
 
-  changeStatus(email: any, event: Event, index: number): void {
+  changeStatus(email: any, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
     email.status = email.status === 'unread' ? 'read' : 'unread';
-    this.updateEmails(email, email.status);
+    this.updateEmail(email.Id, email.status);
   }
 
-  updateEmails(email: any, action: string): void {
-    const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/updateEmails/`;
+  toggleFlag(email: any, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    email.flagStatus === 'flagged' ? 'notFlagged' : 'flagged';
+    email.isFlagged = email.flagStatus === 'flagged' ? true : false;
+    console.log(email);
+    // navigator.clipboard.readText().then((clipText) => {
+    //   document.querySelector('#bodyPreview')['value'] += 'xcvcvxcvxcvxcv';
+    // });
+
+    // const textarea = document.getElementById('bodyPreview');
+    // const cursorPos = textarea['selectionStart'];
+    // const cursorEnd = textarea['selectionEnd'];
+    // console.log(cursorPos, cursorEnd);
+    this.updateEmail(email.Id, email.flagStatus);
+  }
+
+  updateEmail(emailId: any, action: string): void {
+    const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/*`;
     const headers = new HttpHeaders({
       Authorization: `Bearer ${this.accessToken}`,
       'Content-Type': 'application/json'
     });
 
-    const userId = 'Send.Tech@novigo-solutions.com';
+    const params = { messageId: emailId, action };
 
-    this.http
-      .get(`${endpoint}?messageId=${email.id}&action=${action}`, { headers })
-      .subscribe(
-        (data: any) => {
-          console.log('Emails updated successfully:', data);
-        },
-        (error) => {
-          console.error('Error updating email:', error);
-        }
-      );
+    this.http.patch(`${endpoint}`, null, { headers, params }).subscribe(
+      (response: any) => {
+        console.log('Email updated successfully:', response);
+      },
+      (error: any) => {
+        console.error('Error updating email:', error);
+      }
+    );
   }
 
   showDateTime(dateTime: any) {

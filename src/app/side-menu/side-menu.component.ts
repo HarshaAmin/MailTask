@@ -1,18 +1,16 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { FileUploadComponent } from '../file-upload/file-upload.component';
+import { Component } from '@angular/core';
+import { CommonService } from '../../shared/services/common.service';
 
 @Component({
   selector: 'app-side-menu',
   standalone: true,
-  imports: [FileUploadComponent],
+  imports: [],
   templateUrl: './side-menu.component.html'
 })
 export class SideMenuComponent {
-  @Output() openEmailModalEmitter = new EventEmitter<boolean>(false);
-
-  constructor() {}
+  constructor(public commonService: CommonService) {}
 
   openEmailModal() {
-    this.openEmailModalEmitter.emit(true);
+    this.commonService.openEmailModal = true;
   }
 }

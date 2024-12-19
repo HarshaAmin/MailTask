@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { CommonService } from '../shared/services/common.service';
@@ -10,14 +10,19 @@ import { NavComponent } from './nav/nav.component';
   imports: [CommonModule, RouterOutlet, NavComponent],
   templateUrl: './app.component.html'
 })
-export class AppComponent implements OnDestroy {
+export class AppComponent implements OnInit, OnDestroy {
   constructor(private commonService: CommonService) {
     window.addEventListener('resize', this.detectResize.bind(this));
   }
 
-  detectResize(_event: Event) {
-    this.commonService.isNative = window.innerWidth <= 870 ? true : false;
+  ngOnInit(): void {
+    this.detectResize();
   }
 
-  ngOnDestroy(): void { }
+  detectResize(_event?: Event) {
+    this.commonService.isNative = window.innerWidth <= 650 ? true : false;
+    this.commonService.isMobile = window.innerWidth <= 450 ? true : false;
+  }
+
+  ngOnDestroy(): void {}
 }

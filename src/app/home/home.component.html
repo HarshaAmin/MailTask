@@ -1,37 +1,11 @@
 <div class="home-body">
-  <div class="app-sidemenu">
-    <app-side-menu
-      (openEmailModalEmitter)="openEmailModal = $event"
-    ></app-side-menu>
-  </div>
+  @if (!commonService.isNative) {
+    <div class="app-sidemenu">
+      <app-side-menu></app-side-menu>
+    </div>
+  }
   <div class="wrapper-mail-section">
     <h3 class="my-3">Email Dashboad</h3>
-    <!-- <div class="d-flex gap-3 my-3 align-items-center">
-      <h5 class="m-0"></h5>
-      <div class="btn-group" role="group" aria-label="actions">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="toggleType('all')"
-        >
-          All
-        </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="toggleType('read')"
-        >
-          Read
-        </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="toggleType('unread')"
-        >
-          Unread
-        </button>
-      </div>
-    </div> -->
     <div class="social-group">
       <div class="social-item active" id="primary">
         <div class="social-items-header">
@@ -64,6 +38,11 @@
     </div>
 
     <div class="dropdown-wrapper">
+      @if (commonService.isMobile) {
+        <button class="btn btn-outline-primary" (click)="openEmailModal()">
+          Compose Email
+        </button>
+      }
       <div class="dropdown">
         <span>{{ getCurrentType }}</span>
         <div class="dropdown-content">
@@ -75,26 +54,61 @@
     </div>
 
     <div class="mail-section">
-      <div class="email-list-section p-2">
-        <app-email-list
-          [emails]="emails"
-          [filteredEmails]="filteredEmails"
-          [currentTypeSelection]="currentTypeSelection"
-          (selectedEmail)="selectedEmail = $event"
-          [accessToken]="accessToken"
-        ></app-email-list>
-      </div>
-      <div class="email-section p-3">
-        <app-email [selectedEmail]="selectedEmail"></app-email>
-      </div>
-    </div>
-    <div
-      [ngClass]="{ 'hide-block': !openEmailModal }"
-      class="send-mail-section"
-    >
-      <app-send-mail
-        (openEmailModalEmitter)="openEmailModal = $event"
-      ></app-send-mail>
+      @if (!commonService.isMobile) {
+        <div class="email-list-section p-2">
+          <app-email-list
+            [emails]="emails"
+            [filteredEmails]="filteredEmails"
+            [currentTypeSelection]="currentTypeSelection"
+            (selectedEmail)="selectedEmailToggle($event)"
+            [accessToken]="accessToken"
+          ></app-email-list>
+        </div>
+        <div class="email-section p-3">
+          @if (!commonService.openEmailModal) {
+            <app-email [selectedEmail]="selectedEmail"></app-email>
+          } @else if (commonService.openEmailModal) {
+            <app-send-mail
+              (openEmailModalEmitter)="commonService.openEmailModal = $event"
+            >
+            </app-send-mail>
+          }
+        </div>
+      } @else {
+        @if (!commonService.toggleEmailSection) {
+          <div class="email-list-section p-2">
+            <app-email-list
+              [emails]="emails"
+              [filteredEmails]="filteredEmails"
+              [currentTypeSelection]="currentTypeSelection"
+              (selectedEmail)="selectedEmailToggle($event)"
+              [accessToken]="accessToken"
+            ></app-email-list>
+          </div>
+        } @else {
+          <div class="email-section p-3">
+            @if (!commonService.openEmailModal) {
+              <div class="email-wrapper-section">
+                <button
+                  title="previous"
+                  class="btn"
+                  (click)="commonService.toggleEmailSection = false"
+                >
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div class="pt-4">
+                  <app-email [selectedEmail]="selectedEmail"></app-email>
+                </div>
+              </div>
+            } @else if (commonService.openEmailModal) {
+              <app-send-mail
+                (openEmailModalEmitter)="commonService.openEmailModal = $event"
+              >
+              </app-send-mail>
+            }
+          </div>
+        }
+      }
     </div>
   </div>
 </div>

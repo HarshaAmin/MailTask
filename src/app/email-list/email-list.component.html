@@ -10,16 +10,31 @@
             @if (email.status === "unread") {
               <i
                 class="fa-regular fa-envelope"
-                (click)="changeStatus(email, $event, idx)"
+                (click)="changeStatus(email, $event)"
               ></i>
             }
             @if (email.status === "read") {
               <i
                 class="fa-regular fa-envelope-open"
-                (click)="changeStatus(email, $event, idx)"
+                (click)="changeStatus(email, $event)"
               ></i>
             }
-            <i class="fa-regular fa-flag"></i>
+            @if (email.flagStatus === "notFlagged") {
+              <i
+                class="fa-regular fa-flag"
+                [ngClass]="{ flagStatusActive: email.isFlagged }"
+                (click)="toggleFlag(email, $event)"
+              ></i>
+            }
+
+            @if (email.flagStatus === "flagged") {
+              <i
+                class="fa-solid fa-flag"
+                [ngClass]="{ flagStatusActive: email.isFlagged }"
+                (click)="toggleFlag(email, $event)"
+              ></i>
+            }
+
             <i class="fa-solid fa-thumbtack"></i>
           </div>
         </div>

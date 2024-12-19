@@ -1,5 +1,5 @@
 import { NgFor } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import {
   NgxFileDropEntry,
   FileSystemFileEntry,
@@ -14,9 +14,11 @@ import {
   templateUrl: './file-upload.component.html'
 })
 export class FileUploadComponent {
-  public files = [];
+  public files: NgxFileDropEntry[] = [];
 
-  constructor() {}
+  @Output() uploadedFilesEmit = new EventEmitter<NgxFileDropEntry[]>();
+
+  constructor() { }
 
   public dropped(files: NgxFileDropEntry[]) {
     this.files = files;
@@ -24,17 +26,20 @@ export class FileUploadComponent {
       if (droppedFile.fileEntry.isFile) {
         const fileEntry = droppedFile.fileEntry as FileSystemFileEntry;
         const reader = new FileReader();
-        fileEntry.file((_file: File) => {
-          // reader.readAsDataURL(file);
-          // reader.onload = () => {
-          //   console.log(reader.result);
-          // };
+        fileEntry.file((file: File) => {
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            droppedFile['fileName'] = file.name;
+            droppedFile['fileType'] = file.type;
+            droppedFile["base64Content"] = reader.result?.toString().split(',')[1];
+          };
         });
       } else {
         const fileEntry = droppedFile.fileEntry as FileSystemDirectoryEntry;
         console.log(droppedFile.relativePath, fileEntry);
       }
     }
+    this.uploadedFilesEmit.emit(this.files);
   }
 
   fileOver(event) {

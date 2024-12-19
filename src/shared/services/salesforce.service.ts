@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -10,10 +10,21 @@ import { environment } from '../../environments/environment';
 
 
 export class SalesforceService {
+  private baseUrl =
+    'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailService';
+  private openAIapiUrl =
+    'https://api-inference.huggingface.co/models/vennify/t5-base-grammar-correction';
+  private openAIapiKey = ''; // Replace with your OpenAI API Key
+
   private getEmailsUrl =
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/getEmails';
   private getSentEmailsUrl =
-    'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/getSentEmails'; // Update with the correct endpoint
+    'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/getSentEmails';
+
+  private apiUrl =
+    'https://api-inference.huggingface.co/models/bert-base-uncased';
+  private apiUrlSentiment =
+    'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment';
 
   private accessToken: string | null = null;
 
@@ -160,6 +171,22 @@ export class SalesforceService {
           );
         }
         return throwError(error); // Propagate the error
+      })
+    );
+  }
+
+  sendEmail(payload: {
+    to: string,
+    subject: string,
+    body: string,
+    fileName: any,
+    fileType: any,
+    base64Content: any
+  }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(map((response) => response),
+      catchError((error) => {
+        console.error('Error correcting grammar:', error);
+        return throwError(() => new Error('Failed to correct grammar.'));
       })
     );
   }

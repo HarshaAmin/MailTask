@@ -8,4 +8,17 @@
     />
     <p class="ps-2 m-0">SendTech</p>
   </a>
+  @if (commonService.isNative) {
+    <i
+      class="fa-solid fa-bars nav-hamburger"
+      (click)="showDropdown = !showDropdown"
+    ></i>
+  }
 </nav>
+@if (commonService.isNative) {
+  <div class="dropdown-nav" [ngClass]="{ active: showDropdown }">
+    <app-side-menu
+      (openEmailModalEmitter)="commonService.openEmailModal = $event"
+    ></app-side-menu>
+  </div>
+}
