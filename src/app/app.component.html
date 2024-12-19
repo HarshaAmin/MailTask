@@ -56,6 +56,27 @@
         margin-top: 0;
       }
 
+      .emoji-picker-popup {
+        position: absolute; /* Absolute positioning based on parent element */
+        background-color: white;
+        border: 1px solid #ddd;
+        padding: 10px;
+        z-index: 1000;
+        display: block; /* Ensure it's displayed when emojiPickerVisible is true */
+      }
+
+      .emoji-picker-popup button {
+        font-size: 24px;
+        margin: 5px;
+        border: none;
+        background: none;
+        cursor: pointer;
+      }
+
+      .emoji-picker-popup button:hover {
+        background-color: #f0f0f0;
+      }
+
       .form-group {
         margin-bottom: 15px;
       }
@@ -164,19 +185,6 @@
         border-radius: 8px;
         width: 100%;
         max-width: 400px;
-      }
-
-      /* Rich text area styles */
-      .rich-text-area {
-        position: relative;
-        min-height: 150px;
-        padding: 10px;
-        font-size: 14px;
-        line-height: 1.5;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        overflow: auto;
-        width: 100%;
       }
 
       /* Inline Suggestion Styling */
@@ -546,13 +554,16 @@
       }
 
       .rich-text-area {
-        position: relative; /* Ensure proper layering */
-        z-index: 1;
+        position: relative;
         min-height: 150px;
-        border: 1px solid #ccc;
+        height: auto;
         padding: 10px;
         font-size: 14px;
         line-height: 1.5;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        overflow: auto;
+        width: 100%;
       }
 
       .email-actions {
@@ -746,21 +757,21 @@
                   </div>
 
                   <!-- Actual Rich Text Editor (content-editable div) -->
-                  <!-- <div 
-  contenteditable="true" 
-  id="body" 
-  class="rich-text-area"
-  (input)="onContentEditableInput($event)"
-  (keydown)="onKeyDown($event)"
-  (keyup)="trackCaretRowAndColumn()"
-  #textarea>
-</div> -->
                   <div
                     contenteditable="true"
                     id="body"
                     class="rich-text-area"
+                    (input)="onContentEditableInput($event)"
+                    (keydown)="onKeyDown($event)"
+                    (keyup)="trackCaretRowAndColumn()"
                     #textarea
                   ></div>
+                  <!-- <div
+                    contenteditable="true"
+                    id="body"
+                    class="rich-text-area"
+                    #textarea
+                  ></div> -->
                 </div>
 
                 <div class="actions">
@@ -811,12 +822,90 @@
                   />
                   <button
                     class="btn-action"
+                    type="button"
+                    (click)="openEmojiPicker()"
+                  >
+                    <i class="fas fa-smile"></i>
+                  </button>
+
+                  <!-- Display selected emoji -->
+                  <!-- <p>Selected Emoji: {{ selectedEmoji }}</p> -->
+
+                  <!-- Emoji picker (just an example of a simple display) -->
+                  <div
+                    *ngIf="emojiPickerVisible"
+                    class="emoji-picker-popup"
+                    [ngStyle]="popupPosition"
+                  >
+                    <!-- More Emoji Buttons -->
+                    <button type="button" (click)="onEmojiSelect('😊')">
+                      😊
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('😎')">
+                      😎
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('😢')">
+                      😢
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('❤️')">
+                      ❤️
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('🎉')">
+                      🎉
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('🔥')">
+                      🔥
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('👍')">
+                      👍
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('🙏')">
+                      🙏
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('😂')">
+                      😂
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('🥺')">
+                      🥺
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('😍')">
+                      😍
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('💔')">
+                      💔
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('🙌')">
+                      🙌
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('😜')">
+                      😜
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('🥳')">
+                      🥳
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('🤔')">
+                      🤔
+                    </button>
+                    <button type="button" (click)="onEmojiSelect('😆')">
+                      😆
+                    </button>
+                    <!-- Add more as needed -->
+                  </div>
+
+                  <!-- Button to clear selected emoji -->
+                  <!-- <button 
+                    class="btn-action"
+                    type="button"
+                    (click)="clearSelectedEmoji()">Clear Emoji</button> -->
+
+                  <!-- <button
+                    class="btn-action"
                     title="Add Emoji"
                     type="button"
                     (click)="addEmoji()"
                   >
                     <i class="fas fa-smile"></i>
-                  </button>
+                  </button> -->
                   <button
                     class="btn-action"
                     title="Text Color"

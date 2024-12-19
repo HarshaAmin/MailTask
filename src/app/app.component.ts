@@ -1,6 +1,13 @@
-import { Component, OnInit, OnDestroy ,ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef
+} from '@angular/core';
 //import DOMPurify from 'dompurify';
 import { SalesforceService } from '../services/salesforce.service';
+import { EmojiService } from './emoji.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { catchError, switchMap, map, tap } from 'rxjs/operators';
@@ -34,7 +41,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private fileName: string = '';
   private fileType: string = '';
   private base64Content: string = '';
-
+  showEmojiPicker = false;
   suggestionPosition: { top: number; left: number } | null = null;
   staticCursonPosition: any;
   caretPosition: any;
@@ -58,7 +65,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   accessToken: string = '';
   selectedEmail: Email | null = null;
-
+  emojiPickerVisible = false;
+  selectedEmoji: string = '';
+  popupPosition: any = {}; // Position of the popup
   emailData = {
     id: '',
     subject: '',
@@ -77,8 +86,9 @@ export class AppComponent implements OnInit, OnDestroy {
   isItalic = false;
   isUnderline = false;
   constructor(
-    public salesforceService: SalesforceService,
-    private http: HttpClient
+    public salesforceService: SalesforceService, // Inject SalesforceService
+    private http: HttpClient, // Inject HttpClient
+    private emojiService: EmojiService // Inject EmojiService
   ) {}
 
   ngOnInit(): void {
@@ -89,64 +99,171 @@ export class AppComponent implements OnInit, OnDestroy {
       this.generateAccessToken();
     }
 
+    this.emojiService.isEmojiPickerVisible.subscribe((isVisible) => {
+      this.emojiPickerVisible = isVisible;
+    });
+
+    // Subscribe to selected emoji changes
+    this.emojiService.selectedEmoji$.subscribe((emoji) => {
+      this.selectedEmoji = emoji;
+    });
     this.loadEmails('Inbox');
 
     document.addEventListener('keydown', this.handleEscapeKey.bind(this));
   }
 
+  toggleEmojiPicker() {
+    this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
   sanitizeInput(input: string): string {
-    // console.log('Input HTML:', input); // Log the raw input
+    console.log('Original Input:', input); // Log the original input
 
     const parser = new DOMParser();
     const doc = parser.parseFromString(input, 'text/html');
-    // console.log('Parsed DOM:', doc.body.innerHTML); // Log the parsed DOM structure
+    console.log('Parsed HTML Document:', doc.body.innerHTML); // Log the parsed HTML content
 
-    // Function to handle each node
+    // Function to process each node
     const traverseNode = (node: ChildNode): string => {
-      // console.log('Processing node:', node); // Log the current node
-
       if (node.nodeType === Node.TEXT_NODE) {
-        // console.log('Text node content:', node.textContent); // Log text content
-        return node.textContent || '';
+        console.log('Text Node:', node.textContent?.trim()); // Log text nodes
+        return node.textContent?.trim() || '';
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as HTMLElement;
-        // console.log('Element node tag:', element.tagName); // Log tag name
+        console.log('Element Tag:', element.tagName); // Log element tags for processing
 
+        // Handle <br> as newlines
         if (element.tagName === 'BR') {
-          // console.log('Found <br>, replacing with newline'); // Debug <br>
+          console.log('Found <BR> Tag'); // Log when <br> is found
           return '\n';
-        } else if (element.tagName === 'DIV') {
-          // console.log('Found <div>, processing its children'); // Debug <div>
-          return '\n' + traverseChildren(element);
-        } else {
-          // console.log(
-          //   'Found other element, processing its children:',
-          //   element.tagName
-          // ); // Debug other elements
+        }
+
+        // Handle <div> as newlines
+        else if (element.tagName === 'DIV') {
+          const content = traverseChildren(element);
+          console.log('Content inside <div>:', content); // Log content inside <div>
+          return content.trim() ? `${content}\n` : '\n';
+        }
+
+        // Handle <b>, <strong>, <i>, <em>, and other formatting tags
+        else if (element.tagName === 'B' || element.tagName === 'STRONG') {
+          console.log('Found <b> or <strong> Tag'); // Log when <b> or <strong> is found
+          return ` <b>${traverseChildren(element)}</b> `;
+        } else if (element.tagName === 'I' || element.tagName === 'EM') {
+          console.log('Found <i> or <em> Tag'); // Log when <i> or <em> is found
+          return ` <i>${traverseChildren(element)}</i> `;
+        }
+
+        // Handle <u> and other tags
+        else if (element.tagName === 'U') {
+          console.log('Found <u> Tag'); // Log when <u> is found
+          return ` <u>${traverseChildren(element)}</u> `;
+        }
+
+        // Handle <s> or <strike> for strikethrough
+        else if (element.tagName === 'S' || element.tagName === 'STRIKE') {
+          console.log('Found <s> or <strike> Tag'); // Log when <s> or <strike> is found
+          return ` <s>${traverseChildren(element)}</s> `;
+        }
+
+        // Handle <span> or other inline elements
+        else if (element.tagName === 'SPAN') {
+          console.log('Found <span> Tag'); // Log when <span> is found
+          return ` <span>${traverseChildren(element)}</span> `;
+        }
+
+        // Traverse any unhandled tags
+        else {
+          console.log('Traversing Other Tag:', element.tagName); // Log for other tags
           return traverseChildren(element);
         }
       }
-      //console.log('Ignoring unsupported node type:', node.nodeType); // Log unsupported nodes
       return '';
     };
 
-    // Function to process all children of a node
+    // Function to process all children of an element
     const traverseChildren = (node: HTMLElement): string => {
-      //console.log('Traversing children of:', node.tagName || 'root body'); // Debug children traversal
+      console.log('Traversing Children of:', node.tagName); // Log when traversing children
       return Array.from(node.childNodes).map(traverseNode).join('');
     };
 
-    // Start traversal from `doc.body`
-    const sanitizedText = traverseChildren(doc.body).trim();
+    // Start sanitizing and processing the input
+    let sanitizedText = traverseChildren(doc.body).trim();
     console.log('Sanitized Text:', sanitizedText); // Log the final sanitized text
+
     return sanitizedText;
   }
 
+  traverseChildren(node: HTMLElement): string {
+    return Array.from(node.childNodes)
+      .map((child) =>
+        child.nodeType === Node.TEXT_NODE ? child.textContent : ''
+      )
+      .join('');
+  }
+
+  // Move the caret to the end of the inserted text
+  moveCaretToEnd(target: HTMLElement) {
+    const selection = window.getSelection();
+    const range = document.createRange();
+
+    // Focus on the target
+    target.focus();
+
+    // Move caret to the end of the content
+    range.selectNodeContents(target);
+    range.collapse(false);
+
+    // Apply the range to the selection
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
+
+  // sanitizeInput(input: string): string {
+  //   // Parse the input HTML
+  //   const parser = new DOMParser();
+  //   const doc = parser.parseFromString(input, 'text/html');
+
+  //   // Function to process each node
+  //   const traverseNode = (node: ChildNode): string => {
+  //     if (node.nodeType === Node.TEXT_NODE) {
+  //       // Return text content for text nodes
+  //       return node.textContent || '';
+  //     } else if (node.nodeType === Node.ELEMENT_NODE) {
+  //       const element = node as HTMLElement;
+
+  //       // Handle specific elements
+  //       if (element.tagName === 'BR') {
+  //         return '\n'; // Replace <BR> with a newline
+  //       } else if (element.tagName === 'DIV') {
+  //         // Process children of <DIV> with a newline
+  //         return traverseChildren(element) + '\n';
+  //       } else {
+  //         // Process other elements by traversing their children
+  //         return traverseChildren(element);
+  //       }
+  //     }
+  //     // Ignore unsupported node types
+  //     return '';
+  //   };
+
+  //   // Function to process all child nodes of a given node
+  //   const traverseChildren = (node: HTMLElement): string => {
+  //     return Array.from(node.childNodes).map(traverseNode).join('');
+  //   };
+
+  //   // Start traversing from the body of the parsed document
+  //   const sanitizedText = traverseChildren(doc.body).trim();
+
+  //   return sanitizedText;
+  // }
   onContentEditableInput(event: Event) {
+    this.inlineSuggestion = '';
+    //uncomment code 136
     // const target = event.target as HTMLElement;
     // this.emailtoSend.bodyPreview = target.innerHTML.trim();
     // const inputText = this.emailtoSend.bodyPreview;
-
+    console.log('inside onContentedit');
     const target = event.target as HTMLElement;
     const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
     //const inputText = this.emailtoSend.bodyPreview;
@@ -167,9 +284,54 @@ export class AppComponent implements OnInit, OnDestroy {
         left: rect.left + window.scrollX + 10
       };
     }
-
-    this.analyzeText(sanitizedText);
+    console.log('inside onContentedit 170');
+    this.inlineSuggestion = this.getRandomSuggestion();
   }
+
+  getRandomSuggestion() {
+    const dummySuggestions = [
+      'Hello',
+      'Hi',
+      'you',
+      'wanted',
+      'regards',
+      'data',
+      'Add',
+      'TestSuggestion'
+    ];
+
+    const index = Math.floor(Math.random() * dummySuggestions.length);
+    return dummySuggestions[index];
+  }
+
+  // onContentEditableInput(event: Event) {
+  //   // const target = event.target as HTMLElement;
+  //   // this.emailtoSend.bodyPreview = target.innerHTML.trim();
+  //   // const inputText = this.emailtoSend.bodyPreview;
+  //   console.log('inside onContentedit');
+  //   const target = event.target as HTMLElement;
+  //   const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+  //   //const inputText = this.emailtoSend.bodyPreview;
+
+  //   // Clear previous analysis if no input
+  //   if (sanitizedText.length === 0) {
+  //     this.inlineSuggestion = '';
+  //     return;
+  //   }
+
+  //   // Adjust suggestion position with offset for normal typing
+  //   const selection = window.getSelection();
+  //   const rect = selection?.getRangeAt(0).getBoundingClientRect();
+
+  //   if (rect) {
+  //     this.suggestionPosition = {
+  //       top: rect.bottom + window.scrollY + 6, // 5px offset for regular input
+  //       left: rect.left + window.scrollX + 10
+  //     };
+  //   }
+  //   console.log('inside onContentedit 170');
+  //   this.analyzeText(sanitizedText);
+  // }
 
   // onContentEditableInput(event: Event) {
   //   const target = event.target as HTMLElement;
@@ -218,6 +380,7 @@ export class AppComponent implements OnInit, OnDestroy {
     };
   }
   async analyzeText(text: string) {
+    console.log('inside analyzeText');
     try {
       const accessToken = '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'; // Replace with your token
 
@@ -235,7 +398,7 @@ export class AppComponent implements OnInit, OnDestroy {
       );
 
       if (!sentimentResponse.ok) {
-        // throw new Error('Failed to fetch sentiment analysis');
+        throw new Error('Failed to fetch sentiment analysis');
       }
 
       const sentimentData = await sentimentResponse.json();
@@ -255,14 +418,39 @@ export class AppComponent implements OnInit, OnDestroy {
       );
 
       if (!suggestionResponse.ok) {
-        //throw new Error('Failed to fetch suggestions');
+        throw new Error('Failed to fetch suggestions');
       }
+
+      // const suggestionsData = await suggestionResponse.json();
+
+      // // this.suggestions[0] = 'one';
+      // // this.inlineSuggestion = this.suggestions[0] || ''; // Take the first suggestion
+
+      // suggestionsData.map((item: any) => item.token_str.trim());
+      // console.log(
+      //   'inside analyzeText suggestionsData ' + JSON.stringify(suggestionsData)
+      // );
+      // this.inlineSuggestion = this.suggestions[0] || ''; // Take the first suggestion
+      // console.log(
+      //   'inside analyzeText inlineSuggestion ' + this.inlineSuggestion
+      // );
 
       const suggestionsData = await suggestionResponse.json();
 
-      //  this.suggestions[0] = 'one';
-      suggestionsData.map((item: any) => item.token_str.trim());
-      this.inlineSuggestion = this.suggestions[0] || ''; // Take the first suggestion
+      // Trim the suggestion strings and store them
+      this.suggestions = suggestionsData.map((item: any) =>
+        item.token_str.trim()
+      );
+
+      // Take the first suggestion if available
+      this.inlineSuggestion = this.suggestions[0] || '';
+
+      console.log(
+        'inside analyzeText suggestionsData ' + JSON.stringify(suggestionsData)
+      );
+      console.log(
+        'inside analyzeText inlineSuggestion ' + this.inlineSuggestion
+      );
 
       // Dynamically adjust suggestion position
       //this.setSuggestionPosition();
@@ -317,47 +505,79 @@ export class AppComponent implements OnInit, OnDestroy {
     if (event.key === 'Tab' && this.inlineSuggestion) {
       event.preventDefault(); // Stop default behavior (Tab behavior)
 
-      //this.setSuggestionPositionWithoutOffset();
-
-      // Set the suggestion position based on the cursor location, without offset for Tab
-
-      // Apply the suggestion at the caret position
+      // Get the target element and sanitize its HTML content
       const target = event.target as HTMLElement;
       console.log('target.innerHTML.trim() before ' + target.innerHTML.trim());
       const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
-      console.log('sanitizedText before ' + sanitizedText);
+
+      console.log('sanitizedText after ' + sanitizedText);
 
       const textBefore = sanitizedText;
       const { row, column } = this.caretPosition;
       const lines = textBefore.split('\n');
       console.log('row in final is ' + row);
-      console.log('lines in final is ' + lines);
+      console.log('lines in final is ' + JSON.stringify(lines));
+      console.log('lines length is ' + lines.length);
+
+      // Adjust row based on the caret position
       let lineRow = 0;
-      if (row <= 0) {
-        lineRow = row; // If the row is 0 or less, use the first line
-      } else if (row - 1 < lines.length) {
-        lineRow = row - 1; // Use the previous row if within bounds
+
+      // Ensure row is within bounds (preventing it from being negative or out of bounds)
+      if (row < 0) {
+        lineRow = 0; // If row is negative, default to the first line
+      } else if (row >= lines.length) {
+        lineRow = lines.length - 1; // If row exceeds the available lines, use the last line
+      } else {
+        lineRow = row; // Otherwise, use the row as it is
       }
+
+      // Update the line where the suggestion will be inserted
       if (lineRow >= 0 && lineRow < lines.length) {
         const currentLine = lines[lineRow];
-        const beforeCaret = currentLine.substring(0, column);
-        const afterCaret = currentLine.substring(column);
+        const beforeCaret = currentLine.substring(0, column); // Text before the caret
+        const afterCaret = currentLine.substring(column); // Text after the caret
 
-        // Update the current line with the suggestion
+        // Insert the suggestion text in the correct position
         lines[lineRow] =
           beforeCaret + ' ' + this.inlineSuggestion + ' ' + afterCaret;
       }
-      const updatedText = lines.join('\n');
+
+      let result = lines.map(
+        (str) =>
+          str
+            .replaceAll('replace_as_bold_start', '<b>') // Replace start bold marker with <b>
+            .replaceAll('replace_as_bold_end', '</b>') // Replace end bold marker with </b>
+      );
+
+      // Join lines back and log the updated text
+      const updatedText = result.join('\n');
       console.log('Updated Text with Suggestion:', updatedText);
-      target.innerHTML = lines
-        .map((line) => `<div>${line}</div>`) // Wrap each line in a <div>
+
+      const formattedHTML = result
+        .map((line) => {
+          // For empty lines, return <div><br></div>
+          return line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`;
+        })
         .join('');
+
+      // Update the target innerHTML with the new lines
+      target.innerHTML = formattedHTML;
+      // target.innerHTML = lines
+      //   .map((line) => {
+      //     // Preserve empty lines by checking explicitly for empty strings
+      //     return line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`;
+      //   })
+      //   .join('');
+
+      // Reset inline suggestion and suggestions array
       this.inlineSuggestion = '';
       this.suggestions = [];
+
       // Move caret to the end of the inserted text
       this.moveCaretToEnd(target);
     }
   }
+
   applySuggestionAtCaret(textBefore: string, inlineSuggestion: string) {
     console.log('sanitizedText After ' + textBefore);
     const selection = this.staticCursonPosition;
@@ -375,6 +595,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   trackCaretRowAndColumn() {
+    //this.inlineSuggestion = '';
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
       return null; // No selection
@@ -390,11 +611,15 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     const containerRect = contentEditable.getBoundingClientRect();
+    const computedStyle = window.getComputedStyle(contentEditable);
+    const lineHeight = parseFloat(computedStyle.lineHeight);
+    const paddingTop = parseFloat(computedStyle.paddingTop);
+    const borderTopWidth = parseFloat(computedStyle.borderTopWidth);
+    const offsetTop = containerRect.top + paddingTop + borderTopWidth;
 
-    // Calculate row and column
-    const row = Math.floor(
-      (caretRect.top - containerRect.top) / caretRect.height
-    );
+    // Adjust row calculation to account for padding and extra spacing
+    const row = Math.floor((caretRect.top - offsetTop) / lineHeight);
+
     const column = caretRect.left - containerRect.left;
     this.caretPosition = { row, column };
     return { row, column };
@@ -419,16 +644,16 @@ export class AppComponent implements OnInit, OnDestroy {
   //   return beforeCaret + suggestion + afterCaret;
   // }
 
-  moveCaretToEnd(element: HTMLElement) {
-    const range = document.createRange();
-    const selection = window.getSelection();
+  // moveCaretToEnd(element: HTMLElement) {
+  //   const range = document.createRange();
+  //   const selection = window.getSelection();
 
-    // Move the caret to the end of the element's content
-    range.selectNodeContents(element);
-    range.collapse(false);
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  }
+  //   // Move the caret to the end of the element's content
+  //   range.selectNodeContents(element);
+  //   range.collapse(false);
+  //   selection?.removeAllRanges();
+  //   selection?.addRange(range);
+  // }
 
   trackCursorPosition(event: KeyboardEvent) {
     const selection = window.getSelection();
@@ -449,6 +674,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   toggleBold(event: Event) {
     document.execCommand('bold');
+    this.inlineSuggestion = '';
   }
 
   toggleItalic(event: Event) {
@@ -491,9 +717,163 @@ export class AppComponent implements OnInit, OnDestroy {
   //   console.log('File selected:', file);
   // }
 
-  addEmoji() {
-    console.log('Add Emoji clicked');
-    // Implement emoji picker logic
+  // Toggle emoji picker visibility
+  openEmojiPicker() {
+    this.emojiPickerVisible = !this.emojiPickerVisible;
+
+    if (this.emojiPickerVisible) {
+      const button = document.querySelector('.btn-action') as HTMLElement;
+      const buttonRect = button.getBoundingClientRect();
+
+      this.popupPosition = {
+        top: buttonRect.bottom + 'px', // Position below the button
+        left: buttonRect.left + 'px' // Align with the left edge of the button
+      };
+    }
+  }
+
+  // Select an emoji
+  onEmojiSelect(emoji: string) {
+    this.selectedEmoji = emoji;
+    this.emojiPickerVisible = false; // Close emoji picker after selecting
+    this.selectedEmoji = '';
+    this.insertEmojiIntoBody(emoji); // Optionally, insert emoji into the text area
+  }
+
+  // Clear selected emoji
+  clearSelectedEmoji() {
+    this.selectedEmoji = '';
+  }
+
+  // // Insert emoji into the contenteditable div
+  // insertEmojiIntoBody(emoji: string) {
+  //   const textarea: HTMLElement = document.getElementById('body')!;
+  //   const selection = window.getSelection();
+  //   const range = selection?.getRangeAt(0);
+
+  //   if (range) {
+  //     range.deleteContents();
+  //     const emojiNode = document.createTextNode(emoji);
+  //     range.insertNode(emojiNode);
+  //   }
+  // }
+
+  // Insert emoji into the body (contenteditable area)
+  insertEmojiIntoBody(emoji: string) {
+    const textarea: HTMLElement = document.getElementById('body')!;
+    const selection = window.getSelection();
+    const range = selection?.getRangeAt(0);
+
+    if (range) {
+      range.deleteContents();
+      const emojiNode = document.createTextNode(emoji);
+      range.insertNode(emojiNode);
+    }
+  }
+  // // Track caret position for inline suggestions
+  // trackCaretRowAndColumn() {
+  //   const textarea: HTMLElement = document.getElementById('body')!;
+  //   const range = window.getSelection()?.getRangeAt(0);
+  //   if (range) {
+  //     const rect = range.getBoundingClientRect();
+  //     this.suggestionPosition = { top: rect.top, left: rect.left + rect.width };
+  //   }
+  // }
+
+  // addEmoji(event: any) {
+  //   const emoji = event.emoji.native; // The selected emoji
+
+  //   event.preventDefault(); // Stop default behavior (Tab behavior)
+
+  //   // Get the target element and sanitize its HTML content
+  //   const target = event.target as HTMLElement;
+  //   console.log('target.innerHTML.trim() before ' + target.innerHTML.trim());
+  //   const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+
+  //   console.log('sanitizedText after ' + sanitizedText);
+
+  //   const textBefore = sanitizedText;
+  //   const { row, column } = this.caretPosition;
+  //   const lines = textBefore.split('\n');
+  //   console.log('row in final is ' + row);
+  //   console.log('lines in final is ' + JSON.stringify(lines));
+  //   console.log('lines length is ' + lines.length);
+
+  //   // Adjust row based on the caret position
+  //   let lineRow = 0;
+
+  //   // Ensure row is within bounds (preventing it from being negative or out of bounds)
+  //   if (row < 0) {
+  //     lineRow = 0; // If row is negative, default to the first line
+  //   } else if (row >= lines.length) {
+  //     lineRow = lines.length - 1; // If row exceeds the available lines, use the last line
+  //   } else {
+  //     lineRow = row; // Otherwise, use the row as it is
+  //   }
+
+  //   // Update the line where the suggestion will be inserted
+  //   if (lineRow >= 0 && lineRow < lines.length) {
+  //     const currentLine = lines[lineRow];
+  //     const beforeCaret = currentLine.substring(0, column); // Text before the caret
+  //     const afterCaret = currentLine.substring(column); // Text after the caret
+
+  //     // Insert the suggestion text in the correct position
+  //     lines[lineRow] =
+  //       beforeCaret + ' ' + this.inlineSuggestion + ' ' + afterCaret;
+  //   }
+
+  //   let result = lines.map(
+  //     (str) =>
+  //       str
+  //         .replaceAll('replace_as_bold_start', '<b>') // Replace start bold marker with <b>
+  //         .replaceAll('replace_as_bold_end', '</b>') // Replace end bold marker with </b>
+  //   );
+
+  //   // Join lines back and log the updated text
+  //   const updatedText = result.join('\n');
+  //   console.log('Updated Text with Suggestion:', updatedText);
+
+  //   const formattedHTML = result
+  //     .map((line) => {
+  //       // For empty lines, return <div><br></div>
+  //       return line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`;
+  //     })
+  //     .join('');
+
+  //   // Update the target innerHTML with the new lines
+  //   target.innerHTML = formattedHTML;
+  //   // target.innerHTML = lines
+  //   //   .map((line) => {
+  //   //     // Preserve empty lines by checking explicitly for empty strings
+  //   //     return line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`;
+  //   //   })
+  //   //   .join('');
+
+  //   // Reset inline suggestion and suggestions array
+  //   this.inlineSuggestion = '';
+  //   this.suggestions = [];
+
+  //   // Move caret to the end of the inserted text
+  //   this.moveCaretToEnd(target);
+
+  //   this.insertAtCaret(emoji);
+  //   this.showEmojiPicker = false;
+  // }
+  insertAtCaret(emoji: string) {
+    const textarea = this.textarea.nativeElement;
+    const selection = window.getSelection();
+    const range = selection?.getRangeAt(0);
+
+    if (range) {
+      // Insert emoji at the caret position
+      range.deleteContents();
+      range.insertNode(document.createTextNode(emoji));
+
+      // Move caret to the end of the inserted emoji
+      range.collapse(false);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
   }
 
   scheduleEmail() {
