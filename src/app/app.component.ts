@@ -280,8 +280,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
     if (rect) {
       this.suggestionPosition = {
-        top: rect.bottom + window.scrollY + 6, // 5px offset for regular input
-        left: rect.left + window.scrollX + 10
+        top: rect.bottom + window.scrollY, // 5px offset for regular input
+        left: rect.left + window.scrollX
       };
     }
     console.log('inside onContentedit 170');
@@ -359,8 +359,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Adjust position based on rect and viewport
     this.suggestionPosition = {
-      top: rect.top + window.scrollY + 6, // Adjust `20` as needed to offset the suggestion
-      left: rect.left + window.scrollX + 10
+      top: rect.top + window.scrollY, // Adjust `20` as needed to offset the suggestion
+      left: rect.left + window.scrollX
     };
   }
 
@@ -376,7 +376,7 @@ export class AppComponent implements OnInit, OnDestroy {
     // Adjust position based on rect and viewport
     this.suggestionPosition = {
       top: rect.top + window.scrollY, // Adjust `20` as needed to offset the suggestion
-      left: rect.left + window.scrollX + 1
+      left: rect.left + window.scrollX
     };
   }
   async analyzeText(text: string) {
