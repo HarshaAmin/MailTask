@@ -15,15 +15,335 @@
         padding: 0;
         box-sizing: border-box;
       }
-      body {
-        font-family: Arial, sans-serif;
+      .filter-buttons button {
+        margin-right: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        background-color: #f3f4f6;
+        border-radius: 4px;
       }
 
-      /* Container for the layout */
+      .filter-buttons button.active {
+        background-color: #0078d4;
+        color: #000;
+      }
+
+      /* Modal Styles */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 90%;
+        width: 500px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      h3 {
+        margin-top: 0;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+      }
+
+      .btn {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .attach-btn {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .attach-btn input[type="file"] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+      }
+
+      .close-button {
+        margin-top: 15px;
+        background-color: transparent;
+        border: none;
+        color: #007bff;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+
       .container {
         display: flex;
-        flex-direction: row;
         height: 100vh;
+      }
+
+      .email-list {
+        flex: 2;
+        max-width: 300px;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        overflow-y: auto;
+      }
+
+      /* Adjust for small screen */
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          padding: 10px;
+        }
+
+        .main-content {
+          padding: 10px;
+        }
+
+        .content-wrapper {
+          flex-direction: column;
+        }
+
+        .compose-email {
+          padding: 10px;
+          width: 100%;
+        }
+      }
+
+      /* Modal Styles for better appearance */
+      .modal-container {
+        position: relative;
+        display: inline-block;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 400px;
+      }
+
+      /* Rich text area styles */
+      .rich-text-area {
+        position: relative;
+        min-height: 150px;
+        padding: 10px;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        overflow: auto;
+        width: 100%;
+      }
+
+      /* Inline Suggestion Styling */
+      .inline-suggestion {
+        position: absolute;
+        z-index: 10;
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        padding: 5px 10px;
+        font-size: 14px;
+        white-space: nowrap;
+        border-radius: 4px;
+      }
+
+      /* Compose Email Button */
+      .btn-primary {
+        background-color: #0078d4;
+        font-weight: bold;
+        padding: 12px;
+        margin-top: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .no-emails {
+        text-align: center;
+        color: #6b7280;
+      }
+
+      .btn-primary:hover {
+        background-color: #0056b3;
+      }
+
+      /* Secondary Button (Attach) */
+      .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        text-align: center;
+        border: none;
+        padding: 10px;
+        width: 100%;
+        margin-bottom: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .btn-secondary:hover {
+        background-color: #5a6268;
+      }
+
+      /* Compose Button */
+      .compose-button {
+        margin-bottom: 20px;
+        background-color: #007bff;
+        color: rgb(228, 15, 15);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 576px) {
+        .modal-content {
+          width: 90%;
+        }
+
+        .btn {
+          width: 100%;
+          margin-top: 10px;
+        }
+      }
+
+      .email-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #d1d5db;
+        padding: 10px 0;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 10px;
+        background-color: #e5e7eb;
+        border-radius: 8px;
+      }
+
+      .header .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .header .logo {
+        width: 50px;
+        height: 50px;
+      }
+
+      .sidebar {
+        flex: 0 0 250px;
+        background-color: #f3f4f6;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        border-right: 1px solid #d1d5db;
+      }
+
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .sidebar-header .logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .sidebar button:hover {
+        background-color: #135fd2;
+      }
+
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      .content-wrapper {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column;
+        }
+
+        .content-wrapper {
+          flex-direction: column;
+        }
+
+        .email-list {
+          max-width: 100%;
+        }
+      }
+
+      .action-button {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font-size: 18px; /* Icon size */
+        transition:
+          transform 0.2s ease,
+          color 0.2s ease;
+      }
+
+      /* Hover effect */
+      .action-button:hover i {
+        transform: scale(1.1);
+        color: #0056b3; /* Darker blue on hover */
       }
 
       .sidebar.btn-primary {
@@ -32,23 +352,6 @@
         border-radius: 5px;
         padding: 12px;
         margin-top: 10px;
-      }
-      /* Sidebar styles */
-      .sidebar {
-        width: 250px;
-        background-color: #2d3e50;
-        color: #0000;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
-      .sidebar-header {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: 20px;
       }
 
       .logo {
@@ -60,7 +363,7 @@
         font-size: 1.5rem;
         font-weight: bold;
       }
-      .button{
+      .button {
         text-align: center;
         border: none;
         padding: 10px;
@@ -82,25 +385,6 @@
         border-radius: 4px;
       }
 
-      .sidebar button:hover {
-        background-color: #ffff;
-      }
-
-      .main-content {
-        flex: 1;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-      }
-
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-
       .logo-section {
         display: flex;
         align-items: center;
@@ -116,81 +400,42 @@
         flex-direction: row; /* Arrange email list and details side-by-side */
         flex: 5;
       }
-      
-      .email-list {
+
+      .compose-email {
         flex: 2; /* Take half of the space */
         overflow-y: auto; /* Scroll if needed */
         border-right: 1px solid #ccc; /* Optional: Adds a separation */
         padding-right: 10px;
       }
-      .compose-email{
-        flex: 2; /* Take half of the space */
-        overflow-y: auto; /* Scroll if needed */
-        border-right: 1px solid #ccc; /* Optional: Adds a separation */
-        padding-right: 10px;
-      }
-      
+
       .email-details {
         flex: 3; /* Take the remaining space */
         padding-left: 10px;
         overflow-y: auto; /* Scroll for long content */
       }
-      
+
+      .email-item {
+        padding: 3px 5px;
+      }
 
       .email-item:hover {
         background-color: #f0f0f0;
       }
 
-      .email-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+      .email-sender {
         width: 100%;
-      }
-
-      .email-subject {
+        text-align: justify;
         font-weight: bold;
+      }
+      .email-subject,
+      .email-date {
+        width: 100%;
+        text-align: justify;
       }
 
       .email-status {
         color: red;
         font-size: 0.9rem;
-      }
-      .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      
-      .modal-container {
-        position: relative;
-        /* Ensure modal is positioned properly */
-        display: inline-block;
-      }
-      
-      .modal-content {
-        background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        width: 400px;
-      }
-      
-
-      .close-button {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background-color: red;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50%;
-        cursor: pointer;
       }
 
       .email-footer {
@@ -202,8 +447,8 @@
         background-color: #f9f9f9;
         border-radius: 0 0 8px 8px;
       }
-      
-      .actions1{
+
+      .actions1 {
         display: flex;
         align-items: center;
         gap: 10px;
@@ -215,7 +460,7 @@
         align-items: center;
         gap: 10px;
       }
-      
+
       button {
         background: none;
         border: none;
@@ -225,27 +470,27 @@
         border-radius: 4px;
         transition: background-color 0.3s;
       }
-      
+
       button:hover {
         background-color: #e0e0e0;
       }
-      
+
       .btn-send {
         background-color: #1a73e8;
         color: white;
         font-weight: bold;
         padding: 8px 15px;
       }
-      
+
       .btn-send:hover {
         background-color: #185abc;
       }
-      
+
       .btn-draft,
       .btn-discard {
         color: #555;
       }
-      
+
       .btn-format i,
       .btn-attach i,
       .btn-emoji i,
@@ -253,19 +498,18 @@
         font-size: 1.2rem;
         color: #555;
       }
-      
+
       .btn-format:hover i,
       .btn-attach:hover i,
       .btn-emoji:hover i,
       .btn-schedule:hover i {
         color: #1a73e8;
       }
-      
+
       .textarea-container-modal {
-        position: relative;
-        width: 100%;
+        overflow: visible;
       }
-      
+
       textarea {
         position: relative;
         z-index: 2;
@@ -279,75 +523,45 @@
         width: 100%;
         overflow: auto;
       }
-      
+
       .mirror-textarea {
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 1;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        overflow: hidden;
-        pointer-events: none;
-        width: 100%;
-        height: 100%;
-        font-size: 1rem;
-        line-height: 1.5;
-        padding: 10px;
-        border: 1px solid transparent; /* Invisible border to align with textarea */
-        color: transparent;
+        overflow: visible;
       }
-      
-      .content-text {
-        color: #ffffff; /* Visible input text */
-      }
-      
       .inline-suggestion {
-        position: absolute;
-        background-color: #f0f0f0;
-        padding: 4px;
+        position: absolute; /* Position relative to the container */
+        z-index: 10; /* Higher than rich-text-area */
+        background-color: #f9f9f9; /* Ensure it's visually distinct */
         border: 1px solid #ccc;
+        padding: 5px 10px;
         font-size: 14px;
-        color: #333;
+        white-space: nowrap; /* Prevent wrapping */
         border-radius: 4px;
-        z-index: 9999;
-        pointer-events: none;
       }
-      
+      .content-text {
+        color: #0000; /* Visible input text */
+      }
 
-      
-     
-
-      
       textarea::placeholder {
         color: #ccc;
       }
-      
+
       .rich-text-area {
-        width: 100%;
-        height: 200px; /* Set the desired height */
-        border: 1px solid #ccc; /* Border to resemble a textarea */
-        padding: 10px 10px; /* Padding inside the content area */
-        box-sizing: border-box; /* Ensure padding doesn't affect width/height */
-        overflow-y: auto; /* Allow vertical scrolling */
-        white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
-        word-wrap: break-word; /* Wrap long words to the next line */
-        font-family: inherit; /* Use the same font as the parent */
-        font-size: inherit; /* Match the parent's font size */
-        line-height: 1.5; /* Adjust line spacing for readability */
-        outline: none; /* Remove default focus styles */
-        resize: none; /* Prevent resizing (optional) */
+        position: relative; /* Ensure proper layering */
+        z-index: 1;
+        min-height: 150px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        font-size: 14px;
+        line-height: 1.5;
       }
-      
+
       .email-actions {
-        display: flex;
-        gap: 10px; /* Adjust spacing between buttons */
-        align-items: center; /* Align buttons vertically */
-        padding: 10px 0; /* Add some padding if needed */
-        border-top: 1px solid #ddd; /* Optional: Separator line */
-        margin-top: 10px; /* Add spacing from above content */
+        font-size: 1.2rem;
+        padding-right: 10px;
       }
-      
+      .action-button {
+        padding-right: 2px;
+      }
       .btn-action {
         background: none;
         border: none;
@@ -356,24 +570,15 @@
         color: #555; /* Default icon color */
         transition: color 0.2s;
       }
-      
+
       .btn-action:hover {
         color: #007bff; /* Change color on hover */
       }
-      
+
       /* Media Queries for Responsiveness */
       @media (max-width: 768px) {
         .container {
           flex-direction: column;
-        }
-
-        .sidebar {
-          width: 100%;
-          padding: 10px;
-        }
-
-        .main-content {
-          padding: 10px;
         }
       }
     </style>
@@ -390,8 +595,13 @@
         <button (click)="loadSent()">Sent</button>
         <button (click)="loadDraft()">Draft</button>
         <button (click)="loadTrash()">Trash</button>
-        <button class="btn-primary" style="background-color: #0078d4;" (click)="openCompose()">Compose</button>
-
+        <button
+          class="btn-primary"
+          style="background-color: #0078d4"
+          (click)="openCompose()"
+        >
+          Compose
+        </button>
       </div>
 
       <!-- Main Content -->
@@ -433,20 +643,27 @@
                 Unread
               </button>
             </div>
-        
+
             <div
               *ngFor="let email of filteredEmails"
               class="email-item"
               (click)="viewEmailDetails(email)"
             >
               <div class="email-header">
-                <div>
-                  <br/>
-                  <div class="email-subject">{{ email.subject }}</div><br/>
-                  <div class="email-sender">{{ email.sender }}</div><br/>
+                <div class="email-item">
+                  <br />
+                  <div class="email-subject">{{ email.subject }}</div>
+                  <br />
+                  <div class="email-sender">{{ email.sender }}</div>
+                  <br />
                   <div class="email-date">
                     {{ email.receivedDateTime | date: "short" }}
-                  </div><br/>
+                  </div>
+                  <div class="delete-item">
+                    <button class="action-button" (click)="deleteEmail(email)">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </div>
                 </div>
                 <div class="email-actions">
                   <button class="action-button" (click)="toggleRead(email)">
@@ -485,18 +702,30 @@
               </div>
             </div>
           </div>
-        
+
           <!-- Email Details or Compose Form -->
           <div *ngIf="isComposeMode; else emailDetails" class="compose-email">
             <h3>Compose Email</h3>
             <form (ngSubmit)="sendEmail()">
               <div class="form-group">
                 <label for="to">To:</label>
-                <input type="email" id="to" name="to" [(ngModel)]="emailtoSend.to" required />
+                <input
+                  type="email"
+                  id="to"
+                  name="to"
+                  [(ngModel)]="emailtoSend.to"
+                  required
+                />
               </div>
               <div class="form-group">
                 <label for="subject">Subject:</label>
-                <input type="text" id="subject" name="subject" [(ngModel)]="emailtoSend.subject" required />
+                <input
+                  type="text"
+                  id="subject"
+                  name="subject"
+                  [(ngModel)]="emailtoSend.subject"
+                  required
+                />
               </div>
               <div class="form-group">
                 <label for="body">Body:</label>
@@ -506,86 +735,128 @@
                     <!-- <span class="content-text">
                       {{ emailtoSend.bodyPreview.substring(0, cursorPosition) }}
                     </span> -->
-                    <span *ngIf="inlineSuggestion" class="inline-suggestion"
-                      [style.top.px]="suggestionPosition?.top" 
-                      [style.left.px]="suggestionPosition?.left">
+                    <span
+                      *ngIf="inlineSuggestion"
+                      class="inline-suggestion"
+                      [style.top.px]="suggestionPosition?.top"
+                      [style.left.px]="suggestionPosition?.left"
+                    >
                       {{ inlineSuggestion }}
                     </span>
                   </div>
-          
+
                   <!-- Actual Rich Text Editor (content-editable div) -->
-                  <div 
+                  <!-- <div 
   contenteditable="true" 
   id="body" 
   class="rich-text-area"
   (input)="onContentEditableInput($event)"
   (keydown)="onKeyDown($event)"
-  (keyup)="trackCursorPosition($event)"
+  (keyup)="trackCaretRowAndColumn()"
   #textarea>
-</div>
-
-
+</div> -->
+                  <div
+                    contenteditable="true"
+                    id="body"
+                    class="rich-text-area"
+                    #textarea
+                  ></div>
                 </div>
-          
+
                 <div class="actions">
                   <button class="btn-send" type="submit">Send</button>
                   <button class="btn-draft" type="button">Save as Draft</button>
                   <button class="btn-discard" type="button">Discard</button>
                 </div>
-          
+
                 <!-- Formatting Options -->
                 <div class="body-actions">
-                  <button class="btn-action" title="Bold" type="button" (click)="toggleBold($event)">
+                  <button
+                    class="btn-action"
+                    title="Bold"
+                    type="button"
+                    (click)="toggleBold($event)"
+                  >
                     <i class="fas fa-bold"></i>
                   </button>
-                  <button class="btn-action" title="Italic" type="button" (click)="toggleItalic($event)">
+                  <button
+                    class="btn-action"
+                    title="Italic"
+                    type="button"
+                    (click)="toggleItalic($event)"
+                  >
                     <i class="fas fa-italic"></i>
                   </button>
-                  <button class="btn-action" title="Underline" type="button" (click)="toggleUnderline($event)">
+                  <button
+                    class="btn-action"
+                    title="Underline"
+                    type="button"
+                    (click)="toggleUnderline($event)"
+                  >
                     <i class="fas fa-underline"></i>
                   </button>
-                  <button class="btn-action" title="Attach Files" type="button" (click)="triggerFileInput()">
+                  <button
+                    class="btn-action"
+                    title="Attach Files"
+                    type="button"
+                    (click)="triggerFileInput()"
+                  >
                     <i class="fas fa-paperclip"></i>
                   </button>
-                  <input type="file" id="file-input" style="display: none;" (change)="onFileSelected($event)" />
-                  <button class="btn-action" title="Add Emoji" type="button" (click)="addEmoji()">
+                  <input
+                    type="file"
+                    id="file-input"
+                    style="display: none"
+                    (change)="onFileSelected($event)"
+                  />
+                  <button
+                    class="btn-action"
+                    title="Add Emoji"
+                    type="button"
+                    (click)="addEmoji()"
+                  >
                     <i class="fas fa-smile"></i>
                   </button>
-                  <button class="btn-action" title="Text Color" type="button" (click)="changeTextColor()">
+                  <button
+                    class="btn-action"
+                    title="Text Color"
+                    type="button"
+                    (click)="changeTextColor()"
+                  >
                     <i class="fas fa-palette"></i>
                   </button>
-                  <button class="btn-action" title="Schedule Email" type="button">
+                  <button
+                    class="btn-action"
+                    title="Schedule Email"
+                    type="button"
+                  >
                     <i class="fas fa-clock"></i>
                   </button>
                 </div>
               </div>
             </form>
           </div>
-          
-          
-        
+
           <!-- Email Details -->
           <ng-template #emailDetails>
             <div *ngIf="selectedEmail" class="email-details">
-              <br/><br/><br/>
+              <br /><br /><br />
               <h3>{{ selectedEmail.subject }}</h3>
-              <br/><br/>
+              <br /><br />
               <p><strong>From:</strong> {{ selectedEmail.sender }}</p>
-              <br/><br/>
+              <br /><br />
               <p>
                 <strong>Received:</strong>
                 {{ selectedEmail.receivedDateTime | date: "short" }}
               </p>
-              <br/><br/>
+              <br /><br />
               <div [innerHTML]="selectedEmail.bodyPreview"></div>
             </div>
           </ng-template>
         </div>
-        
       </div>
     </div>
 
     <!-- Compose Email Modal -->
-    
   </body>
 </html>

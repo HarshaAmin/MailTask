@@ -84,86 +84,171 @@ global with sharing class OutlookEmailServiceRest {
     return responseWrapper;
   }
 
-  @HttpPost
-global static ResponseWrapper sendEmail() {
-    ResponseWrapper responseWrapper = new ResponseWrapper();
+  @HttpDelete
+  global static ResponseWrapper deleteEmail() {
+    RestRequest reqContext = RestContext.request;
+    ResponseWrapper responseWrapper;
+
     try {
-        RestRequest reqContext = RestContext.request;
-        String requestBody = reqContext.requestBody.toString();
+      // Extract emailId from URL
+      String[] urlSegments = reqContext.requestURI.split('/');
+      System.debug('URL Segments: ' + JSON.serialize(urlSegments));
+      System.debug('URL Segments 0: ' + urlSegments[0]);
+      System.debug('URL Segments: 1' + urlSegments[1]);
+      System.debug('URL Segments: 2' + urlSegments[2]);
+      System.debug('URL Segments: 3' + urlSegments[3]);
+      if (urlSegments.size() < 3) {
+        throw new IllegalArgumentException('Email ID is missing in the URL.');
+      }
 
-        // Deserialize the JSON body into a Map
-        Map<String, Object> params = (Map<String, Object>) JSON.deserializeUntyped(requestBody);
+      // Decode the emailId (multiple times if necessary)
+      String emailId = urlSegments[3];
+      emailId = EncodingUtil.urlDecode(emailId, 'UTF-8'); // Decode URL
 
-        // Extract parameters
-        String toAddress = (String) params.get('toAddress');
-        String subject = (String) params.get('subject');
-        String bodyContent = (String) params.get('bodyContent');
-        String fileName = (String) params.get('fileName');
-        String fileType = (String) params.get('fileType');
-        String base64Content = (String) params.get('base64Content');
-        String accessToken = OutlookEmailService.getAccessToken();
-        String endpoint = 'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/sendMail';
+      // Validate emailId
+      if (String.isBlank(emailId)) {
+        throw new IllegalArgumentException('Email ID cannot be null or empty.');
+      }
 
-        // Construct the email payload
-        Map<String, Object> message = new Map<String, Object>{
-            'subject' => subject,
-            'body' => new Map<String, Object>{
-                'contentType' => 'Text',
-                'content' => bodyContent
-            },
-            'toRecipients' => new List<Object>{
-                new Map<String, Object>{
-                    'emailAddress' => new Map<String, Object>{
-                        'address' => toAddress
-                    }
-                }
-            }
-        };
+      // Fetch access token
+      String accessToken = OutlookEmailService.getAccessToken();
+      if (String.isBlank(accessToken)) {
+        //throw new Exception('Access token is missing or invalid.');
+      }
 
-        // Attachments are added if base64Content exists
-        if (String.isNotBlank(base64Content)) {
-            message.put('attachments', new List<Object>{
-                new Map<String, Object>{
-                    '@odata.type' => '#microsoft.graph.fileAttachment',
-                    'name' => fileName,
-                    'contentType' => fileType,
-                    'contentBytes' => base64Content
-                }
-            });
-        }
+      // Construct API endpoint
+      String endpoint =
+        'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/messages/' +
+        emailId;
 
-        // Final payload
-        Map<String, Object> emailPayload = new Map<String, Object>{
-            'message' => message,
-            'saveToSentItems' => true
-        };
+      // Create HTTP request to delete the email
+      HttpRequest req = new HttpRequest();
+      req.setEndpoint(endpoint);
+      req.setMethod('DELETE');
+      req.setHeader('Authorization', 'Bearer ' + accessToken);
 
-        // Prepare HTTP request
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(endpoint);
-        req.setMethod('POST');
-        req.setHeader('Authorization', 'Bearer ' + accessToken);
-        req.setHeader('Content-Type', 'application/json');
-        req.setBody(JSON.serialize(emailPayload));
+      // Send the request
+      Http http = new Http();
+      HttpResponse res = http.send(req);
 
-        // Send the request
-        Http http = new Http();
-        HttpResponse res = http.send(req);
-
-        // Return success response
+      // Process the response
+      if (res.getStatusCode() == 204) {
+        // No Content
+        System.debug('Email deleted successfully.');
         responseWrapper = new ResponseWrapper(
-            res.getStatus(),
-            null,
-            res.getStatusCode(),
-            res.getBody()
+          'Success',
+          null,
+          res.getStatusCode(),
+          'Email deleted successfully.'
         );
-
+      } else {
+        System.debug('Failed to delete email. Response: ' + res.getBody());
+        responseWrapper = new ResponseWrapper(
+          'Failure',
+          null,
+          res.getStatusCode(),
+          res.getBody()
+        );
+      }
+    } catch (IllegalArgumentException e) {
+      System.debug('Invalid input: ' + e.getMessage());
+      return createErrorResponse(e.getMessage(), 400);
     } catch (Exception e) {
-        return createErrorResponse('Email Failed to Send: ' + e.getMessage(), 500);
+      System.debug('Error deleting email: ' + e.getMessage());
+      return createErrorResponse(
+        'Error deleting email: ' + e.getMessage(),
+        500
+      );
     }
 
     return responseWrapper;
-}
+  }
+
+  @HttpPost
+  global static ResponseWrapper sendEmail() {
+    ResponseWrapper responseWrapper = new ResponseWrapper();
+    try {
+      RestRequest reqContext = RestContext.request;
+      String requestBody = reqContext.requestBody.toString();
+
+      // Deserialize the JSON body into a Map
+      Map<String, Object> params = (Map<String, Object>) JSON.deserializeUntyped(
+        requestBody
+      );
+
+      // Extract parameters
+      String toAddress = (String) params.get('toAddress');
+      String subject = (String) params.get('subject');
+      String bodyContent = (String) params.get('bodyContent');
+      String fileName = (String) params.get('fileName');
+      String fileType = (String) params.get('fileType');
+      String base64Content = (String) params.get('base64Content');
+      String accessToken = OutlookEmailService.getAccessToken();
+      String endpoint = 'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/sendMail';
+
+      // Construct the email payload
+      Map<String, Object> message = new Map<String, Object>{
+        'subject' => subject,
+        'body' => new Map<String, Object>{
+          'contentType' => 'Text',
+          'content' => bodyContent
+        },
+        'toRecipients' => new List<Object>{
+          new Map<String, Object>{
+            'emailAddress' => new Map<String, Object>{ 'address' => toAddress }
+          }
+        }
+      };
+
+      // Attachments are added if base64Content exists
+      if (String.isNotBlank(base64Content)) {
+        message.put(
+          'attachments',
+          new List<Object>{
+            new Map<String, Object>{
+              '@odata.type' => '#microsoft.graph.fileAttachment',
+              'name' => fileName,
+              'contentType' => fileType,
+              'contentBytes' => base64Content
+            }
+          }
+        );
+      }
+
+      // Final payload
+      Map<String, Object> emailPayload = new Map<String, Object>{
+        'message' => message,
+        'saveToSentItems' => true
+      };
+
+      // Prepare HTTP request
+      HttpRequest req = new HttpRequest();
+      req.setEndpoint(endpoint);
+      req.setMethod('POST');
+      req.setHeader('Authorization', 'Bearer ' + accessToken);
+      req.setHeader('Content-Type', 'application/json');
+      req.setBody(JSON.serialize(emailPayload));
+
+      // Send the request
+      Http http = new Http();
+      HttpResponse res = http.send(req);
+
+      // Return success response
+      responseWrapper = new ResponseWrapper(
+        res.getStatus(),
+        null,
+        res.getStatusCode(),
+        res.getBody()
+      );
+    } catch (Exception e) {
+      return createErrorResponse(
+        'Email Failed to Send: ' + e.getMessage(),
+        500
+      );
+    }
+
+    return responseWrapper;
+  }
 
   // Helper function to construct the request body based on action
   private static String getActionBody(String action) {

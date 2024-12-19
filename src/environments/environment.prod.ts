@@ -10,7 +10,8 @@ export const environment = {
     redirectUri:
       'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/',
     apiVersion: 'v62.0', // Use the latest version
-    salesforceApiBaseUrl:'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest'
+    salesforceApiBaseUrl:
+      'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest'
   },
-  huggingFaceApiKey: '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',  // Add this line
+  huggingFaceApiKey: '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' // Add this line
 };

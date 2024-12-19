@@ -162,10 +162,22 @@ export class SalesforceService {
       );
   }
 
-  sendEmail(to: string, subject: string, body: string,fileName:string,
-    fileType:string,
-    base64Content:string): Observable<any> {
-    const payload = { toAddress: to, subject, bodyContent: body ,fileName:fileName,fileType:fileType,base64Content:base64Content};
+  sendEmail(
+    to: string,
+    subject: string,
+    body: string,
+    fileName: string,
+    fileType: string,
+    base64Content: string
+  ): Observable<any> {
+    const payload = {
+      toAddress: to,
+      subject,
+      bodyContent: body,
+      fileName: fileName,
+      fileType: fileType,
+      base64Content: base64Content
+    };
     return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(
       map((response) => response),
       catchError((error) => {
@@ -176,6 +188,20 @@ export class SalesforceService {
     //return this.http.post(`${this.baseUrl}/sendEmail`, payload);
   }
 
+  deleteEmail(emailId: string): Observable<any> {
+    const url = `${this.baseUrl}/deleteEmail/${emailId}`;
+
+    return this.http
+      .delete<any>(url, {
+        headers: { Authorization: `Bearer ${this.accessToken}` }
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error deleting email:', error);
+          return throwError(error);
+        })
+      );
+  }
   // getUserEmails(): Observable<any> {
   //   return this.http.get(this.getEmailsUrl, {
   //     headers: { Authorization: `Bearer ${this.accessToken}` },

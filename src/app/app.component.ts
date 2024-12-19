@@ -3,11 +3,13 @@ import { Component, OnInit, OnDestroy ,ViewChild, ElementRef } from '@angular/co
 import { SalesforceService } from '../services/salesforce.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
+import { catchError, switchMap, map, tap } from 'rxjs/operators';
 import {
   SentimentResponse,
   SuggestionsResponse
 } from '../app/suggestion.interface';
 import { Observable, throwError } from 'rxjs';
+import { AnyCatcher } from 'rxjs/internal/AnyCatcher';
 
 interface Email {
   subject: string;
@@ -27,7 +29,6 @@ interface Email {
   styleUrls: ['./app.component.scss', './app.component.css']
 })
 export class AppComponent implements OnInit, OnDestroy {
-
   @ViewChild('textarea') textarea!: ElementRef; // Reference to the textarea
 
   private fileName: string = '';
@@ -35,10 +36,11 @@ export class AppComponent implements OnInit, OnDestroy {
   private base64Content: string = '';
 
   suggestionPosition: { top: number; left: number } | null = null;
+  staticCursonPosition: any;
+  caretPosition: any;
   suggestions: string[] = [];
 
-
-isComposeMode: boolean = false;
+  isComposeMode: boolean = false;
   correctedText = '';
   sentimentAnalysis: SentimentResponse | null = null;
   inlineSuggestion: string | null = null; // Example inline suggestion
@@ -50,12 +52,21 @@ isComposeMode: boolean = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
   emails: any[] = [];
-  filteredEmails: any[] = [];
+  filteredEmails: Email[] = [];
   showDropdown = false;
   emailtoSend = { to: '', subject: '', bodyPreview: '' };
 
   accessToken: string = '';
   selectedEmail: Email | null = null;
+
+  emailData = {
+    id: '',
+    subject: '',
+    bodyPreview: '',
+    sender: '',
+    status: '',
+    flagStatus: ''
+  };
   isComposeModalOpen: boolean = false;
   email = { to: '', subject: '', bodyPreview: '' };
   selectedFilter = 'all';
@@ -83,23 +94,132 @@ isComposeMode: boolean = false;
     document.addEventListener('keydown', this.handleEscapeKey.bind(this));
   }
 
+  sanitizeInput(input: string): string {
+    // console.log('Input HTML:', input); // Log the raw input
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(input, 'text/html');
+    // console.log('Parsed DOM:', doc.body.innerHTML); // Log the parsed DOM structure
+
+    // Function to handle each node
+    const traverseNode = (node: ChildNode): string => {
+      // console.log('Processing node:', node); // Log the current node
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        // console.log('Text node content:', node.textContent); // Log text content
+        return node.textContent || '';
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        // console.log('Element node tag:', element.tagName); // Log tag name
+
+        if (element.tagName === 'BR') {
+          // console.log('Found <br>, replacing with newline'); // Debug <br>
+          return '\n';
+        } else if (element.tagName === 'DIV') {
+          // console.log('Found <div>, processing its children'); // Debug <div>
+          return '\n' + traverseChildren(element);
+        } else {
+          // console.log(
+          //   'Found other element, processing its children:',
+          //   element.tagName
+          // ); // Debug other elements
+          return traverseChildren(element);
+        }
+      }
+      //console.log('Ignoring unsupported node type:', node.nodeType); // Log unsupported nodes
+      return '';
+    };
+
+    // Function to process all children of a node
+    const traverseChildren = (node: HTMLElement): string => {
+      //console.log('Traversing children of:', node.tagName || 'root body'); // Debug children traversal
+      return Array.from(node.childNodes).map(traverseNode).join('');
+    };
+
+    // Start traversal from `doc.body`
+    const sanitizedText = traverseChildren(doc.body).trim();
+    console.log('Sanitized Text:', sanitizedText); // Log the final sanitized text
+    return sanitizedText;
+  }
+
   onContentEditableInput(event: Event) {
+    // const target = event.target as HTMLElement;
+    // this.emailtoSend.bodyPreview = target.innerHTML.trim();
+    // const inputText = this.emailtoSend.bodyPreview;
+
     const target = event.target as HTMLElement;
-    this.emailtoSend.bodyPreview = target.innerHTML.trim();
-    const inputText = this.emailtoSend.bodyPreview;
+    const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+    //const inputText = this.emailtoSend.bodyPreview;
 
     // Clear previous analysis if no input
-    if (inputText.length === 0) {
+    if (sanitizedText.length === 0) {
       this.inlineSuggestion = '';
       return;
     }
 
-    this.analyzeText(inputText);
+    // Adjust suggestion position with offset for normal typing
+    const selection = window.getSelection();
+    const rect = selection?.getRangeAt(0).getBoundingClientRect();
+
+    if (rect) {
+      this.suggestionPosition = {
+        top: rect.bottom + window.scrollY + 6, // 5px offset for regular input
+        left: rect.left + window.scrollX + 10
+      };
+    }
+
+    this.analyzeText(sanitizedText);
   }
 
+  // onContentEditableInput(event: Event) {
+  //   const target = event.target as HTMLElement;
+  //   const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+  //   this.emailtoSend.bodyPreview = sanitizedText;
+
+  //   // Clear previous analysis if no input
+  //   if (sanitizedText.length === 0) {
+  //     this.inlineSuggestion = '';
+  //     return;
+  //   }
+  //   // this.setSuggestionPosition();
+  //   // this.analyzeText(sanitizedText);
+  //   this.trackCursorPosition(event as KeyboardEvent);
+  //   this.analyzeText(sanitizedText);
+  // }
+  setSuggestionPosition() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0); // Get the current range
+    const rect = range.getBoundingClientRect(); // Get the position of the caret
+
+    // Adjust position based on rect and viewport
+    this.suggestionPosition = {
+      top: rect.top + window.scrollY + 6, // Adjust `20` as needed to offset the suggestion
+      left: rect.left + window.scrollX + 10
+    };
+  }
+
+  setSuggestionPositionWithoutOffset() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0); // Get the current range
+    const rect = range.getBoundingClientRect(); // Get the position of the caret
+
+    // Adjust position based on rect and viewport
+    this.suggestionPosition = {
+      top: rect.top + window.scrollY, // Adjust `20` as needed to offset the suggestion
+      left: rect.left + window.scrollX + 1
+    };
+  }
   async analyzeText(text: string) {
     try {
-      const accessToken = ''; // Replace with your token
+      const accessToken = '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'; // Replace with your token
 
       // Request for sentiment analysis
       const sentimentResponse = await fetch(
@@ -108,14 +228,14 @@ isComposeMode: boolean = false;
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`
           },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text })
         }
       );
 
       if (!sentimentResponse.ok) {
-        throw new Error('Failed to fetch sentiment analysis');
+        // throw new Error('Failed to fetch sentiment analysis');
       }
 
       const sentimentData = await sentimentResponse.json();
@@ -128,24 +248,30 @@ isComposeMode: boolean = false;
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${accessToken}`
           },
-          body: inputData,
+          body: inputData
         }
       );
 
       if (!suggestionResponse.ok) {
-        throw new Error('Failed to fetch suggestions');
+        //throw new Error('Failed to fetch suggestions');
       }
 
       const suggestionsData = await suggestionResponse.json();
 
-      this.suggestions = suggestionsData.map((item: any) => text + ' ' + item.token_str);
-      this.currentHighScoreSuggestion = this.suggestions[0];
-      this.inlineSuggestion = this.currentHighScoreSuggestion.replace(text, '');
+      //  this.suggestions[0] = 'one';
+      suggestionsData.map((item: any) => item.token_str.trim());
+      this.inlineSuggestion = this.suggestions[0] || ''; // Take the first suggestion
 
-      // Set suggestion position dynamically
-      this.setSuggestionPosition();
+      // Dynamically adjust suggestion position
+      //this.setSuggestionPosition();
+
+      // this.currentHighScoreSuggestion = this.suggestions[0];
+      // this.inlineSuggestion = this.currentHighScoreSuggestion.replace(text, '');
+
+      // // Set suggestion position dynamically
+      // this.setSuggestionPosition();
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error('Error fetching analysis:', error.message); // Safely accessing `message`
@@ -155,61 +281,170 @@ isComposeMode: boolean = false;
         this.errorMessage = `Analysis failed: An unknown error occurred.`;
       }
     }
-    
-  }
-
-  setSuggestionPosition() {
-    // Placeholder logic for positioning the suggestion, update according to your layout
-    this.suggestionPosition = { top: 50, left: 100 };
   }
 
   insertAtCursor(suggestion: string) {
     const textarea = document.getElementById('body') as HTMLElement;
     const selection = window.getSelection();
-  
+
     if (selection) {
       // Get the current selection range
       const range = selection.getRangeAt(0);
-      
+
       // Remove any selected text (if any)
       range.deleteContents();
-      
+
       // Create a text node with the suggestion
       const suggestionNode = document.createTextNode(suggestion);
-  
+
       // Insert the suggestion at the cursor position
       range.insertNode(suggestionNode);
-  
+
       // Move the cursor after the inserted suggestion
       range.setStartAfter(suggestionNode);
       range.setEndAfter(suggestionNode);
-  
+
       // Update the selection to reflect the new cursor position
       selection.removeAllRanges();
       selection.addRange(range);
-      
+
       // Optionally, scroll the contenteditable div to keep the cursor visible
       textarea.scrollTop = textarea.scrollHeight;
     }
   }
-  
-  
-  
 
   onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Tab' && this.inlineSuggestion) {
-      event.preventDefault();
-      this.insertAtCursor(this.inlineSuggestion);
-      this.inlineSuggestion = ''; // Reset suggestion after applying
+      event.preventDefault(); // Stop default behavior (Tab behavior)
+
+      //this.setSuggestionPositionWithoutOffset();
+
+      // Set the suggestion position based on the cursor location, without offset for Tab
+
+      // Apply the suggestion at the caret position
+      const target = event.target as HTMLElement;
+      console.log('target.innerHTML.trim() before ' + target.innerHTML.trim());
+      const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+      console.log('sanitizedText before ' + sanitizedText);
+
+      const textBefore = sanitizedText;
+      const { row, column } = this.caretPosition;
+      const lines = textBefore.split('\n');
+      console.log('row in final is ' + row);
+      console.log('lines in final is ' + lines);
+      let lineRow = 0;
+      if (row <= 0) {
+        lineRow = row; // If the row is 0 or less, use the first line
+      } else if (row - 1 < lines.length) {
+        lineRow = row - 1; // Use the previous row if within bounds
+      }
+      if (lineRow >= 0 && lineRow < lines.length) {
+        const currentLine = lines[lineRow];
+        const beforeCaret = currentLine.substring(0, column);
+        const afterCaret = currentLine.substring(column);
+
+        // Update the current line with the suggestion
+        lines[lineRow] =
+          beforeCaret + ' ' + this.inlineSuggestion + ' ' + afterCaret;
+      }
+      const updatedText = lines.join('\n');
+      console.log('Updated Text with Suggestion:', updatedText);
+      target.innerHTML = lines
+        .map((line) => `<div>${line}</div>`) // Wrap each line in a <div>
+        .join('');
+      this.inlineSuggestion = '';
+      this.suggestions = [];
+      // Move caret to the end of the inserted text
+      this.moveCaretToEnd(target);
     }
+  }
+  applySuggestionAtCaret(textBefore: string, inlineSuggestion: string) {
+    console.log('sanitizedText After ' + textBefore);
+    const selection = this.staticCursonPosition;
+    if (!selection || selection.rangeCount === 0) {
+      return textBefore; // No selection, return unchanged text
+    }
+
+    const range = selection.getRangeAt(0);
+    const caretOffset = range.startOffset;
+
+    // Insert the suggestion into the text at the caret position
+    const beforeCaret = textBefore.substring(0, caretOffset);
+    const afterCaret = textBefore.substring(caretOffset);
+    return beforeCaret + ' ' + inlineSuggestion + afterCaret;
+  }
+
+  trackCaretRowAndColumn() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return null; // No selection
+    }
+
+    const range = selection.getRangeAt(0);
+    const caretRect = range.getBoundingClientRect();
+
+    // Get the bounding rectangle of the content-editable element
+    const contentEditable = document.querySelector('.rich-text-area');
+    if (!contentEditable) {
+      return null;
+    }
+
+    const containerRect = contentEditable.getBoundingClientRect();
+
+    // Calculate row and column
+    const row = Math.floor(
+      (caretRect.top - containerRect.top) / caretRect.height
+    );
+    const column = caretRect.left - containerRect.left;
+    this.caretPosition = { row, column };
+    return { row, column };
+  }
+
+  // }
+  // }
+
+  // applySuggestionAtCaret(text: string, suggestion: string): string {
+  //   //const selection = window.getSelection();
+  //   const selection = this.staticCursonPosition;
+  //   if (!selection || selection.rangeCount === 0) {
+  //     return text; // No selection, return unchanged text
+  //   }
+
+  //   const range = selection.getRangeAt(0);
+  //   const caretOffset = range.startOffset;
+
+  //   // Insert the suggestion into the text at the caret position
+  //   const beforeCaret = text.substring(0, caretOffset);
+  //   const afterCaret = text.substring(caretOffset);
+  //   return beforeCaret + suggestion + afterCaret;
+  // }
+
+  moveCaretToEnd(element: HTMLElement) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+
+    // Move the caret to the end of the element's content
+    range.selectNodeContents(element);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
   }
 
   trackCursorPosition(event: KeyboardEvent) {
     const selection = window.getSelection();
-    const range = selection?.getRangeAt(0);
-    if (range) {
-      this.cursorPosition = range.endOffset;
+    this.staticCursonPosition = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      return;
     }
+
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    // Update suggestion position below the caret
+    this.suggestionPosition = {
+      top: rect.bottom + window.scrollY, // 5px offset
+      left: rect.left + window.scrollX
+    };
   }
 
   toggleBold(event: Event) {
@@ -242,25 +477,25 @@ isComposeMode: boolean = false;
   toggleDropdown() {
     this.showDropdown = !this.showDropdown;
   }
-  
+
   // triggerFileInput() {
   //   const fileInput = document.getElementById('file-input') as HTMLInputElement;
   //   if (fileInput) {
   //     fileInput.click();
   //   }
   // }
-  
+
   // onFileSelected(event: any) {
   //   // Handle file selection logic
   //   const file = event.target.files[0];
   //   console.log('File selected:', file);
   // }
-  
+
   addEmoji() {
     console.log('Add Emoji clicked');
     // Implement emoji picker logic
   }
-  
+
   scheduleEmail() {
     console.log('Schedule Email clicked');
     // Implement email scheduling logic
@@ -329,7 +564,6 @@ isComposeMode: boolean = false;
   // }
 
   sendEmail() {
-   
     this.salesforceService
       .sendEmail(
         this.emailtoSend.to,
@@ -348,8 +582,67 @@ isComposeMode: boolean = false;
           console.error('Error:', JSON.stringify(error));
         }
       );
-	  this.isComposeMode = false; // Return to email list
+    this.isComposeMode = false; // Return to email list
   }
+  deleteEmail(emailData: any): void {
+    console.log('Delete button clicked for email:', emailData);
+    console.log('Delete button clicked for email:', emailData.Id);
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      this.accessToken = token;
+    } else {
+      this.generateAccessToken();
+    }
+    console.log('this.accessToken button clicked for email:', this.accessToken);
+    const url = `https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailService/deleteEmail/${emailData.Id}`;
+
+    // return this.http
+    //   .delete<any>(url, {
+    //     headers: { Authorization: `Bearer ${this.accessToken}` }
+    //   })
+    //   .pipe(
+    //     tap((response) => {
+    //       console.log('Email deleted successfully:', response);
+    //     }),
+    //     catchError((error) => {
+    //       console.error('Error deleting email:', error);
+    //       return throwError(error);
+    //     })
+    //   );
+
+    this.salesforceService.deleteEmail(emailData.Id).subscribe(
+      (response) => {
+        console.log('Email sent successfully! ' + JSON.stringify(response));
+        console.log('Email sent successfully! ' + response);
+      },
+      (error) => {
+        console.error('Error:', JSON.stringify(error));
+      }
+    );
+    // this.isComposeMode = false; // Return to email list
+  }
+
+  // deleteEmail(emailId: string): Observable<any> {
+  //   console.log('Inside API call delete, emailId:', emailId);
+  //   const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/deleteEmail/${emailId}`;
+
+  //   const headers = new HttpHeaders({
+  //     Authorization: `Bearer ${this.accessToken}`,
+  //     'Content-Type': 'application/json'
+  //   });
+
+  //   return this.http.delete<any>(endpoint, { headers }).pipe(
+  //     // Success response handling
+  //     tap((response) => {
+  //       console.log('Email deleted successfully:', response);
+  //     }),
+  //     catchError((error) => {
+  //       console.error('Error deleting email:', error);
+  //       this.errorMessage = `Error deleting email: ${error.message || 'Unknown error'}`;
+  //       return throwError(error);
+  //     })
+  //   );
+  // }
 
   loadEmails(folder: string = 'Inbox'): void {
     const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/*`;
@@ -408,9 +701,9 @@ isComposeMode: boolean = false;
 
   viewEmailDetails(email: any): void {
     this.selectedEmail = email;
-	    this.isComposeMode = false; // Exit compose mode
+    this.isComposeMode = false; // Exit compose mode
   }
-openCompose() {
+  openCompose() {
     this.isComposeMode = true; // Enable compose mode
     this.selectedEmail = null; // Hide email details
     this.emailtoSend = { to: '', subject: '', bodyPreview: '' }; // Reset form
@@ -456,14 +749,13 @@ openCompose() {
   changeTextColor() {
     console.log('Change text color functionality not implemented yet.');
   }
-  
 
   // onFileSelected(event: Event) {
   //   const input = event.target as HTMLInputElement;
 
   //   if (input.files && input.files.length > 0) {
   //     const file = input.files[0]; // Get the selected file
-      
+
   //     const reader = new FileReader();
 
   //     reader.onload = () => {
@@ -497,22 +789,22 @@ openCompose() {
 
     console.log('Text to correct:', this.emailtoSend.bodyPreview);
 
-    this.salesforceService.correctGrammar(this.emailtoSend.bodyPreview).subscribe({
-      next: (response) => {
-        console.log('Grammar correction response:', response);
-        this.correctedText = response;
-        this.errorMessage = '';
-      },
-      error: (err) => {
-        console.error('Error during grammar correction:', err);
-        this.errorMessage = 'Failed to correct grammar. Please try again.';
-      }
-    });
+    this.salesforceService
+      .correctGrammar(this.emailtoSend.bodyPreview)
+      .subscribe({
+        next: (response) => {
+          console.log('Grammar correction response:', response);
+          this.correctedText = response;
+          this.errorMessage = '';
+        },
+        error: (err) => {
+          console.error('Error during grammar correction:', err);
+          this.errorMessage = 'Failed to correct grammar. Please try again.';
+        }
+      });
 
     console.log('Exiting correctGrammar method...');
   }
-
-  
 
   fetchSuggestions(inputValue: string) {
     if (!inputValue) {
@@ -520,13 +812,13 @@ openCompose() {
       this.inlineSuggestion = '';
       return;
     }
-
   }
 
-  
-
   calculateSuggestionPosition(textarea: HTMLTextAreaElement) {
-    const textBeforeCursor = textarea.value.substring(0, textarea.selectionStart);
+    const textBeforeCursor = textarea.value.substring(
+      0,
+      textarea.selectionStart
+    );
 
     // Create a temporary div to measure cursor position
     const ghostDiv = document.createElement('div');
@@ -540,7 +832,7 @@ openCompose() {
       font: style.font,
       width: style.width,
       lineHeight: style.lineHeight,
-      padding: style.padding,
+      padding: style.padding
     });
 
     ghostDiv.textContent = textBeforeCursor;
@@ -558,19 +850,15 @@ openCompose() {
     // Update the suggestionPosition property with the relative position
     this.suggestionPosition = {
       top: markerPosition.top - textareaPosition.top,
-      left: markerPosition.left - textareaPosition.left,
+      left: markerPosition.left - textareaPosition.left
     };
 
     document.body.removeChild(ghostDiv);
   }
- 
-  
 
   selectSuggestion(suggestion: string): void {
     this.emailtoSend.bodyPreview += ` ${suggestion}`;
   }
-
-  
 
   updateEmail(emailId: string, action: string) {
     const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/*`;
