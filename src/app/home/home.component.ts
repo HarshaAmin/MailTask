@@ -45,6 +45,7 @@ export class HomeComponent implements AfterViewInit {
   selectedEmail: Email | null = null;
   currentTypeSelection: string = 'all';
   currentCategorySelection: string = 'primary';
+  categories: string[] = [];
 
   selectedFilter = 'all'; // Default filter
   uEmail = 'SendTech@novigosolutions.com'; // Default email if needed
@@ -63,12 +64,7 @@ export class HomeComponent implements AfterViewInit {
       this.generateAccessToken();
     }
 
-    // Load emails for Inbox folder
-    this.loadEmails('Inbox', 'fetch');
-    // Optionally load user info
-    //this.loadUserInfo();
-
-    // Add event listener for ESC key to close compose modal
+    this.loadEmails('Inbox');
   }
 
   ngAfterViewInit(): void {
@@ -87,32 +83,6 @@ export class HomeComponent implements AfterViewInit {
   markAsRead(email: Email): void {
     email.status = 'read';
     this.filterEmails(this.selectedFilter); // Reapply the filter
-  }
-
-  loadEmails(folder: string = 'Inbox', action: string): void {
-    const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/getUserEmails/`;
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`,
-      'Content-Type': 'application/json'
-    });
-
-    const userId = 'Send.Tech@novigo-solutions.com'; // Default user if not available
-
-    this.http
-      .get(`${endpoint}?userId=${userId}&folder=${folder}&action=${action}`, {
-        headers
-      })
-      .subscribe(
-        (data: any) => {
-          console.log('Emails loaded:', data);
-          this.emails = data.emails;
-          this.filteredEmails = data.emails;
-        },
-        (error) => {
-          console.error('Error loading emails:', error);
-          this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
-        }
-      );
   }
 
   filterEmails(filter: string): void {
@@ -211,34 +181,6 @@ export class HomeComponent implements AfterViewInit {
     console.log('User logged in with access token:', token);
   }
 
-  // Define loadInbox method
-  loadInbox(): void {
-    console.log('Loading Inbox...');
-    // Call your service to load inbox emails
-    this.loadEmails('Inbox', 'fetch');
-  }
-
-  // Define loadSent method
-  loadSent(): void {
-    console.log('Loading Sent emails...');
-    // Call your service to load sent emails
-    this.loadEmails('SentItems', 'fetch');
-  }
-  // Define Drafts method
-  loadDraft(): void {
-    console.log('Loading Draft emails...');
-    // Call your service to load sent emails
-    this.loadEmails('Drafts', 'fetch');
-  }
-
-  // Define Trash method
-  loadTrash(): void {
-    console.log('Loading Trash emails...');
-    // Call your service to load sent emails
-    this.loadEmails('DeletedItems', 'fetch');
-  }
-
-  // Log out method
   onLogout(): void {
     this.salesforceService.clearAccessToken();
     console.log('User logged out');
@@ -274,5 +216,43 @@ export class HomeComponent implements AfterViewInit {
   openEmailModal() {
     this.commonService.openEmailModal = true;
     this.commonService.toggleEmailSection = true;
+  }
+
+  loadEmails(folder: string = 'Inbox'): void {
+    const endpoint = `${environment.salesforce.salesforceApiBaseUrl}/OutlookEmailService/*`;
+    const endpointCatergory = `${environment.salesforce.salesforceApiBaseUrl}/EmailCategorizationEndpoint/*`;
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.accessToken}`,
+      'Content-Type': 'application/json'
+    });
+
+    const userId = 'Send.Tech@novigo-solutions.com';
+
+    this.http
+      .get(`${endpoint}?userId=${userId}&folder=${folder}`, { headers })
+      .subscribe(
+        (data: any) => {
+          console.log('Emails loaded:', data);
+          this.emails = data.emails;
+          this.filteredEmails = data.emails;
+
+          const endpointCategory = `${environment.salesforce.salesforceApiBaseUrl}/services/apexrest/api/parse-emails`;
+          this.http.post(endpointCategory, data.emails, { headers }).subscribe(
+            (data: any) => {
+              console.log('Emails loaded:', data);
+              console.log('Categories:', data); // Assuming the response is an array or object of categories
+              this.categories = data;
+            },
+            (error) => {
+              console.error('Error loading emails:', error);
+              this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
+            }
+          );
+        },
+        (error) => {
+          console.error('Error loading emails:', error);
+          this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
+        }
+      );
   }
 }

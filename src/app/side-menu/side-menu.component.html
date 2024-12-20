@@ -1,8 +1,9 @@
 <div class="mt-5">
   <ul class="sidebar-menu-items">
-    <li class="mb-3"><a href="#">Inbox</a></li>
-    <li class="mb-3"><a href="#">Drafts</a></li>
-    <li class="mb-3"><a href="#">Spam</a></li>
+    <li class="mb-3"><a (click)="loadInbox()">Inbox</a></li>
+    <li class="mb-3"><a (click)="loadSent()">Sent</a></li>
+    <li class="mb-3"><a (click)="loadDraft()">Draft</a></li>
+    <li class="mb-3"><a (click)="loadTrash()">Trash</a></li>
   </ul>
   <button class="btn btn-outline-primary mt-5" (click)="openEmailModal()">
     Compose Email
