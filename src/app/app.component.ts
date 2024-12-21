@@ -38,11 +38,41 @@ interface Email {
 export class AppComponent implements OnInit, OnDestroy {
   @ViewChild('textarea') textarea!: ElementRef; // Reference to the textarea
 
+  private suggestionTimeout: any;
+  savedRange: Range | null = null;
+
+  // Other properties
+  popupPosition = { top: '0px', left: '0px' };
+  showColorPalette = false;
+
+  inlineSuggestionVisible = false;
+  inlineSuggestion: string | null = null;
+  suggestionPosition: { top: number; left: number } | null = null;
+
+  textColor: string = 'black'; // Default text color
+  colorOptions = [
+    '#ff0000',
+    '#00ff00',
+    '#0000ff',
+    '#ffff00',
+    '#ff00ff',
+    '#00ffff'
+  ];
+
+  colors: string[] = [
+    '#ff0000',
+    '#00ff00',
+    '#0000ff',
+    '#ffff00',
+    '#ff00ff',
+    '#00ffff'
+  ];
+
   private fileName: string = '';
   private fileType: string = '';
   private base64Content: string = '';
   showEmojiPicker = false;
-  suggestionPosition: { top: number; left: number } | null = null;
+  //suggestionPosition: { top: number; left: number } | null = null;
   staticCursonPosition: any;
   caretPosition: any;
   suggestions: string[] = [];
@@ -50,7 +80,7 @@ export class AppComponent implements OnInit, OnDestroy {
   isComposeMode: boolean = false;
   correctedText = '';
   sentimentAnalysis: SentimentResponse | null = null;
-  inlineSuggestion: string | null = null; // Example inline suggestion
+  //inlineSuggestion: string | null = null; // Example inline suggestion
   cursorPosition: number = 0; // Declare cursorPosition to track the cursor index
 
   currentHighScoreSuggestion: string = ''; // Best suggestion to apply
@@ -67,7 +97,7 @@ export class AppComponent implements OnInit, OnDestroy {
   selectedEmail: Email | null = null;
   emojiPickerVisible = false;
   selectedEmoji: string = '';
-  popupPosition: any = {}; // Position of the popup
+  //popupPosition: { top: string; left: string } = { top: '0px', left: '0px' };
   emailData = {
     id: '',
     subject: '',
@@ -114,6 +144,111 @@ export class AppComponent implements OnInit, OnDestroy {
 
   toggleEmojiPicker() {
     this.showEmojiPicker = !this.showEmojiPicker;
+  }
+
+  toggleColorPalette() {
+    console.log('toggle color palette clicked');
+    this.showColorPalette = !this.showColorPalette;
+  }
+
+  openColorPicker(event: MouseEvent) {
+    // Save the current selection
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      this.savedRange = selection.getRangeAt(0); // Save the current selection range
+    }
+
+    // Get the button and its position for positioning the color picker
+    const button = event.currentTarget as HTMLElement;
+    if (button && button.classList.contains('btn-action')) {
+      const buttonRect = button.getBoundingClientRect();
+      this.popupPosition = {
+        top: buttonRect.bottom + 'px',
+        left: buttonRect.left + 'px'
+      };
+      console.log('Color picker position set to:', this.popupPosition);
+    } else {
+      console.warn('Button not found in event.currentTarget.');
+      return; // Exit if button is not valid
+    }
+
+    // Toggle visibility of the color picker
+    this.showColorPalette = !this.showColorPalette;
+
+    // Auto-close after 3 seconds
+    if (this.showColorPalette) {
+      setTimeout(() => {
+        this.showColorPalette = false;
+        console.log('Color picker closed automatically after timeout');
+      }, 3000);
+    }
+  }
+  applyColorToSelection(color: string) {
+    const selection = window.getSelection();
+
+    // Safely check if selection is not null and rangeCount > 0
+    if (!selection || !selection.rangeCount) {
+      console.warn('No selection found!');
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString(); // Get the selected text
+    console.log('Selected Text:', selectedText); // Log the selected text
+
+    const textarea = document.getElementById('body') as HTMLElement;
+
+    const parentElement =
+      range.commonAncestorContainer.nodeType === 3
+        ? range.commonAncestorContainer.parentElement
+        : (range.commonAncestorContainer as HTMLElement);
+
+    // Ensure the selection is within the contenteditable area
+    if (textarea.contains(parentElement)) {
+      const span = document.createElement('span');
+      span.style.color = color; // Apply the selected color
+      span.appendChild(range.extractContents()); // Wrap selected text in a span
+      range.insertNode(span); // Insert the styled span
+
+      // Merge adjacent spans to avoid unnecessary nesting
+      span.normalize();
+
+      console.log(`Applied color ${color} to selection.`);
+    } else {
+      console.warn('Selection is not within the editable area.');
+    }
+
+    // Close the color palette after color is applied
+    this.showColorPalette = false;
+  }
+  
+
+  // Toggle visibility of color palette
+  toggleColorPicker(event: MouseEvent) {
+    const button = event.target as HTMLElement;
+    const buttonRect = button.getBoundingClientRect();
+
+    // Set the position of the popup to be below the button
+    this.popupPosition = {
+      top: `${buttonRect.bottom + window.scrollY}px`, // Position below the button
+      left: `${buttonRect.left + window.scrollX}px` // Align with the left edge of the button
+    };
+
+    console.log('Color Picker position set to:', this.popupPosition);
+
+    // Toggle the color picker visibility
+    this.showColorPalette = !this.showColorPalette;
+  }
+
+  getSelectedRange(): Range | null {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      console.log('Selected Range:', range);
+      console.log('Selected Text:', range.toString());
+      return range;
+    }
+    return null;
   }
 
   sanitizeInput(input: string): string {
@@ -266,6 +401,7 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log('inside onContentedit');
     const target = event.target as HTMLElement;
     const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+    console.log('sanitizedText ' + sanitizedText);
     //const inputText = this.emailtoSend.bodyPreview;
 
     // Clear previous analysis if no input
@@ -279,15 +415,28 @@ export class AppComponent implements OnInit, OnDestroy {
     const rect = selection?.getRangeAt(0).getBoundingClientRect();
 
     if (rect) {
+      this.inlineSuggestion = this.getRandomSuggestion();
       this.suggestionPosition = {
         top: rect.bottom + window.scrollY, // 5px offset for regular input
         left: rect.left + window.scrollX
       };
-    }
-    console.log('inside onContentedit 170');
-    this.inlineSuggestion = this.getRandomSuggestion();
-  }
+      this.inlineSuggestionVisible = true;
 
+      // Clear any existing timeout to prevent multiple timeouts from stacking
+      if (this.suggestionTimeout) {
+        clearTimeout(this.suggestionTimeout);
+      }
+
+      // Set a new timeout to hide the suggestion after 3 seconds
+      this.suggestionTimeout = setTimeout(() => {
+        this.inlineSuggestionVisible = false;
+        this.inlineSuggestion = null;
+        this.suggestionPosition = null;
+      }, 3000); // 3000 milliseconds = 3 seconds
+      console.log('inside onContentedit 170');
+      this.inlineSuggestion = this.getRandomSuggestion();
+    }
+  }
   getRandomSuggestion() {
     const dummySuggestions = [
       'Hello',
@@ -718,18 +867,31 @@ export class AppComponent implements OnInit, OnDestroy {
   // }
 
   // Toggle emoji picker visibility
-  openEmojiPicker() {
-    this.emojiPickerVisible = !this.emojiPickerVisible;
+  openEmojiPicker(event: MouseEvent) {
+    setTimeout(() => {
+      // Toggle the visibility of the emoji picker
+      this.emojiPickerVisible = !this.emojiPickerVisible;
 
-    if (this.emojiPickerVisible) {
-      const button = document.querySelector('.btn-action') as HTMLElement;
-      const buttonRect = button.getBoundingClientRect();
+      if (this.emojiPickerVisible) {
+        // Calculate and set the popup position relative to the button
+        const button = document.querySelector('.btn-action') as HTMLElement;
+        const buttonRect = button.getBoundingClientRect();
+        this.popupPosition = {
+          top: buttonRect.bottom + 'px', // Position below the button
+          left: buttonRect.left + 'px' // Align with the left edge of the button
+        };
 
-      this.popupPosition = {
-        top: buttonRect.bottom + 'px', // Position below the button
-        left: buttonRect.left + 'px' // Align with the left edge of the button
-      };
-    }
+        console.log('Emoji picker opened at position:', this.popupPosition);
+
+        // Auto-close the emoji picker after 3 seconds
+        setTimeout(() => {
+          this.emojiPickerVisible = false;
+          console.log('Emoji picker closed automatically after timeout');
+        }, 3000); // 3000ms = 3 seconds
+      } else {
+        console.log('Emoji picker closed');
+      }
+    }, 30); // 30ms delay before toggling visibility
   }
 
   // Select an emoji
@@ -1126,9 +1288,6 @@ export class AppComponent implements OnInit, OnDestroy {
   //     // Handle the file selection here
   //   }
   // }
-  changeTextColor() {
-    console.log('Change text color functionality not implemented yet.');
-  }
 
   // onFileSelected(event: Event) {
   //   const input = event.target as HTMLInputElement;
