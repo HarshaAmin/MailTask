@@ -23,6 +23,7 @@ interface Email {
   sender: string;
   receivedDateTime: string;
   bodyPreview: string;
+  body: string;
   status: string;
   id: string;
   isRead: boolean;
@@ -104,7 +105,8 @@ export class AppComponent implements OnInit, OnDestroy {
     bodyPreview: '',
     sender: '',
     status: '',
-    flagStatus: ''
+    flagStatus: '',
+    body: ''
   };
   isComposeModalOpen: boolean = false;
   email = { to: '', subject: '', bodyPreview: '' };
@@ -221,7 +223,6 @@ export class AppComponent implements OnInit, OnDestroy {
     // Close the color palette after color is applied
     this.showColorPalette = false;
   }
-  
 
   // Toggle visibility of color palette
   toggleColorPicker(event: MouseEvent) {
@@ -535,7 +536,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
       // Request for sentiment analysis
       const sentimentResponse = await fetch(
-        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
+        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentimen',
         {
           method: 'POST',
           headers: {
@@ -822,7 +823,9 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   toggleBold(event: Event) {
-    document.execCommand('bold');
+    // document.execCommand('bold');
+    console.log(document.execCommand('bold'));
+
     this.inlineSuggestion = '';
   }
 

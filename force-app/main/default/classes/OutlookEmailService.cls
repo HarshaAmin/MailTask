@@ -23,6 +23,8 @@ public class OutlookEmailService {
     public String bodyPreview;
     @AuraEnabled
     public String receivedDateTime;
+     @AuraEnabled
+    public String body;
     @AuraEnabled
     public String status;
     @AuraEnabled
@@ -165,6 +167,11 @@ public class OutlookEmailService {
           .get('address');
       }
       email.bodyPreview = (String) msgMap.get('bodyPreview');
+      
+      Object emlBody = (Object) msgMap.get('body');
+      Map<String,Object> cBody = (Map<String,Object>)emlBody;
+      email.body = cBody.get('content').toString();
+
       email.receivedDateTime = (String) msgMap.get('receivedDateTime');
       email.status = msgMap.get('isRead') == true ? 'read' : 'unread';
       email.Id = (String) msgMap.get('id');

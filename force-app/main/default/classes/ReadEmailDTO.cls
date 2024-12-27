@@ -33,6 +33,7 @@ public class ReadEmailDTO {
     public cls_bccRecipients[] bccRecipients; // BCC recipients
     public cls_replyTo[] replyTo; // Reply to addresses
     public flag flag; // Email flag status
+    public 
   }
 
   public class cls_categories {
