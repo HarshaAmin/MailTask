@@ -8,7 +8,7 @@
   <p><b>To: </b> {{ uEmail }}</p>
   <p>
     <b>Body: </b>
-    <span [innerHTML]="selectedEmail.bodyPreview"></span>
+    <span class="text-break" [innerHTML]="selectedEmail.body"></span>
   </p>
 } @else {
   <p>Please select a mail.</p>
