@@ -1,81 +1,71 @@
-<div class="home-body">
-  @if (!commonService.isNative) {
-    <div class="app-sidemenu">
-      <app-side-menu (loadEmailEmit)="loadEmails($event)"></app-side-menu>
-    </div>
-  }
-  <div class="wrapper-mail-section">
-    <h3 class="my-3">Email Dashboad</h3>
-    <div class="social-group">
-      <div class="social-item active" id="primary">
-        <div class="social-items-header">
-          <i class="fa-regular fa-comment"></i>
-          <p class="m-0">Primary</p>
-        </div>
-        <div class="bottom"></div>
+<div class="position-relative">
+  <div class="home-body">
+    @if (!commonService.isNative) {
+      <div class="app-sidemenu">
+        <app-side-menu (loadEmailEmit)="loadEmails($event)"></app-side-menu>
       </div>
-      <div class="social-item" id="promotions">
-        <div class="social-items-header">
-          <i class="fa-solid fa-rectangle-ad"></i>
-          <p class="m-0">Promotions</p>
+    }
+    <div class="wrapper-mail-section">
+      <h3 class="my-3">Email Dashboad</h3>
+      <div class="social-group">
+        <div class="social-item active" id="primary">
+          <div class="social-items-header">
+            <i class="fa-regular fa-comment"></i>
+            <p class="m-0">Primary</p>
+          </div>
+          <div class="bottom"></div>
         </div>
-        <div class="bottom"></div>
-      </div>
-      <div class="social-item" id="social">
-        <div class="social-items-header">
-          <i class="fa-brands fa-bluesky"></i>
-          <p class="m-0">Social</p>
+        <div class="social-item" id="promotions">
+          <div class="social-items-header">
+            <i class="fa-solid fa-rectangle-ad"></i>
+            <p class="m-0">Promotions</p>
+          </div>
+          <div class="bottom"></div>
         </div>
-        <div class="bottom"></div>
-      </div>
-      <div class="social-item" id="updates">
-        <div class="social-items-header">
-          <i class="fa-solid fa-exclamation"></i>
-          <p class="m-0">Updates</p>
+        <div class="social-item" id="social">
+          <div class="social-items-header">
+            <i class="fa-brands fa-bluesky"></i>
+            <p class="m-0">Social</p>
+          </div>
+          <div class="bottom"></div>
         </div>
-        <div class="bottom"></div>
+        <div class="social-item" id="updates">
+          <div class="social-items-header">
+            <i class="fa-solid fa-exclamation"></i>
+            <p class="m-0">Updates</p>
+          </div>
+          <div class="bottom"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="dropdown-wrapper">
-      @if (commonService.isMobile) {
-        <button class="btn btn-outline-primary" (click)="openEmailModal()">
-          Compose Email
-        </button>
-      }
-      <div class="dropdown">
-        <span>{{ getCurrentType }}</span>
-        <div class="dropdown-content">
-          <p (click)="toggleType('all')">All</p>
-          <p (click)="toggleType('read')">Read</p>
-          <p (click)="toggleType('unread')">Unread</p>
+      <div class="dropdown-wrapper">
+        @if (commonService.isMobile) {
+          <button class="btn btn-outline-primary" (click)="openEmailModal()">
+            Compose Email
+          </button>
+        }
+        <div
+          class="dropdown dropdown-selector"
+          id="dropdown-selector-id"
+          (click)="selectType($event)"
+        >
+          <div
+            class="d-flex justify-content-between align-items-center w-100 px-2"
+          >
+            <span>{{ getCurrentType }}</span>
+            <i class="fa-solid fa-caret-down"></i>
+          </div>
+
+          <div class="dropdown-content">
+            <p (click)="toggleType('all')">All</p>
+            <p (click)="toggleType('read')">Read</p>
+            <p (click)="toggleType('unread')">Unread</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="mail-section">
-      @if (!commonService.isMobile) {
-        <div class="email-list-section p-2">
-          <app-email-list
-            [emails]="emails"
-            [filteredEmails]="filteredEmails"
-            [currentTypeSelection]="currentTypeSelection"
-            (selectedEmail)="selectedEmailToggle($event)"
-            [accessToken]="accessToken"
-          ></app-email-list>
-        </div>
-        <div class="email-section p-3">
-          @if (!commonService.openEmailModal) {
-            <app-email [selectedEmail]="selectedEmail"></app-email>
-          } @else if (commonService.openEmailModal) {
-            <app-send-mail
-              (openEmailModalEmitter)="commonService.openEmailModal = $event"
-            >
-            </app-send-mail>
-          }
-        </div>
-      } @else {
-        @if (!commonService.toggleEmailSection) {
+      <div class="mail-section">
+        @if (!commonService.isMobile) {
           <div class="email-list-section p-2">
             <app-email-list
               [emails]="emails"
@@ -85,21 +75,9 @@
               [accessToken]="accessToken"
             ></app-email-list>
           </div>
-        } @else {
           <div class="email-section p-3">
             @if (!commonService.openEmailModal) {
-              <div class="email-wrapper-section">
-                <button
-                  title="previous"
-                  class="btn"
-                  (click)="commonService.toggleEmailSection = false"
-                >
-                  <i class="fa-solid fa-arrow-left"></i>
-                </button>
-                <div class="pt-4">
-                  <app-email [selectedEmail]="selectedEmail"></app-email>
-                </div>
-              </div>
+              <app-email [selectedEmail]="selectedEmail"></app-email>
             } @else if (commonService.openEmailModal) {
               <app-send-mail
                 (openEmailModalEmitter)="commonService.openEmailModal = $event"
@@ -107,8 +85,50 @@
               </app-send-mail>
             }
           </div>
+        } @else {
+          @if (!commonService.toggleEmailSection) {
+            <div class="email-list-section p-2">
+              <app-email-list
+                [emails]="emails"
+                [filteredEmails]="filteredEmails"
+                [currentTypeSelection]="currentTypeSelection"
+                (selectedEmail)="selectedEmailToggle($event)"
+                (generateToken)="generateAccessToken()"
+                [accessToken]="accessToken"
+              ></app-email-list>
+            </div>
+          } @else {
+            <div class="email-section p-3">
+              @if (!commonService.openEmailModal) {
+                <div class="email-wrapper-section">
+                  <button
+                    title="previous"
+                    class="btn"
+                    (click)="commonService.toggleEmailSection = false"
+                  >
+                    <i class="fa-solid fa-arrow-left"></i>
+                  </button>
+                  <div class="pt-4">
+                    <app-email [selectedEmail]="selectedEmail"></app-email>
+                  </div>
+                </div>
+              } @else if (commonService.openEmailModal) {
+                <app-send-mail
+                  (openEmailModalEmitter)="
+                    commonService.openEmailModal = $event
+                  "
+                >
+                </app-send-mail>
+              }
+            </div>
+          }
         }
-      }
+      </div>
     </div>
   </div>
+  @if (commonService.activeSpinner) {
+    <div class="spinner-section" [ngClass]="{ active: true }">
+      <app-spinner></app-spinner>
+    </div>
+  }
 </div>

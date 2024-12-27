@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { SalesforceService } from '../../shared/services/salesforce.service';
+import { CommonService } from '../../shared/services/common.service';
 
 interface Email {
   subject: string;
@@ -44,10 +46,14 @@ export class EmailListComponent implements OnInit, OnChanges {
   @Input() accessToken: string;
   @Input() currentTypeSelection: string;
 
+  @Output() generateToken = new EventEmitter<any>();
+
   constructor(
     private http: HttpClient,
-    private cd: ChangeDetectorRef
-  ) {}
+    private cd: ChangeDetectorRef,
+    public salesforceService: SalesforceService,
+    public commonService: CommonService
+  ) { }
 
   ngOnInit(): void {
     this.generateNoOfPages();
@@ -133,7 +139,6 @@ export class EmailListComponent implements OnInit, OnChanges {
     });
 
     const params = { messageId: emailId, action };
-
     this.http.patch(`${endpoint}`, null, { headers, params }).subscribe(
       (response: any) => {
         console.log('Email updated successfully:', response);
@@ -155,5 +160,30 @@ export class EmailListComponent implements OnInit, OnChanges {
 
   selectedEmailClick(email: Email) {
     this.selectedEmail.emit(email);
+  }
+
+  deleteEmail(emailData: any, e: Event): void {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Delete button clicked for email:', emailData);
+    console.log('Delete button clicked for email:', emailData.Id);
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      this.accessToken = token;
+    } else {
+      this.generateToken.emit();
+    }
+    console.log('this.accessToken button clicked for email:', this.accessToken);
+    const url = `https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailService/deleteEmail/${emailData.Id}`;
+
+    this.salesforceService.deleteEmail(emailData.Id).subscribe(
+      (response) => {
+        console.log('Email sent successfully! ' + JSON.stringify(response));
+        console.log('Email sent successfully! ' + response);
+      },
+      (error) => {
+        console.error('Error:', JSON.stringify(error));
+      }
+    );
   }
 }

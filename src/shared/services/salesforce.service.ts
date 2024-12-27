@@ -3,13 +3,14 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { CommonService } from './common.service';
 
 @Injectable({
   providedIn: 'root',
 })
 
 
-export class SalesforceService {
+export class SalesforceService extends CommonService {
   private baseUrl =
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailService';
   private openAIapiUrl =
@@ -30,6 +31,7 @@ export class SalesforceService {
 
   constructor(private http: HttpClient) {
     // Try to load the access token from localStorage when service is initialized
+    super();
     const savedToken = localStorage.getItem('accessToken');
     if (savedToken) {
       this.accessToken = savedToken;
@@ -183,11 +185,27 @@ export class SalesforceService {
     fileType: any,
     base64Content: any
   }): Observable<any> {
+    console.log(payload);
     return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(map((response) => response),
       catchError((error) => {
         console.error('Error correcting grammar:', error);
         return throwError(() => new Error('Failed to correct grammar.'));
       })
     );
+  }
+
+  deleteEmail(emailId: string): Observable<any> {
+    const url = `${this.baseUrl}/deleteEmail/${emailId}`;
+
+    return this.http
+      .delete<any>(url, {
+        headers: { Authorization: `Bearer ${this.accessToken}` }
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('Error deleting email:', error);
+          return throwError(error);
+        })
+      );
   }
 }

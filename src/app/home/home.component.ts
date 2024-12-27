@@ -8,7 +8,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { SendMailComponent } from '../send-mail/send-mail.component';
 import { NgClass } from '@angular/common';
-import { Subscription } from 'rxjs';
+import { SpinnerComponent } from '../spinner/spinner.component';
 
 interface Email {
   subject: string;
@@ -29,7 +29,8 @@ interface Email {
     EmailListComponent,
     EmailComponent,
     SendMailComponent,
-    NgClass
+    NgClass,
+    SpinnerComponent
   ],
   templateUrl: './home.component.html'
 })
@@ -72,7 +73,6 @@ export class HomeComponent implements AfterViewInit {
     this.socialItem.forEach((item: HTMLElement) =>
       item.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
         this.socialItem.forEach((item) => item.classList.remove('active'));
         item.classList.add('active');
         this.currentCategorySelection = item.id;
@@ -135,7 +135,7 @@ export class HomeComponent implements AfterViewInit {
     body.set('grant_type', 'client_credentials');
     body.set('client_id', clientId);
     body.set('client_secret', clientSecret);
-
+    this.commonService.activeSpinner = true;
     this.http
       .post(tokenUrl, body.toString(), {
         headers: new HttpHeaders({
@@ -144,12 +144,14 @@ export class HomeComponent implements AfterViewInit {
       })
       .subscribe(
         (response: any) => {
+          this.commonService.activeSpinner = false;
           this.accessToken = response.access_token;
           console.log('Access token generated:', this.accessToken);
           localStorage.setItem('accessToken', this.accessToken);
           this.salesforceService.setAccessToken(this.accessToken);
         },
         (error) => {
+          this.commonService.activeSpinner = false;
           console.error('Failed to generate access token:', error);
           this.errorMessage = 'Failed to generate access token';
         }
@@ -163,7 +165,6 @@ export class HomeComponent implements AfterViewInit {
       this.errorMessage = 'User is not authenticated. Please log in.';
       return;
     }
-
     this.salesforceService.getUserInfo().subscribe(
       (data) => {
         this.userInfo = data;
@@ -254,5 +255,12 @@ export class HomeComponent implements AfterViewInit {
           this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
         }
       );
+  }
+
+  selectType(e: Event) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log(e.target['id'])
+    document.querySelector(".dropdown-selector").classList.toggle("active");
   }
 }

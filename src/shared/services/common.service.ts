@@ -7,6 +7,11 @@ export class CommonService {
   isMobile: boolean = false;
   openEmailModal: boolean = false;
   toggleEmailSection: boolean = false;
+  activeSpinner: boolean = false;
 
-  constructor() {}
+  constructor() { }
+
+
+
+
 }

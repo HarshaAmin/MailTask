@@ -376,7 +376,7 @@ export class SendMailComponent implements OnInit {
     this.emojiPickerVisible = !this.emojiPickerVisible;
 
     if (this.emojiPickerVisible) {
-      const button = document.querySelector('.btn-action') as HTMLElement;
+      const button = document.querySelector('-action') as HTMLElement;
       const buttonRect = button.getBoundingClientRect();
 
       this.popupPosition = {

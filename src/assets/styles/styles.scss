@@ -1,8 +1,11 @@
 @import "@fortawesome/fontawesome-free/css/all.css";
 @import "../../../node_modules/bootstrap/scss/bootstrap.scss";
 
+$overFlow: unset;
+
 body {
   font-size: 10px;
+  overflow: $overFlow;
 }
 
 button {
@@ -46,8 +49,12 @@ button {
   border-radius: 5px;
   height: max-content;
   margin: 10px;
-  width: 100%;
+  width: 80%;
   padding: 10px 25px;
+
+  @media (max-width: 450px) {
+    width: 100%;
+  }
 }
 
 ul.sidebar-menu-items {
@@ -66,7 +73,7 @@ ul.sidebar-menu-items {
   border: 1px solid lightgray;
   border-radius: 5px;
   min-width: 230px;
-  width: max-content;
+  width: 35%;
   height: max-content;
 
   @media (max-width: 450px) {
@@ -95,14 +102,14 @@ ul.sidebar-menu-items {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 150px;
+  width: auto;
 }
 
 .email-preview-p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 180px;
+  width: auto;
   font-size: 15px;
   color: #212b86;
 }
@@ -111,12 +118,24 @@ ul.sidebar-menu-items {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 180px;
+  width: auto;
   font-size: 12px;
 }
 
 .dropdown-toggle::after {
   display: none;
+}
+
+.email-item-top-left {
+  width: 76%;
+}
+
+.email-item-bottom {
+  width: 100%;
+}
+
+.email-item-mid-left {
+  width: 90%;
 }
 
 .email-item-top-right,
@@ -125,6 +144,7 @@ ul.sidebar-menu-items {
   justify-content: space-between;
   gap: 8px;
   cursor: pointer;
+  width: 10%;
 }
 
 .email-item-top,
@@ -149,6 +169,7 @@ ul.sidebar-menu-items {
 
 .email-item:hover .email-item-mid-right {
   display: flex;
+  justify-content: right;
 }
 
 .pagination-section {
@@ -247,6 +268,7 @@ ul.sidebar-menu-items {
   justify-content: center;
   border: 0.5px solid lightgray;
   border-radius: 3px;
+  cursor: pointer;
 }
 
 .dropdown-content {
@@ -257,10 +279,11 @@ ul.sidebar-menu-items {
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   padding: 12px 16px;
   z-index: 1;
+  top: 25px;
+  right: 0;
 }
 
-.dropdown:hover {
-  cursor: pointer;
+.dropdown.active {
   & .dropdown-content {
     display: block;
     & p {
@@ -426,4 +449,52 @@ ul.sidebar-menu-items {
 
 .sidebar-menu-items a {
   cursor: pointer;
+}
+
+.loader {
+  border: 5px solid #f3f3f3;
+  border-top-width: 5px;
+  border-top-style: solid;
+  border-top-color: rgb(243, 243, 243);
+  border-radius: 50%;
+  border-top: 5px solid #3498db;
+  width: 50px;
+  height: 50px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-section {
+  position: absolute;
+  width: -moz-available;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  $over-flow: unset;
+}
+
+.spinner-section.active {
+  $overFlow: hidden;
 }

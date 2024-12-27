@@ -48,7 +48,10 @@
             </p>
           </div>
           <div class="email-item-mid-right">
-            <i class="fa-solid fa-trash"></i>
+            <i
+              class="fa-solid fa-trash"
+              (click)="deleteEmail(email, $event)"
+            ></i>
           </div>
         </div>
         <div class="email-item-bottom">

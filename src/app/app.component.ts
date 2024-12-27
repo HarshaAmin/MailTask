@@ -13,6 +13,7 @@ import { NavComponent } from './nav/nav.component';
 export class AppComponent implements OnInit, OnDestroy {
   constructor(private commonService: CommonService) {
     window.addEventListener('resize', this.detectResize.bind(this));
+    window.addEventListener('click', this.handleGlobalClick.bind(this))
   }
 
   ngOnInit(): void {
@@ -24,5 +25,12 @@ export class AppComponent implements OnInit, OnDestroy {
     this.commonService.isMobile = window.innerWidth <= 450 ? true : false;
   }
 
-  ngOnDestroy(): void {}
+  handleGlobalClick(e: Event) {
+    const id = e.target['id'];
+    if (id !== "dropdown-selector-id") {
+      document.querySelector(".dropdown-selector").classList.remove("active");
+    }
+  }
+
+  ngOnDestroy(): void { }
 }
