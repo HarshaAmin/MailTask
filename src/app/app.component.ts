@@ -3,8 +3,13 @@ import {
   OnInit,
   OnDestroy,
   ViewChild,
-  ElementRef
+  ElementRef,
+  AfterViewInit,
+  AfterViewChecked
 } from '@angular/core';
+import Quill, { Delta } from 'quill';
+//import { Blot } from 'parchment'; // Blot class from Parchment
+
 import { SalesforceService } from '../services/salesforce.service';
 import { EmojiService } from './emoji.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -34,19 +39,38 @@ interface Email {
   flagStatus: string;
   categories: string[];
 }
+import { Blot } from 'parchment'; // Import Blot from Parchment
+// Type casting to any to solve the "unknown" error
+const InlineSuggestion = Quill.import('blots/inline') as any;
+
+class InlineSuggestionBlot extends InlineSuggestion {
+  static blotName = 'inline-suggestion'; // Custom name for the blot
+  static tagName = 'span'; // Span tag for inline suggestion
+
+  constructor(domNode: any) {
+    super(domNode);
+    domNode.classList.add('inline-suggestion'); // Add the custom class to the element
+  }
+}
+
+// Register the custom blot with Quill
+Quill.register(InlineSuggestionBlot);
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss', './app.component.css']
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent
+  implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked
+{
   @ViewChild('textarea') textarea!: ElementRef; // Reference to the textarea
   private suggestionTimeout: any;
   savedRange: Range | null = null;
   popupPosition = { top: '0px', left: '0px' };
   showColorPalette = false;
   inlineSuggestionVisible = false;
-  inlineSuggestion: string | null = null;
+  // inlineSuggestion: string | null = null;
   suggestionPosition: { top: number; left: number } | null = null;
   textColor: string = 'black'; // Default text color
   colorOptions = [
@@ -71,7 +95,7 @@ export class AppComponent implements OnInit, OnDestroy {
   showEmojiPicker = false;
   staticCursonPosition: any;
   caretPosition: any;
-  suggestions: string[] = [];
+  //suggestions: string[] = [];
   isComposeMode: boolean = false;
   correctedText = '';
   sentimentAnalysis: SentimentResponse | null = null;
@@ -79,7 +103,7 @@ export class AppComponent implements OnInit, OnDestroy {
   currentHighScoreSuggestion: string = ''; // Best suggestion to apply
   records: any;
   userInfo: any;
-  errorMessage: string | null = null;
+  //errorMessage: string | null = null;
   successMessage: string | null = null;
   emails: any[] = [];
   filteredEmails: Email[] = [];
@@ -107,12 +131,288 @@ export class AppComponent implements OnInit, OnDestroy {
   isBold = false;
   isItalic = false;
   isUnderline = false;
-  private resetTimeout: any = null; // Variable to store the timeout ID
+  //private resetTimeout: any = null; // Variable to store the timeout ID
+  quill: any;
+  suggestions: { token_str: string; sequence: string }[] = [];
+  inlineSuggestion: { token_str: string; sequence: string } = {
+    token_str: '',
+    sequence: ''
+  };
+
+  resetTimeout: any;
+  errorMessage: string = '';
+  private debounceTimeout: any;
+  // Debounce timeout
+  private typingTimeout: any;
+  private lastAnalyzedText = '';
+  private isEditorInitialized = false; // Flag to track if the editor has already been initialized
+  private isAddingSuggestions = false; // Flag to avoid recursion when adding suggestions
+
+  mockSuggestionsResponse = [
+    {
+      token_str: 'died',
+      sequence: "{ inputs : ' hi, i wanted to inform you that d died. ' }"
+    },
+    {
+      token_str: 'is',
+      sequence: "{ inputs : ' hi, i wanted to inform you that d is. ' }"
+    },
+    {
+      token_str: 'amazing',
+      sequence: "{ inputs : ' hi, i wanted to inform you that is amazing. ' }"
+    }
+    // Add more mock data as needed
+  ];
   constructor(
     public salesforceService: SalesforceService, // Inject SalesforceService
     private http: HttpClient, // Inject HttpClient
     private emojiService: EmojiService // Inject EmojiService
   ) {}
+
+  ngAfterViewInit() {
+    if (this.isComposeMode) {
+      this.initializeEditor();
+    }
+  }
+
+  ngAfterViewChecked() {
+    const editorElement = document.getElementById('editor');
+    if (editorElement && !this.quill) {
+      this.initializeEditor();
+    }
+  }
+
+  initializeEditor() {
+    const editorElement = document.getElementById('editor');
+    if (!editorElement) {
+      console.error('Editor element not found!');
+      return;
+    }
+
+    if (this.isEditorInitialized) {
+      return; // If editor is already initialized, don't reinitialize or bind again
+    }
+
+    this.quill = new Quill(editorElement, {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ header: '1' }, { header: '2' }, { font: [] }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['bold', 'italic', 'underline'],
+          [{ align: [] }],
+          ['link', 'blockquote', 'code-block'],
+          ['image', 'video']
+        ]
+      }
+    });
+
+    // Focus on the editor
+    this.quill.focus();
+
+    // Add listener for text changes (bind this only once)
+    this.quill.on('text-change', this.onTextChange.bind(this));
+
+    // Set the flag indicating the editor is initialized
+    this.isEditorInitialized = true;
+  }
+
+  onTextChange(delta: Delta, oldDelta: Delta, source: string) {
+    console.log('onTextChange text before: ' + this.quill.getText().trim());
+    const text = this.quill.getText().trim();
+
+    // Prevent recursion if suggestions are being added
+    if (this.isAddingSuggestions || !text) {
+      return;
+    }
+
+    console.log('onTextChange text inside: ' + text);
+    this.analyzeText(text);
+  }
+
+  addSuggestionsToEditor(
+    suggestions: { token_str: string; sequence: string }[]
+  ) {
+    // Prevent triggering the onTextChange event while adding suggestions
+    this.isAddingSuggestions = true;
+
+    // Define the original text for position calculation
+    const originalText = 'hi, i wanted to inform you that '; // Update as per actual text
+    console.log('line 195 suggestions ' + suggestions);
+    suggestions.forEach((suggestion) => {
+      const { token_str, sequence } = suggestion;
+
+      // Calculate the start and end position of the suggestion
+      const start = sequence.indexOf(token_str); // Find the start position of the token in the sequence
+      const end = start + token_str.length; // Calculate the end position of the token
+
+      // Insert the suggestion text at the correct position
+      this.quill.insertText(start, token_str, 'inline-suggestion');
+      console.log('line 205 suggestions ' + suggestions);
+
+      // Ensure the cursor moves to the end of the inserted suggestion
+      this.quill.setSelection(end, end);
+    });
+
+    // Re-enable text-change event listener after suggestions are added
+    this.isAddingSuggestions = false;
+  }
+
+  // onTextChange(delta: Delta, oldDelta: Delta, source: string) {
+  //   console.log('onTextChange text before');
+  //   const text = this.quill.getText().trim();
+  //   console.log('onTextChange text' + text);
+
+  //   // Clear any existing debounced function
+  //   if (this.debounceTimeout) {
+  //     clearTimeout(this.debounceTimeout);
+  //   }
+
+  //   // Call API only after 500ms of no text change
+  //   this.debounceTimeout = setTimeout(() => {
+  //     if (text) {
+  //       console.log('onTextChange inside text' + text);
+  //       this.analyzeText(text);
+  //     }
+  //   }, 500);
+  // }
+
+  async analyzeText(text: string) {
+    /*
+    try {
+      const accessToken = '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'; // Replace with your token
+      const sentimentResponse = await fetch(
+        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`
+          },
+          body: JSON.stringify({ text })
+        }
+      );
+      if (!sentimentResponse.ok) {
+        throw new Error('Failed to fetch sentiment analysis');
+      }
+      const sentimentData = await sentimentResponse.json();
+      const inputData = `{ inputs: '${text} [MASK].' }`;
+      const suggestionResponse = await fetch(
+        'https://api-inference.huggingface.co/models/bert-base-uncased',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`
+          },
+          body: inputData
+        }
+      );
+      if (!suggestionResponse.ok) {
+        throw new Error('Failed to fetch suggestions');
+      }
+      const suggestionsData = await suggestionResponse.json();
+      const formattedSuggestions = suggestionsData.map((item: any) => ({
+        token_str: item.token_str.trim(), // Token text (the word or fragment to insert)
+        sequence: item.sequence // The sequence or context for the token
+      }));
+
+      // Clear old suggestions before adding new ones
+      this.clearOldSuggestions();
+
+      // Add the formatted suggestions to the editor
+      this.addSuggestionsToEditor(formattedSuggestions);
+
+      // Set the suggestion after 3 seconds
+      setTimeout(() => {
+        // Extract the first suggestion's token_str and assign it to inlineSuggestion
+        this.inlineSuggestion = this.suggestions[0]?.token_str || ''; // Only assign the token_str
+
+        // Reset the suggestion after 27 seconds if no new action occurs
+        this.resetTimeout = setTimeout(() => {
+          this.inlineSuggestion = ''; // Set suggestion to empty after 30 seconds from the start
+        }, 27000); // 27000ms = 27 seconds after setting the suggestion
+      }, 3000); // 3000ms = 3 seconds
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error fetching analysis:', error.message); // Safely accessing `message`
+        this.errorMessage = `Analysis failed: ${error.message}`;
+      } else {
+        console.error('Unknown error:', error); // In case it's not an instance of Error
+        this.errorMessage = `Analysis failed: An unknown error occurred.`;
+      }
+    }*/
+
+    if (text === this.lastAnalyzedText) {
+      return; // Don't analyze again if the text hasn't changed
+    }
+
+    this.lastAnalyzedText = text; // Update the last analyzed text
+    try {
+      // Mock the response to simulate the API call
+      const mockSuggestionsData = this.mockSuggestionsResponse; // Use mock response
+
+      // Format the mock response like the actual API response
+      const formattedSuggestions = mockSuggestionsData.map((item: any) => ({
+        token_str: item.token_str.trim(), // Token text (the word or fragment to insert)
+        sequence: item.sequence // The sequence or context for the token
+      }));
+
+      // Pass the mock formatted suggestions to addSuggestionsToEditor
+      this.addSuggestionsToEditor(formattedSuggestions);
+
+      // Set the suggestion after 3 seconds (as in your original code)
+      setTimeout(() => {
+        this.inlineSuggestion = this.suggestions[0] || ''; // Set the first suggestion or empty string
+
+        // Reset the suggestion after 27 seconds if no new action occurs
+        this.resetTimeout = setTimeout(() => {
+          //this.inlineSuggestion = ''; // Set suggestion to empty after 30 seconds
+        }, 27000); // 27000ms = 27 seconds after setting the suggestion
+      }, 3000); // 3000ms = 3 seconds
+    } catch (error) {
+      console.error('Error fetching analysis:', error);
+    }
+  }
+
+  clearOldSuggestions() {
+    this.suggestions = [];
+    this.inlineSuggestion = { token_str: '', sequence: '' }; // Reset to an empty object
+  }
+
+  // addSuggestionsToEditor(
+  //   suggestions: { token_str: string; sequence: string }[]
+  // ) {
+  //   // Define the original text for position calculation
+  //   const originalText = 'hi, i wanted to inform you that '; // Update as per actual text
+  //   suggestions.forEach((suggestion) => {
+  //     const { token_str, sequence } = suggestion;
+
+  //     // Calculate the start and end position of the suggestion
+  //     const start = sequence.indexOf(token_str); // Find the start position of the token in the sequence
+  //     const end = start + token_str.length; // Calculate the end position of the token
+
+  //     // Insert the suggestion text at the correct position
+  //     this.quill.insertText(start, token_str, 'inline-suggestion');
+
+  //     // Ensure the cursor moves to the end of the inserted suggestion
+  //     this.quill.setSelection(end, end);
+  //   });
+  // }
+
+  // // The callback for the text-change event
+  // onTextChange(delta: Delta, oldDelta: Delta, source: string) {
+  //   // You can choose to use 'delta', 'oldDelta', or 'source' in the function
+  //   // For now, we will log the delta to see what it contains
+  //   console.log('Text change detected:', delta);
+
+  //   // You can process the changes or check for specific conditions
+  //   const text = this.quill.getText().trim();
+  //   if (text) {
+  //     this.getSuggestions(text); // Call API to fetch suggestions
+  //   }
+  // }
+
   ngOnInit(): void {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -128,6 +428,38 @@ export class AppComponent implements OnInit, OnDestroy {
     });
     this.loadEmails('Inbox');
     const contentEditableElement = document.getElementById('body');
+
+    // const editor = document.getElementById('editor'); // editor can be null
+
+    // if (editor) {
+    //   // Now TypeScript knows that `editor` is not null
+    //   this.quill = new Quill(editor, {
+    //     theme: 'snow',
+    //     modules: {
+    //       toolbar: [
+    //         [{ header: '1' }, { header: '2' }, { font: [] }],
+    //         [{ list: 'ordered' }, { list: 'bullet' }],
+    //         ['bold', 'italic', 'underline'],
+    //         [{ align: [] }],
+    //         ['link', 'blockquote', 'code-block'],
+    //         ['image', 'video']
+    //       ]
+    //     }
+    //   });
+
+    //   this.quill.on('text-change', () => {
+    //     const html = this.quill.root.innerHTML; // Get the HTML content
+    //     this.emailtoSend.bodyPreview = html; // Sync with your model
+    //   });
+    // } else {
+    //   console.error('Editor element not found!');
+    // }
+
+    // this.quill.on('text-change', () => {
+    //   const html = this.quill.root.innerHTML; // Get the HTML content
+    //   this.emailtoSend.bodyPreview = html; // Sync with your model
+    // });
+
     if (contentEditableElement) {
       contentEditableElement.addEventListener(
         'input',
@@ -269,16 +601,23 @@ export class AppComponent implements OnInit, OnDestroy {
   onContentEditableInput(event: Event) {
     //console.log('inside onContentedit');
     const target = event.target as HTMLElement;
+    //this.emailtoSend.bodyPreview = target.innerHTML; // Sync with model
+
+    // Get plain text content (without HTML tags)
+    const bodyContent = target.textContent || ''; // Just get the text content, no HTML tags
+
+    this.emailtoSend.bodyPreview = bodyContent; // Sync with model
+
     const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
     if (sanitizedText.length === 0) {
-      this.inlineSuggestion = '';
+      this.inlineSuggestion = { token_str: '', sequence: '' }; // Reset to an empty object
       return;
     }
     this.updateSuggestionPosition();
     this.trackCaretRowAndColumn();
     this.resetPositionData();
     //console.log('inside onContentedit 170');
-    this.inlineSuggestion = this.getRandomSuggestion();
+    this.inlineSuggestion = { token_str: '', sequence: '' }; // Reset to an empty object
 
     //this.analyzeText(sanitizedText);
   }
@@ -346,71 +685,77 @@ export class AppComponent implements OnInit, OnDestroy {
     };
   }
 
-  async analyzeText(text: string) {
-    try {
-      const accessToken = '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'; // Replace with your token
-      const sentimentResponse = await fetch(
-        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({ text })
-        }
-      );
-      if (!sentimentResponse.ok) {
-        throw new Error('Failed to fetch sentiment analysis');
-      }
-      const sentimentData = await sentimentResponse.json();
-      const inputData = `{ inputs: '${text} [MASK].' }`;
-      const suggestionResponse = await fetch(
-        'https://api-inference.huggingface.co/models/bert-base-uncased',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`
-          },
-          body: inputData
-        }
-      );
-      if (!suggestionResponse.ok) {
-        throw new Error('Failed to fetch suggestions');
-      }
-      const suggestionsData = await suggestionResponse.json();
-      this.suggestions = suggestionsData.map((item: any) =>
-        item.token_str.trim()
-      );
+  // async analyzeText(text: string) {
+  //   try {
+  //     const accessToken = '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'; // Replace with your token
+  //     const sentimentResponse = await fetch(
+  //       'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
+  //       {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Authorization: `Bearer ${accessToken}`
+  //         },
+  //         body: JSON.stringify({ text })
+  //       }
+  //     );
+  //     if (!sentimentResponse.ok) {
+  //       throw new Error('Failed to fetch sentiment analysis');
+  //     }
+  //     const sentimentData = await sentimentResponse.json();
+  //     const inputData = `{ inputs: '${text} [MASK].' }`;
+  //     const suggestionResponse = await fetch(
+  //       'https://api-inference.huggingface.co/models/bert-base-uncased',
+  //       {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Authorization: `Bearer ${accessToken}`
+  //         },
+  //         body: inputData
+  //       }
+  //     );
+  //     if (!suggestionResponse.ok) {
+  //       throw new Error('Failed to fetch suggestions');
+  //     }
+  //     const suggestionsData = await suggestionResponse.json();
+  //     this.suggestions = suggestionsData.map((item: any) =>
+  //       item.token_str.trim()
+  //     );
+  //     const formattedSuggestions = suggestionsData.map((item: any) => ({
+  //       token_str: item.token_str.trim(), // Token text (the word or fragment to insert)
+  //       sequence: item.sequence // The sequence or context for the token
+  //     }));
 
-      // Set the suggestion after 3 seconds
-      setTimeout(() => {
-        this.inlineSuggestion = this.suggestions[0] || ''; // Set the first suggestion or empty string
+  //     // Now pass the correctly formatted suggestions to the addSuggestionsToEditor function
+  //     this.addSuggestionsToEditor(formattedSuggestions);
+  //     // Set the suggestion after 3 seconds
+  //     setTimeout(() => {
+  //       this.inlineSuggestion = this.suggestions[0] || ''; // Set the first suggestion or empty string
 
-        // Reset the suggestion after 27 seconds if no new action occurs
-        this.resetTimeout = setTimeout(() => {
-          this.inlineSuggestion = ''; // Set suggestion to empty after 30 seconds from the start
-        }, 27000); // 27000ms = 27 seconds after setting the suggestion
-      }, 3000); // 3000ms = 3 seconds
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('Error fetching analysis:', error.message); // Safely accessing `message`
-        this.errorMessage = `Analysis failed: ${error.message}`;
-      } else {
-        console.error('Unknown error:', error); // In case it's not an instance of Error
-        this.errorMessage = `Analysis failed: An unknown error occurred.`;
-      }
-    }
-  }
+  //       // Reset the suggestion after 27 seconds if no new action occurs
+  //       this.resetTimeout = setTimeout(() => {
+  //         this.inlineSuggestion = ''; // Set suggestion to empty after 30 seconds from the start
+  //       }, 27000); // 27000ms = 27 seconds after setting the suggestion
+  //     }, 3000); // 3000ms = 3 seconds
+  //   } catch (error: unknown) {
+  //     if (error instanceof Error) {
+  //       console.error('Error fetching analysis:', error.message); // Safely accessing `message`
+  //       this.errorMessage = `Analysis failed: ${error.message}`;
+  //     } else {
+  //       console.error('Unknown error:', error); // In case it's not an instance of Error
+  //       this.errorMessage = `Analysis failed: An unknown error occurred.`;
+  //     }
+  //   }
+  // }
 
   // This function can be used to reset the timeout whenever there is a new action
-  resetSuggestion() {
-    if (this.resetTimeout) {
-      clearTimeout(this.resetTimeout); // Clear the existing timeout
-    }
-    this.inlineSuggestion = this.suggestions[0] || ''; // Reset suggestion if needed
-  }
+  // resetSuggestion() {
+  //   if (this.resetTimeout) {
+  //     clearTimeout(this.resetTimeout); // Clear the existing timeout
+  //   }
+  //   this.inlineSuggestion = this.suggestions[0] || ''; // Reset suggestion if needed
+  // }
 
   onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Tab' && this.inlineSuggestion) {
@@ -471,7 +816,7 @@ export class AppComponent implements OnInit, OnDestroy {
       target.innerHTML = formattedHTML; // Update the content of the content-editable element
 
       // Reset the inline suggestion and suggestions array
-      this.inlineSuggestion = '';
+      this.inlineSuggestion = { token_str: '', sequence: '' }; // Reset to an empty object
       this.suggestions = [];
     }
   }
@@ -567,7 +912,7 @@ export class AppComponent implements OnInit, OnDestroy {
     // Return the sanitized text as a plain string
     return finalSanitizedHTML.trim();
   }
-  
+
   trackCaretRowAndColumn() {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
@@ -613,7 +958,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.resetPositionData();
   }
   resetPositionData() {
-    this.inlineSuggestion = '';
+    this.inlineSuggestion = { token_str: '', sequence: '' }; // Reset to an empty object
     this.suggestions = [];
   }
 
@@ -897,7 +1242,7 @@ export class AppComponent implements OnInit, OnDestroy {
   fetchSuggestions(inputValue: string) {
     if (!inputValue) {
       this.suggestions = [];
-      this.inlineSuggestion = '';
+      this.inlineSuggestion = { token_str: '', sequence: '' }; // Reset to an empty object
       return;
     }
   }

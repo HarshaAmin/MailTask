@@ -15,6 +15,14 @@
         padding: 0;
         box-sizing: border-box;
       }
+      .inline-suggestion {
+  color: gray;  /* Graying out the text */
+  font-style: italic; /* Optional: Makes the text italic */
+  font-weight: normal; /* Optional: Makes the text not bold */
+  cursor: pointer; /* Optional: Make it appear clickable */
+}
+
+
       .color-picker-popup {
         position: absolute;
         display: flex;
@@ -221,15 +229,7 @@
         max-width: 400px;
       }
 
-      /* Inline Suggestion Styling */
-      .inline-suggestion {
-        position: absolute;
-        z-index: 10;
-        background-color: #f9f9f9;
-        padding: 5px 10px;
-        font-size: 14px;
-        white-space: nowrap;
-      }
+     
 
       /* Compose Email Button */
       .btn-primary {
@@ -566,15 +566,7 @@
 
       .mirror-textarea {
         overflow: visible;
-      }
-      .inline-suggestion {
-        position: absolute; /* Position relative to the container */
-        z-index: 10; /* Higher than rich-text-area */
-        color: #888888; /* Muted text color */
-        padding: 5px 10px;
-        font-size: 14px;
-        white-space: nowrap;
-        font-style: italic; /* Optional: makes it look more like a suggestion */
+    
       }
 
       .content-text {
@@ -746,256 +738,35 @@
             </div>
           </div>
 
-          <!-- Email Details or Compose Form -->
-          <div *ngIf="isComposeMode; else emailDetails" class="compose-email">
-            <h3>Compose Email</h3>
-            <form (ngSubmit)="sendEmail()">
-              <div class="form-group">
-                <label for="to">To:</label>
-                <input
-                  type="email"
-                  id="to"
-                  name="to"
-                  [(ngModel)]="emailtoSend.to"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <label for="subject">Subject:</label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  [(ngModel)]="emailtoSend.subject"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <label for="body">Body:</label>
-                <div class="textarea-container-modal">
-                  <!-- Mirror Div for Positioning -->
-                  <div class="mirror-textarea">
-                    <!-- <span class="content-text">
-                      {{ emailtoSend.bodyPreview.substring(0, cursorPosition) }}
-                    </span> -->
-                    <span
-                      *ngIf="inlineSuggestion"
-                      class="inline-suggestion"
-                      [style.top.px]="suggestionPosition?.top"
-                      [style.left.px]="suggestionPosition?.left"
-                    >
-                      {{ inlineSuggestion }}
-                    </span>
-                  </div>
+        <div *ngIf="isComposeMode; else emailDetails" class="compose-email">
+  <h3>Compose Email</h3>
+  <form (ngSubmit)="sendEmail()">
+    <div class="form-group">
+      <label for="to">To:</label>
+      <input type="email" id="to" name="to" [(ngModel)]="emailtoSend.to" required />
+    </div>
+    <div class="form-group">
+      <label for="subject">Subject:</label>
+      <input type="text" id="subject" name="subject" [(ngModel)]="emailtoSend.subject" required />
+    </div>
+    <div class="form-group">
+      <label for="body">Body:</label>
+      <!-- Quill editor container -->
+      <div id="editor" style="height: 300px; border: 1px solid #ccc;"></div>
+    </div>
 
-                  <!-- Actual Rich Text Editor (content-editable div) -->
+    <button type="submit">Send</button>
 
-                  <div
-                    contenteditable="true"
-                    id="body"
-                    class="rich-text-area"
-                    (input)="onContentEditableInput($event)"
-                    (keydown)="onKeyDown($event)"
-                    (keyup)="trackCaretRowAndColumn()"
-                    #textarea
-                  ></div>
-                  <!-- <div
-                    contenteditable="true"
-                    id="body"
-                    class="rich-text-area"
-                    #textarea
-                  ></div> -->
-                </div>
+    <div class="actions">
+      <button class="btn-send" type="submit">Send</button>
+      <button class="btn-draft" type="button">Save as Draft</button>
+      <button class="btn-discard" type="button">Discard</button>
+    </div>
+  </form>
+</div>
 
-                <div class="actions">
-                  <button class="btn-send" type="submit">Send</button>
-                  <button class="btn-draft" type="button">Save as Draft</button>
-                  <button class="btn-discard" type="button">Discard</button>
-                </div>
 
-                <!-- Formatting Options -->
-                <div class="body-actions">
-                  <button
-                    class="btn-action"
-                    title="Bold"
-                    type="button"
-                    (click)="toggleBold($event)"
-                  >
-                    <i class="fas fa-bold"></i>
-                  </button>
-                  <button
-                    class="btn-action"
-                    title="Italic"
-                    type="button"
-                    (click)="toggleItalic($event)"
-                  >
-                    <i class="fas fa-italic"></i>
-                  </button>
-                  <button
-                    class="btn-action"
-                    title="Underline"
-                    type="button"
-                    (click)="toggleUnderline($event)"
-                  >
-                    <i class="fas fa-underline"></i>
-                  </button>
-                  <button
-                    class="btn-action"
-                    title="Attach Files"
-                    type="button"
-                    (click)="triggerFileInput()"
-                  >
-                    <i class="fas fa-paperclip"></i>
-                  </button>
-                  <input
-                    type="file"
-                    id="file-input"
-                    style="display: none"
-                    (change)="onFileSelected($event)"
-                  />
 
-                  <button
-                    class="btn-action"
-                    type="button"
-                    (click)="openEmojiPicker($event)"
-                  >
-                    <i class="fas fa-smile"></i>
-                  </button>
-
-                  <!-- Display selected emoji -->
-                  <!-- <p>Selected Emoji: {{ selectedEmoji }}</p> -->
-
-                  <!-- Emoji picker (just an example of a simple display) -->
-                  <div
-                    *ngIf="emojiPickerVisible"
-                    class="emoji-picker-popup"
-                    [ngStyle]="popupPosition"
-                  >
-                    <!-- More Emoji Buttons -->
-                    <button type="button" (click)="onEmojiSelect('😊')">
-                      😊
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('😎')">
-                      😎
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('😢')">
-                      😢
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('❤️')">
-                      ❤️
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('🎉')">
-                      🎉
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('🔥')">
-                      🔥
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('👍')">
-                      👍
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('🙏')">
-                      🙏
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('😂')">
-                      😂
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('🥺')">
-                      🥺
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('😍')">
-                      😍
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('💔')">
-                      💔
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('🙌')">
-                      🙌
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('😜')">
-                      😜
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('🥳')">
-                      🥳
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('🤔')">
-                      🤔
-                    </button>
-                    <button type="button" (click)="onEmojiSelect('😆')">
-                      😆
-                    </button>
-                    <!-- Add more as needed -->
-                  </div>
-
-                  <!-- Button to clear selected emoji -->
-                  <!-- <button 
-                    class="btn-action"
-                    type="button"
-                    (click)="clearSelectedEmoji()">Clear Emoji</button> -->
-
-                  <!-- <button
-                    class="btn-action"
-                    title="Add Emoji"
-                    type="button"
-                    (click)="addEmoji()"
-                  >
-                    <i class="fas fa-smile"></i>
-                  </button> -->
-
-                  <button
-                    class="btn-action"
-                    type="button"
-                    (click)="applyColorToSelection('#ff0000')"
-                  >
-                    Red
-                  </button>
-
-                  <button
-                    class="btn-action"
-                    title="Text Color"
-                    type="button"
-                    (click)="openColorPicker($event)"
-                  >
-                    <i class="fas fa-palette"></i>
-                  </button>
-
-                  <!-- The color palette popup -->
-                  <!-- Color Picker Popup -->
-                  <div
-                    *ngIf="showColorPalette"
-                    class="color-picker-popup"
-                    [ngStyle]="popupPosition"
-                  >
-                    <div
-                    class="btn-action"
-                      *ngFor="let color of colorOptions"
-                      (click)="applyColorToSelection(color)"
-                    >
-                      <div
-                        class="color-swatch"
-                        [style.background]="color"
-                      ></div>
-                    </div>
-                  </div>
-
-                  <button
-                    class="btn-action"
-                    type="button"
-                    (click)="applyColorToSelection('#ff0000')"
-                  >
-                    Red
-                  </button>
-
-                  <button
-                    class="btn-action"
-                    title="Schedule Email"
-                    type="button"
-                  >
-                    <i class="fas fa-clock"></i>
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
 
           <!-- Email Details -->
           <ng-template #emailDetails>
