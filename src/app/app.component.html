@@ -738,7 +738,7 @@
             </div>
           </div>
 
-        <div *ngIf="isComposeMode; else emailDetails" class="compose-email">
+       <div *ngIf="isComposeMode; else emailDetails" class="compose-email">
   <h3>Compose Email</h3>
   <form (ngSubmit)="sendEmail()">
     <div class="form-group">
@@ -749,10 +749,11 @@
       <label for="subject">Subject:</label>
       <input type="text" id="subject" name="subject" [(ngModel)]="emailtoSend.subject" required />
     </div>
+
     <div class="form-group">
       <label for="body">Body:</label>
-      <!-- Quill editor container -->
-      <div id="editor" style="height: 300px; border: 1px solid #ccc;"></div>
+      <!-- Quill editor with ngModel binding -->
+      <quill-editor [(ngModel)]="emailtoSend.bodyPreview" [ngModelOptions]="{standalone: true}" style="height: 300px; border: 1px solid #ccc;"></quill-editor>
     </div>
 
     <button type="submit">Send</button>
@@ -764,6 +765,7 @@
     </div>
   </form>
 </div>
+
 
 
 

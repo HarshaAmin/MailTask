@@ -190,7 +190,7 @@ global with sharing class OutlookEmailServiceRest {
       Map<String, Object> message = new Map<String, Object>{
         'subject' => subject,
         'body' => new Map<String, Object>{
-          'contentType' => 'Text',
+          'contentType' => 'html',
           'content' => bodyContent
         },
         'toRecipients' => new List<Object>{

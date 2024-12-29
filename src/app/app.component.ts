@@ -21,6 +21,9 @@ import {
 } from '../app/suggestion.interface';
 import { Observable, throwError } from 'rxjs';
 import { AnyCatcher } from 'rxjs/internal/AnyCatcher';
+import TurndownService from 'turndown';
+import { marked } from 'marked';
+
 interface Email {
   id: string;
   subject: string;
@@ -148,6 +151,8 @@ export class AppComponent
   private isEditorInitialized = false; // Flag to track if the editor has already been initialized
   private isAddingSuggestions = false; // Flag to avoid recursion when adding suggestions
 
+  private isSuggestionVisible = false;
+
   mockSuggestionsResponse = [
     {
       token_str: 'died',
@@ -163,11 +168,14 @@ export class AppComponent
     }
     // Add more mock data as needed
   ];
+  private turndownService: TurndownService;
   constructor(
     public salesforceService: SalesforceService, // Inject SalesforceService
     private http: HttpClient, // Inject HttpClient
     private emojiService: EmojiService // Inject EmojiService
-  ) {}
+  ) {
+    this.turndownService = new TurndownService();
+  }
 
   ngAfterViewInit() {
     if (this.isComposeMode) {
@@ -213,51 +221,126 @@ export class AppComponent
     // Add listener for text changes (bind this only once)
     this.quill.on('text-change', this.onTextChange.bind(this));
 
+    // Add event listeners for Tab and Enter keys
+    this.quill.root.addEventListener('keydown', (event: KeyboardEvent) =>
+      this.onKeyDown(event)
+    );
+
     // Set the flag indicating the editor is initialized
     this.isEditorInitialized = true;
   }
 
-  onTextChange(delta: Delta, oldDelta: Delta, source: string) {
-    console.log('onTextChange text before: ' + this.quill.getText().trim());
-    const text = this.quill.getText().trim();
+  onKeyDown(event: KeyboardEvent) {
+    console.log('inside onkeydown ' + this.suggestions);
+    if (event.key === 'Tab' || event.key === 'Enter') {
+      event.preventDefault(); // Prevent the default behavior (like adding a tab or new line)
+      this.insertSuggestion(); // Call your suggestion insertion method
+    }
+  }
 
-    // Prevent recursion if suggestions are being added
-    if (this.isAddingSuggestions || !text) {
+  insertSuggestion() {
+    console.log('inside insertSuggestion suggestion is  ' + this.suggestions);
+    console.log('inside insertSuggestion');
+    // Ensure a suggestion is available
+    if (!this.suggestions.length) {
       return;
     }
 
-    console.log('onTextChange text inside: ' + text);
-    this.analyzeText(text);
+    // Get the first suggestion (or modify this logic to handle multiple suggestions)
+    const suggestion = this.suggestions[0];
+
+    if (!suggestion) {
+      return;
+    }
+
+    // Insert the suggestion text at the current cursor position
+    const cursorPosition = this.quill.getSelection()?.index || 0;
+
+    // Insert the suggestion token as inline text
+    this.quill.insertText(
+      cursorPosition,
+      suggestion.token_str,
+      'inline-suggestion'
+    );
+
+    // Move the cursor after the inserted suggestion
+    this.quill.setSelection(cursorPosition + suggestion.token_str.length);
+
+    // Optionally, you can remove or update the suggestion list after applying it
+    this.suggestions = []; // Clear suggestions once applied (or modify as needed)
+  }
+
+  onTextChange(delta: Delta, oldDelta: Delta, source: string) {
+    console.log('onTextChange ');
+    // Get the raw HTML content
+    const htmlContent = this.quill.root.innerHTML;
+    console.log('onTextChange htmlContent ' + htmlContent);
+    // Use a DOM parser to parse the HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+
+    // Check if the body is not null before accessing its textContent
+    const body = doc.body;
+    if (body) {
+      // Remove any inline suggestions (or placeholders)
+      // Example: Remove all spans with a specific class used for suggestions
+      const suggestionElements = body.querySelectorAll('.suggestion-class'); // Change this selector based on your actual class
+      suggestionElements.forEach((el) => {
+        el.remove(); // Remove the suggestion element
+      });
+
+      // Now get the text without suggestions
+      const cleanedText = body.textContent?.trim() || ''; // Handle case when textContent is null
+      console.log('Cleaned text: ' + cleanedText);
+
+      // Prevent recursion if suggestions are being added
+      if (this.isAddingSuggestions || !cleanedText) {
+        return;
+      }
+
+      this.analyzeText(cleanedText);
+    } else {
+      console.error('Error: Body element is null');
+    }
   }
 
   addSuggestionsToEditor(
     suggestions: { token_str: string; sequence: string }[]
   ) {
-    // Prevent triggering the onTextChange event while adding suggestions
-    this.isAddingSuggestions = true;
+    this.isAddingSuggestions = true; // Prevent recursion while adding suggestions
 
-    // Define the original text for position calculation
-    const originalText = 'hi, i wanted to inform you that '; // Update as per actual text
-    console.log('line 195 suggestions ' + suggestions);
-    suggestions.forEach((suggestion) => {
-      const { token_str, sequence } = suggestion;
+    const { token_str, sequence } = suggestions[0];
+    const start = sequence.indexOf(token_str);
+    const end = start + token_str.length;
 
-      // Calculate the start and end position of the suggestion
-      const start = sequence.indexOf(token_str); // Find the start position of the token in the sequence
-      const end = start + token_str.length; // Calculate the end position of the token
+    // Insert the suggestion text as grayed-out (inline-suggestion)
+    this.quill.insertText(start, token_str, 'inline-suggestion');
 
-      // Insert the suggestion text at the correct position
-      this.quill.insertText(start, token_str, 'inline-suggestion');
-      console.log('line 205 suggestions ' + suggestions);
+    // Move the cursor after the inserted suggestion
+    this.quill.setSelection(end, end);
 
-      // Ensure the cursor moves to the end of the inserted suggestion
-      this.quill.setSelection(end, end);
-    });
+    this.isAddingSuggestions = false; // Re-enable text-change event listener
 
-    // Re-enable text-change event listener after suggestions are added
-    this.isAddingSuggestions = false;
+    // Set timeout to hide the suggestion after 5 seconds
+    this.hideSuggestionAfterTimeout();
   }
 
+  hideSuggestionAfterTimeout() {
+    if (this.suggestionTimeout) {
+      clearTimeout(this.suggestionTimeout); // Clear any previous timeout
+    }
+
+    this.suggestionTimeout = setTimeout(() => {
+      // Remove the suggestion (or hide it in the editor)
+      this.suggestions = []; // Reset suggestions
+      this.isSuggestionVisible = false;
+    }, 5000); // Hide suggestion after 5 seconds
+  }
+
+  convertToMarkdown(htmlContent: string): string {
+    // Using Turndown to convert HTML to markdown, removing unnecessary tags
+    return this.turndownService.turndown(htmlContent);
+  }
   // onTextChange(delta: Delta, oldDelta: Delta, source: string) {
   //   console.log('onTextChange text before');
   //   const text = this.quill.getText().trim();
@@ -359,6 +442,7 @@ export class AppComponent
       }));
 
       // Pass the mock formatted suggestions to addSuggestionsToEditor
+      this.suggestions = formattedSuggestions;
       this.addSuggestionsToEditor(formattedSuggestions);
 
       // Set the suggestion after 3 seconds (as in your original code)
@@ -757,69 +841,69 @@ export class AppComponent
   //   this.inlineSuggestion = this.suggestions[0] || ''; // Reset suggestion if needed
   // }
 
-  onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Tab' && this.inlineSuggestion) {
-      this.trackCaretRowAndColumn(); // Track the caret position
+  // onKeyDown(event: KeyboardEvent) {
+  //   if (event.key === 'Tab' && this.inlineSuggestion) {
+  //     this.trackCaretRowAndColumn(); // Track the caret position
 
-      event.preventDefault(); // Prevent default behavior of the Tab key
-      const target = event.target as HTMLElement;
+  //     event.preventDefault(); // Prevent default behavior of the Tab key
+  //     const target = event.target as HTMLElement;
 
-      // Sanitize the input text from the content-editable element
-      const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
-      const lines = sanitizedText.split('\n'); // Split text into lines
+  //     // Sanitize the input text from the content-editable element
+  //     const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+  //     const lines = sanitizedText.split('\n'); // Split text into lines
 
-      const { row, column } = this.caretPosition; // Get caret position (row and column)
+  //     const { row, column } = this.caretPosition; // Get caret position (row and column)
 
-      let lineRow = 0;
-      if (row < 0) {
-        lineRow = 0; // If row is negative, default to the first line
-      } else if (row >= lines.length) {
-        lineRow = lines.length - 1; // If row exceeds available lines, use the last line
-      } else {
-        lineRow = row; // Otherwise, use the row as it is
-      }
+  //     let lineRow = 0;
+  //     if (row < 0) {
+  //       lineRow = 0; // If row is negative, default to the first line
+  //     } else if (row >= lines.length) {
+  //       lineRow = lines.length - 1; // If row exceeds available lines, use the last line
+  //     } else {
+  //       lineRow = row; // Otherwise, use the row as it is
+  //     }
 
-      // Find the caret position in the string based on the range
-      const currentLine = lines[lineRow];
-      console.log('current line in keydown :', currentLine);
-      const columnIndex = this.getTextColumnIndex(currentLine, column);
-      console.log('columnIndex line:', columnIndex);
-      const beforeCaret = currentLine.substring(0, column); // Text before the caret
-      const afterCaret = currentLine.substring(column); // Text after the caret
+  //     // Find the caret position in the string based on the range
+  //     const currentLine = lines[lineRow];
+  //     console.log('current line in keydown :', currentLine);
+  //     const columnIndex = this.getTextColumnIndex(currentLine, column);
+  //     console.log('columnIndex line:', columnIndex);
+  //     const beforeCaret = currentLine.substring(0, column); // Text before the caret
+  //     const afterCaret = currentLine.substring(column); // Text after the caret
 
-      // Adjust column to be based on the string length and caret position
-      const textLength = beforeCaret.length; // This will give the actual position in the string
-      console.log('Column in terms of string length: ', textLength);
+  //     // Adjust column to be based on the string length and caret position
+  //     const textLength = beforeCaret.length; // This will give the actual position in the string
+  //     console.log('Column in terms of string length: ', textLength);
 
-      // Now we can insert the suggestion based on the calculated position
-      lines[lineRow] =
-        beforeCaret + ' ' + this.inlineSuggestion + ' ' + afterCaret;
+  //     // Now we can insert the suggestion based on the calculated position
+  //     lines[lineRow] =
+  //       beforeCaret + ' ' + this.inlineSuggestion + ' ' + afterCaret;
 
-      // Process lines to handle any formatting (like bold text)
-      let result = lines.map(
-        (str) =>
-          str
-            .replaceAll('replace_as_bold_start', '<b>') // Replace start bold marker with <b>
-            .replaceAll('replace_as_bold_end', '</b>') // Replace end bold marker with </b>
-      );
+  //     // Process lines to handle any formatting (like bold text)
+  //     let result = lines.map(
+  //       (str) =>
+  //         str
+  //           .replaceAll('replace_as_bold_start', '<b>') // Replace start bold marker with <b>
+  //           .replaceAll('replace_as_bold_end', '</b>') // Replace end bold marker with </b>
+  //     );
 
-      const updatedText = result.join('\n');
-      console.log('Updated Text with Suggestion:', updatedText);
+  //     const updatedText = result.join('\n');
+  //     console.log('Updated Text with Suggestion:', updatedText);
 
-      // Create the final HTML for contenteditable
-      const formattedHTML = result
-        .map((line) =>
-          line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`
-        )
-        .join('');
+  //     // Create the final HTML for contenteditable
+  //     const formattedHTML = result
+  //       .map((line) =>
+  //         line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`
+  //       )
+  //       .join('');
 
-      target.innerHTML = formattedHTML; // Update the content of the content-editable element
+  //     target.innerHTML = formattedHTML; // Update the content of the content-editable element
 
-      // Reset the inline suggestion and suggestions array
-      this.inlineSuggestion = { token_str: '', sequence: '' }; // Reset to an empty object
-      this.suggestions = [];
-    }
-  }
+  //     // Reset the inline suggestion and suggestions array
+  //     this.inlineSuggestion = { token_str: '', sequence: '' }; // Reset to an empty object
+  //     this.suggestions = [];
+  //   }
+  // }
 
   getTextColumnIndex(line: string, caretColumn: number): number {
     console.log('current line in getTextColumnIndex :', line);
@@ -1099,11 +1183,20 @@ export class AppComponent
   }
 
   sendEmail() {
+    console.log(
+      'Sending email with body (Markdown):',
+      this.emailtoSend.bodyPreview
+    );
+
+    // Convert Markdown to HTML
+    const htmlBody = this.convertMarkdownToHtml(this.emailtoSend.bodyPreview);
+    console.log('Converted HTML Body:', htmlBody);
+
     this.salesforceService
       .sendEmail(
         this.emailtoSend.to,
         this.emailtoSend.subject,
-        this.emailtoSend.bodyPreview,
+        htmlBody, // Send Markdown content here
         this.fileName,
         this.fileType,
         this.base64Content
@@ -1119,6 +1212,30 @@ export class AppComponent
       );
     this.isComposeMode = false; // Return to email list
   }
+
+  convertMarkdownToHtml(markdown: string): string {
+    let html: string = '';
+
+    // Check if the result of marked is a Promise
+    const result = marked(markdown);
+
+    // If result is a promise, we need to resolve it
+    if (result instanceof Promise) {
+      result
+        .then((resolvedHtml: string) => {
+          html = resolvedHtml; // Handle resolved value
+        })
+        .catch((error: any) => {
+          console.error('Error converting markdown to HTML:', error);
+        });
+    } else {
+      // If it's a string, use it directly
+      html = result;
+    }
+
+    return html;
+  }
+
   deleteEmail(emailData: any): void {
     const token = localStorage.getItem('accessToken');
     if (token) {
