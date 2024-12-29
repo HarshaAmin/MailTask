@@ -177,9 +177,9 @@ global with sharing class OutlookEmailServiceRest {
       );
 
       // Extract parameters
-      String toAddress = (String) params.get('toAddress');
+      String toAddress = (String) params.get('to');
       String subject = (String) params.get('subject');
-      String bodyContent = (String) params.get('bodyContent');
+      String bodyContent = (String) params.get('body');
       String fileName = (String) params.get('fileName');
       String fileType = (String) params.get('fileType');
       String base64Content = (String) params.get('base64Content');

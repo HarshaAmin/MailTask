@@ -3,32 +3,20 @@
     <head>
       <meta charset="utf-8" />
       <title>SendTech</title>
-      <base href="/resource/AngularAppNew/" />
+    <base href="/resource/AngularAppNew/" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <link
-        rel="icon"
-        type="image/x-icon"
-        href="/resource/AngularAppNew/favicon.ico"
+      <link rel="icon" type="image/x-icon" href="/resource/AngularAppNew/favicon.ico" />
+      <link rel="stylesheet" href="/resource/AngularAppNew/styles-YBIRT2YH.css"
       />
-      <!-- Link to the CSS file from the Static Resource -->
-      <link
-        rel="stylesheet"
-        href="/resource/AngularAppNew/styles-CW5SLSSK.css"
-      />
+      <!-- Link to the CSS file from the Static Resource -->      
     </head>
     <body>
       <!-- Root Angular component -->
       <app-root></app-root>
-
+      
       <!-- Link to the JavaScript files -->
-      <script
-        src="/resource/AngularAppNew/polyfills-FFHMD2TL.js"
-        type="module"
-      ></script>
-      <script
-        src="/resource/AngularAppNew/main-XNXZ2NMP.js"
-        type="module"
-      ></script>
+      <script src="/resource/AngularAppNew/polyfills-FFHMD2TL.js" type="module"></script>
+      <script src="/resource/AngularAppNew/main-4WQCEH6Z.js" type="module"></script>
     </body>
   </html>
 </apex:page>

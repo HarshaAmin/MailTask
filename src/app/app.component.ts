@@ -19,13 +19,19 @@ import { Observable, throwError } from 'rxjs';
 import { AnyCatcher } from 'rxjs/internal/AnyCatcher';
 
 interface Email {
+  id: string;
   subject: string;
   sender: string;
+  to: string;
+  senderName: string;
+  senderEmail: string;
+  recipientNames: string[];
+  recipientEmails: string[];
+  receivedDate: Date;
   receivedDateTime: string;
   bodyPreview: string;
   body: string;
   status: string;
-  id: string;
   isRead: boolean;
   flagStatus: string;
   categories: string[];
@@ -154,26 +160,6 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   openColorPicker(event: MouseEvent) {
-    // Save the current selection
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      this.savedRange = selection.getRangeAt(0); // Save the current selection range
-    }
-
-    // Get the button and its position for positioning the color picker
-    const button = event.currentTarget as HTMLElement;
-    if (button && button.classList.contains('btn-action')) {
-      const buttonRect = button.getBoundingClientRect();
-      this.popupPosition = {
-        top: buttonRect.bottom + 'px',
-        left: buttonRect.left + 'px'
-      };
-      console.log('Color picker position set to:', this.popupPosition);
-    } else {
-      console.warn('Button not found in event.currentTarget.');
-      return; // Exit if button is not valid
-    }
-
     // Toggle visibility of the color picker
     this.showColorPalette = !this.showColorPalette;
 
@@ -186,6 +172,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
   applyColorToSelection(color: string) {
+    console.log('color selected ' + color);
     const selection = window.getSelection();
 
     // Safely check if selection is not null and rangeCount > 0
@@ -226,18 +213,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Toggle visibility of color palette
   toggleColorPicker(event: MouseEvent) {
-    const button = event.target as HTMLElement;
-    const buttonRect = button.getBoundingClientRect();
-
-    // Set the position of the popup to be below the button
-    this.popupPosition = {
-      top: `${buttonRect.bottom + window.scrollY}px`, // Position below the button
-      left: `${buttonRect.left + window.scrollX}px` // Align with the left edge of the button
-    };
-
-    console.log('Color Picker position set to:', this.popupPosition);
-
-    // Toggle the color picker visibility
     this.showColorPalette = !this.showColorPalette;
   }
 
@@ -355,89 +330,38 @@ export class AppComponent implements OnInit, OnDestroy {
     selection?.addRange(range);
   }
 
-  // sanitizeInput(input: string): string {
-  //   // Parse the input HTML
-  //   const parser = new DOMParser();
-  //   const doc = parser.parseFromString(input, 'text/html');
+  // onContentEditableInput(event: Event) {
+  //   this.inlineSuggestion = '';
+  //   console.log('inside onContentedit');
+  //   const target = event.target as HTMLElement;
+  //   const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+  //   console.log('sanitizedText ' + sanitizedText);
+  //   if (sanitizedText.length === 0) {
+  //     this.inlineSuggestion = '';
+  //     return;
+  //   }
+  //   const selection = window.getSelection();
+  //   const rect = selection?.getRangeAt(0).getBoundingClientRect();
 
-  //   // Function to process each node
-  //   const traverseNode = (node: ChildNode): string => {
-  //     if (node.nodeType === Node.TEXT_NODE) {
-  //       // Return text content for text nodes
-  //       return node.textContent || '';
-  //     } else if (node.nodeType === Node.ELEMENT_NODE) {
-  //       const element = node as HTMLElement;
-
-  //       // Handle specific elements
-  //       if (element.tagName === 'BR') {
-  //         return '\n'; // Replace <BR> with a newline
-  //       } else if (element.tagName === 'DIV') {
-  //         // Process children of <DIV> with a newline
-  //         return traverseChildren(element) + '\n';
-  //       } else {
-  //         // Process other elements by traversing their children
-  //         return traverseChildren(element);
-  //       }
+  //   if (rect) {
+  //     this.inlineSuggestion = this.getRandomSuggestion();
+  //     this.suggestionPosition = {
+  //       top: rect.bottom + window.scrollY, // 5px offset for regular input
+  //       left: rect.left + window.scrollX
+  //     };
+  //     this.inlineSuggestionVisible = true;
+  //     if (this.suggestionTimeout) {
+  //       clearTimeout(this.suggestionTimeout);
   //     }
-  //     // Ignore unsupported node types
-  //     return '';
-  //   };
-
-  //   // Function to process all child nodes of a given node
-  //   const traverseChildren = (node: HTMLElement): string => {
-  //     return Array.from(node.childNodes).map(traverseNode).join('');
-  //   };
-
-  //   // Start traversing from the body of the parsed document
-  //   const sanitizedText = traverseChildren(doc.body).trim();
-
-  //   return sanitizedText;
+  //     this.suggestionTimeout = setTimeout(() => {
+  //       this.inlineSuggestionVisible = false;
+  //       this.inlineSuggestion = null;
+  //       this.suggestionPosition = null;
+  //     }, 3000); // 3000 milliseconds = 3 seconds
+  //     console.log('inside onContentedit 170');
+  //     this.inlineSuggestion = this.getRandomSuggestion();
+  //   }
   // }
-  onContentEditableInput(event: Event) {
-    this.inlineSuggestion = '';
-    //uncomment code 136
-    // const target = event.target as HTMLElement;
-    // this.emailtoSend.bodyPreview = target.innerHTML.trim();
-    // const inputText = this.emailtoSend.bodyPreview;
-    console.log('inside onContentedit');
-    const target = event.target as HTMLElement;
-    const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
-    console.log('sanitizedText ' + sanitizedText);
-    //const inputText = this.emailtoSend.bodyPreview;
-
-    // Clear previous analysis if no input
-    if (sanitizedText.length === 0) {
-      this.inlineSuggestion = '';
-      return;
-    }
-
-    // Adjust suggestion position with offset for normal typing
-    const selection = window.getSelection();
-    const rect = selection?.getRangeAt(0).getBoundingClientRect();
-
-    if (rect) {
-      this.inlineSuggestion = this.getRandomSuggestion();
-      this.suggestionPosition = {
-        top: rect.bottom + window.scrollY, // 5px offset for regular input
-        left: rect.left + window.scrollX
-      };
-      this.inlineSuggestionVisible = true;
-
-      // Clear any existing timeout to prevent multiple timeouts from stacking
-      if (this.suggestionTimeout) {
-        clearTimeout(this.suggestionTimeout);
-      }
-
-      // Set a new timeout to hide the suggestion after 3 seconds
-      this.suggestionTimeout = setTimeout(() => {
-        this.inlineSuggestionVisible = false;
-        this.inlineSuggestion = null;
-        this.suggestionPosition = null;
-      }, 3000); // 3000 milliseconds = 3 seconds
-      console.log('inside onContentedit 170');
-      this.inlineSuggestion = this.getRandomSuggestion();
-    }
-  }
   getRandomSuggestion() {
     const dummySuggestions = [
       'Hello',
@@ -454,34 +378,34 @@ export class AppComponent implements OnInit, OnDestroy {
     return dummySuggestions[index];
   }
 
-  // onContentEditableInput(event: Event) {
-  //   // const target = event.target as HTMLElement;
-  //   // this.emailtoSend.bodyPreview = target.innerHTML.trim();
-  //   // const inputText = this.emailtoSend.bodyPreview;
-  //   console.log('inside onContentedit');
-  //   const target = event.target as HTMLElement;
-  //   const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
-  //   //const inputText = this.emailtoSend.bodyPreview;
+  onContentEditableInput(event: Event) {
+    // const target = event.target as HTMLElement;
+    // this.emailtoSend.bodyPreview = target.innerHTML.trim();
+    // const inputText = this.emailtoSend.bodyPreview;
+    console.log('inside onContentedit');
+    const target = event.target as HTMLElement;
+    const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
+    //const inputText = this.emailtoSend.bodyPreview;
 
-  //   // Clear previous analysis if no input
-  //   if (sanitizedText.length === 0) {
-  //     this.inlineSuggestion = '';
-  //     return;
-  //   }
+    // Clear previous analysis if no input
+    if (sanitizedText.length === 0) {
+      this.inlineSuggestion = '';
+      return;
+    }
 
-  //   // Adjust suggestion position with offset for normal typing
-  //   const selection = window.getSelection();
-  //   const rect = selection?.getRangeAt(0).getBoundingClientRect();
+    // Adjust suggestion position with offset for normal typing
+    const selection = window.getSelection();
+    const rect = selection?.getRangeAt(0).getBoundingClientRect();
 
-  //   if (rect) {
-  //     this.suggestionPosition = {
-  //       top: rect.bottom + window.scrollY + 6, // 5px offset for regular input
-  //       left: rect.left + window.scrollX + 10
-  //     };
-  //   }
-  //   console.log('inside onContentedit 170');
-  //   this.analyzeText(sanitizedText);
-  // }
+    if (rect) {
+      this.suggestionPosition = {
+        top: rect.bottom + window.scrollY + 6, // 5px offset for regular input
+        left: rect.left + window.scrollX + 10
+      };
+    }
+    console.log('inside onContentedit 170');
+    this.analyzeText(sanitizedText);
+  }
 
   // onContentEditableInput(event: Event) {
   //   const target = event.target as HTMLElement;
@@ -532,7 +456,7 @@ export class AppComponent implements OnInit, OnDestroy {
   async analyzeText(text: string) {
     console.log('inside analyzeText');
     try {
-      const accessToken = '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'; // Replace with your token
+      const accessToken = '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'; // Replace with your token
 
       // Request for sentiment analysis
       const sentimentResponse = await fetch(

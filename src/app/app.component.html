@@ -966,6 +966,7 @@
                     [ngStyle]="popupPosition"
                   >
                     <div
+                    class="btn-action"
                       *ngFor="let color of colorOptions"
                       (click)="applyColorToSelection(color)"
                     >
@@ -1002,7 +1003,9 @@
               <br /><br /><br />
               <h3>{{ selectedEmail.subject }}</h3>
               <br /><br />
-              <p><strong>From:</strong> {{ selectedEmail.sender }}</p>
+              <p><strong>From:</strong> {{ selectedEmail.senderEmail }}</p>
+              <br /><br />
+              <p><strong>To:</strong> {{ selectedEmail.recipientEmails }}</p>
               <br /><br />
               <p>
                 <strong>Received:</strong>

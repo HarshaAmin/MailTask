@@ -20,6 +20,8 @@ public class OutlookEmailService {
     @AuraEnabled
     public String sender;
     @AuraEnabled
+    public String to;
+    @AuraEnabled
     public String bodyPreview;
     @AuraEnabled
     public String receivedDateTime;
@@ -35,6 +37,15 @@ public class OutlookEmailService {
     public String flagStatus;
     @AuraEnabled
     public List<String> categories;
+    @AuraEnabled
+    public String senderName;
+    @AuraEnabled
+    public String senderEmail;
+    @AuraEnabled
+    public List<String> recipientNames;
+    @AuraEnabled
+    public List<String> recipientEmails;
+
   }
 
   public class CategorizationResponse {
@@ -166,6 +177,45 @@ public class OutlookEmailService {
           ))
           .get('address');
       }
+      // Map<String, Object> toRecipients = (Map<String, Object>) msgMap.get('toRecipients');
+      // email.to = (String) ((Map<String, Object>) toRecipients.get(
+      //       'emailAddress'
+      //     ))
+      //     .get('address');
+
+      Map<String, Object> fromEmail = (Map<String, Object>) msgMap.get('from');
+
+      Map<String, Object> fEmail = (Map<String, Object>)fromEmail.get('emailAddress'); 
+      email.senderName =(String)fEmail.get('name');
+      email.senderEmail =(String)fEmail.get('address') ;
+
+      List<Object> toRecipients = (List<Object>) msgMap.get('toRecipients');
+      Integer i=0;
+      if(toRecipients!=null){
+        email.recipientNames = new List<String>();
+        email.recipientEmails = new List<String>();
+        for(Object toRecipient : toRecipients){
+       Map<String, Object> toRecipientContent =(Map<String, Object>) toRecipient;
+        Map<String, Object> toEmail =  (Map<String, Object>) toRecipientContent.get('emailAddress'); 
+        if(i!=0){
+          email.recipientNames.add(';');
+          email.recipientEmails.add(';');
+        }
+      email.recipientNames.add((String)toEmail.get('name'));
+      email.recipientEmails.add((String)toEmail.get('address')) ;
+      i++;
+      }
+      }
+      
+      //List<Map<String, Object>> toEmail = (List<Map<String, Object>>)fromEmail.get('emailAddress'); 
+
+      // email.recipientNames = (List<String>)toEmail[0].get('name');
+      // email.recipientEmails= (List<String>)toEmail[0].get('address');
+
+      // email.senderName =(String)fEmail.get('name');
+      // email.senderEmail =(String)fEmail.get('address') ;
+
+
       email.bodyPreview = (String) msgMap.get('bodyPreview');
       
       Object emlBody = (Object) msgMap.get('body');
@@ -308,7 +358,7 @@ public class OutlookEmailService {
     req.setMethod('POST');
     req.setHeader(
       'Authorization',
-      'Bearer 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'
+      'Bearer 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'
     );
     req.setHeader('Content-Type', 'application/json');
     req.setBody(requestBody);

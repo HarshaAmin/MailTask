@@ -178,6 +178,7 @@ export class SalesforceService {
       fileType: fileType,
       base64Content: base64Content
     };
+    console.log('payload is ' + payload);
     return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(
       map((response) => response),
       catchError((error) => {
