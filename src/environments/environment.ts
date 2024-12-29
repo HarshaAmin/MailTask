@@ -12,6 +12,6 @@ export const environment = {
     salesforceApiBaseUrl:
       'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest'
   },
-  huggingFaceApiKey: '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' // Add this line
+  huggingFaceApiKey: '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' // Add this line
 };
   

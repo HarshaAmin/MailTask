@@ -358,7 +358,7 @@ public class OutlookEmailService {
     req.setMethod('POST');
     req.setHeader(
       'Authorization',
-      'Bearer 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'
+      'Bearer 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'
     );
     req.setHeader('Content-Type', 'application/json');
     req.setBody(requestBody);
