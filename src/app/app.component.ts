@@ -276,6 +276,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
     this.updateSuggestionPosition();
     this.trackCaretRowAndColumn();
+    this.resetPositionData();
     //console.log('inside onContentedit 170');
     this.inlineSuggestion = this.getRandomSuggestion();
 
@@ -295,7 +296,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
   onMouseUpOrClick(event: MouseEvent) {
-    this.updateSuggestionPosition(); // Update position on mouseup or click
+    this.updateSuggestionPosition();
+    this.trackCaretRowAndColumn();
+    this.resetPositionData();
+
     const target = event.target as HTMLElement;
     const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
     if (sanitizedText.length > 0) {
@@ -410,58 +414,161 @@ export class AppComponent implements OnInit, OnDestroy {
 
   onKeyDown(event: KeyboardEvent) {
     if (event.key === 'Tab' && this.inlineSuggestion) {
-      event.preventDefault();
+      this.trackCaretRowAndColumn(); // Track the caret position
+
+      event.preventDefault(); // Prevent default behavior of the Tab key
       const target = event.target as HTMLElement;
-      //console.log('target.innerHTML.trim() before ' + target.innerHTML.trim());
+
+      // Sanitize the input text from the content-editable element
       const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
-      // console.log('sanitizedText after ' + sanitizedText);
-      const textBefore = sanitizedText;
-      const { row, column } = this.caretPosition;
-      const lines = textBefore.split('\n');
-      // console.log('row in final is ' + row);
-      // console.log('lines in final is ' + JSON.stringify(lines));
-      // console.log('lines length is ' + lines.length);
+      const lines = sanitizedText.split('\n'); // Split text into lines
+
+      const { row, column } = this.caretPosition; // Get caret position (row and column)
+
       let lineRow = 0;
       if (row < 0) {
         lineRow = 0; // If row is negative, default to the first line
       } else if (row >= lines.length) {
-        lineRow = lines.length - 1; // If row exceeds the available lines, use the last line
+        lineRow = lines.length - 1; // If row exceeds available lines, use the last line
       } else {
         lineRow = row; // Otherwise, use the row as it is
       }
 
-      // Update the line where the suggestion will be inserted
-      if (lineRow >= 0 && lineRow < lines.length) {
-        const currentLine = lines[lineRow];
-        const beforeCaret = currentLine.substring(0, column); // Text before the caret
-        const afterCaret = currentLine.substring(column);
-        lines[lineRow] =
-          beforeCaret + ' ' + this.inlineSuggestion + ' ' + afterCaret;
-      }
+      // Find the caret position in the string based on the range
+      const currentLine = lines[lineRow];
+      console.log('current line in keydown :', currentLine);
+      const columnIndex = this.getTextColumnIndex(currentLine, column);
+      console.log('columnIndex line:', columnIndex);
+      const beforeCaret = currentLine.substring(0, column); // Text before the caret
+      const afterCaret = currentLine.substring(column); // Text after the caret
 
+      // Adjust column to be based on the string length and caret position
+      const textLength = beforeCaret.length; // This will give the actual position in the string
+      console.log('Column in terms of string length: ', textLength);
+
+      // Now we can insert the suggestion based on the calculated position
+      lines[lineRow] =
+        beforeCaret + ' ' + this.inlineSuggestion + ' ' + afterCaret;
+
+      // Process lines to handle any formatting (like bold text)
       let result = lines.map(
         (str) =>
           str
             .replaceAll('replace_as_bold_start', '<b>') // Replace start bold marker with <b>
             .replaceAll('replace_as_bold_end', '</b>') // Replace end bold marker with </b>
       );
+
       const updatedText = result.join('\n');
       console.log('Updated Text with Suggestion:', updatedText);
+
+      // Create the final HTML for contenteditable
       const formattedHTML = result
-        .map((line) => {
-          // For empty lines, return <div><br></div>
-          return line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`;
-        })
+        .map((line) =>
+          line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`
+        )
         .join('');
-      target.innerHTML = formattedHTML;
+
+      target.innerHTML = formattedHTML; // Update the content of the content-editable element
+
+      // Reset the inline suggestion and suggestions array
       this.inlineSuggestion = '';
       this.suggestions = [];
-      this.moveCaretToEnd(target);
     }
   }
 
+  getTextColumnIndex(line: string, caretColumn: number): number {
+    console.log('current line in getTextColumnIndex :', line);
+    console.log(
+      'current line in getTextColumnIndex  caretColumn :',
+      caretColumn
+    );
+    // Create an invisible container to measure text width
+    const tempDiv = document.createElement('div');
+    tempDiv.style.visibility = 'hidden';
+    tempDiv.style.position = 'absolute';
+    document.body.appendChild(tempDiv);
+
+    const span = document.createElement('span');
+    tempDiv.appendChild(span);
+
+    // Measure the width of each character and accumulate the width
+    let totalWidth = 0;
+    let columnIndex = 0;
+
+    // Split the line by characters and measure the width of each character
+    for (let i = 0; i < line.length; i++) {
+      span.textContent = line.substring(0, i + 1); // Add one character at a time
+      totalWidth = span.offsetWidth;
+
+      // If the width exceeds the caret position, we found the correct index
+      if (totalWidth >= caretColumn) {
+        columnIndex = i;
+        break;
+      }
+    }
+
+    document.body.removeChild(tempDiv); // Clean up the temporary container
+
+    console.log('Calculated column index in raw text: ' + columnIndex);
+
+    // Now sanitize the line for output after we've calculated the caret position
+
+    return columnIndex; // Return the index for insertion in raw text
+  }
+  sanitizeInputNew(input: string): string {
+    // Create a temporary container to parse and manipulate the input HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(input, 'text/html');
+
+    // Handle <b> and <strong> tags by replacing them with their inner text
+    const bTags = doc.querySelectorAll('b, strong');
+    bTags.forEach((bTag) => {
+      const textContent = bTag.textContent || '';
+      bTag.replaceWith(textContent);
+    });
+
+    // Handle <i> and <em> tags by replacing them with their inner text
+    const iTags = doc.querySelectorAll('i, em');
+    iTags.forEach((iTag) => {
+      const textContent = iTag.textContent || '';
+      iTag.replaceWith(textContent);
+    });
+
+    // Handle <u> tags by replacing them with their inner text
+    const uTags = doc.querySelectorAll('u');
+    uTags.forEach((uTag) => {
+      const textContent = uTag.textContent || '';
+      uTag.replaceWith(textContent);
+    });
+
+    // Handle <s> and <strike> tags by replacing them with their inner text
+    const sTags = doc.querySelectorAll('s, strike');
+    sTags.forEach((sTag) => {
+      const textContent = sTag.textContent || '';
+      sTag.replaceWith(textContent);
+    });
+
+    // Handle <span> tags by replacing them with their inner text
+    const spanTags = doc.querySelectorAll('span');
+    spanTags.forEach((spanTag) => {
+      const textContent = spanTag.textContent || '';
+      spanTag.replaceWith(textContent);
+    });
+
+    // Replace all &nbsp; (non-breaking space) entities with a regular space
+    const docHTML = doc.body.innerHTML;
+
+    // Replace &nbsp; with regular spaces
+    const sanitizedHTML = docHTML.replace(/&nbsp;/g, ' ');
+
+    // Replace <br> tags with newline character '\n'
+    const finalSanitizedHTML = sanitizedHTML.replace(/<br\s*\/?>/g, '\n');
+
+    // Return the sanitized text as a plain string
+    return finalSanitizedHTML.trim();
+  }
+  
   trackCaretRowAndColumn() {
-    //this.inlineSuggestion = '';
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
       return null; // No selection
@@ -486,22 +593,16 @@ export class AppComponent implements OnInit, OnDestroy {
     // Adjust row calculation to account for padding and extra spacing
     const row = Math.floor((caretRect.top - offsetTop) / lineHeight);
 
-    const column = caretRect.left - containerRect.left;
+    // Get padding and border values of the content container
+    const paddingLeft = parseFloat(computedStyle.paddingLeft);
+    const borderLeftWidth = parseFloat(computedStyle.borderLeftWidth);
+
+    // Adjust column calculation to account for padding and borders
+    const column =
+      caretRect.left - containerRect.left - paddingLeft - borderLeftWidth;
+    console.log('column in track is ' + column);
     this.caretPosition = { row, column };
     return { row, column };
-  }
-  trackCursorPosition(event: KeyboardEvent) {
-    const selection = window.getSelection();
-    this.staticCursonPosition = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-      return;
-    }
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    this.suggestionPosition = {
-      top: rect.bottom + window.scrollY, // 5px offset
-      left: rect.left + window.scrollX
-    };
   }
 
   toggleBold(event: Event) {
