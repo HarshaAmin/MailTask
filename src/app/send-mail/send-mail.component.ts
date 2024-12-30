@@ -28,6 +28,7 @@ export class SendMailComponent implements OnInit, AfterViewInit {
   selectedEmoji: string = '';
   popupPosition: any = {};
 
+
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
   @Input() openSendEmailModal: boolean = false;
 
@@ -426,4 +427,8 @@ export class SendMailComponent implements OnInit, AfterViewInit {
       range.insertNode(emojiNode);
     }
   }
+
+
+
+
 }

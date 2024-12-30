@@ -27,6 +27,10 @@ export class SalesforceService extends CommonService {
   private apiUrlSentiment =
     'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment';
 
+  private baseForwardUrl =
+    'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookForwardEmailService';
+
+
   private accessToken: string | null = null;
 
   constructor(private http: HttpClient) {
@@ -204,6 +208,24 @@ export class SalesforceService extends CommonService {
       .pipe(
         catchError((error) => {
           console.error('Error deleting email:', error);
+          return throwError(error);
+        })
+      );
+  }
+
+  forwardEmail(emailId: string, toRecipients: any): Observable<any> {
+    const payload = {
+      emailId: emailId,
+      toRecipients: toRecipients
+    };
+    console.log('payload is ' + payload);
+    const url = `${this.baseForwardUrl}/forwardEmail/${emailId}`;
+
+    return this.http
+      .post<any>(url, payload)
+      .pipe(
+        catchError((error) => {
+          console.error('Email formward failed:', error);
           return throwError(error);
         })
       );
