@@ -39,7 +39,11 @@
         <div class="form-group" style="position: relative">
           <div class="textarea-header-section">
             <label for="body">Body:</label>
-            <div id="editor" (keydown)="handleKeyDown($event)"></div>
+            <div
+              id="editor"
+              (keyup)="handleKeyDown($event)"
+              (select)="handleKeyDown($event)"
+            ></div>
           </div>
         </div>
 

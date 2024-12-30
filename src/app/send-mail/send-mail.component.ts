@@ -7,7 +7,7 @@ import { SalesforceService } from '../../shared/services/salesforce.service';
 import { CommonService } from '../../shared/services/common.service';
 import { NgIf } from '@angular/common';
 import { EmojiService } from '../../shared/services/emoji.service';
-import Quill from 'quill';
+import Quill, { Delta } from 'quill';
 
 @Component({
   selector: 'app-send-mail',
@@ -17,9 +17,7 @@ import Quill from 'quill';
 })
 export class SendMailComponent implements OnInit, AfterViewInit {
   email = { to: '', subject: '', body: '' };
-  inlineSuggestion: string | null = null;
   files: NgxFileDropEntry[] = [];
-  suggestions: string[] = [];
   currentHighScoreSuggestion: string = '';
   cursorPosition: number = 0;
   suggestionPosition: { top: number; left: number } | null = null;
@@ -27,7 +25,40 @@ export class SendMailComponent implements OnInit, AfterViewInit {
   emojiPickerVisible = false;
   selectedEmoji: string = '';
   popupPosition: any = {};
-
+  isSuggestionVisible = false;
+  mockSuggestionsResponse = [
+    {
+      token_str: 'died',
+      sequence: "{ inputs : ' hi, i wanted to inform you that d died. ' }"
+    },
+    {
+      token_str: 'is',
+      sequence: "{ inputs : ' hi, i wanted to inform you that d is. ' }"
+    },
+    {
+      token_str: 'amazing',
+      sequence: "{ inputs : ' hi, i wanted to inform you that is amazing. ' }"
+    }
+    // Add more mock data as needed
+  ];
+  quill: Quill;
+  isAddingSuggestions = false;
+  lastAnalyzedText = '';
+  suggestions: { token_str: string; sequence: string }[] = [];
+  inlineSuggestion: { token_str: string; sequence: string } = {
+    token_str: '',
+    sequence: ''
+  };
+  suggestionTimeout: any;
+  resetTimeout: any;
+  emailBodyCords: {
+    elementIdx: number,
+    cursorPos: number
+  } = {
+      elementIdx: 0,
+      cursorPos: 0
+    }
+  target: string;
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
   @Input() openSendEmailModal: boolean = false;
@@ -51,13 +82,46 @@ export class SendMailComponent implements OnInit, AfterViewInit {
     });
   }
 
-  handleKeyDown(e: Event) {
-    console.log(e)
-    this.email.body = e.target["innerHTML"];
+  handleKeyDown(event) {
+    console.log(event);
+    let isFocusElSet = false;
+    if (event.keyCode == 9) return;
+
+    let el = document.querySelector(".ql-editor");
+    let selection = window.getSelection();
+    el.childNodes.forEach((node) => {
+      node['classList'].remove("elmInFocus");
+      node['classList'].add(`emailBodyChild`);
+    });
+    console.log(el.childNodes, "CHILD NODES")
+    selection.focusNode.parentElement.classList.add("elmInFocus");
+    for (let i = 0; i < el.childNodes.length; i++) {
+      if (el.childNodes[i]['classList'].contains("elmInFocus")) {
+        this.emailBodyCords.elementIdx = i;
+        this.emailBodyCords.cursorPos = selection.focusOffset;
+      }
+    }
+
+    if (!isFocusElSet) {
+      if (event.keyCode == 13 || event.keyCode == 40) {
+        if (this.emailBodyCords.elementIdx >= el.childNodes.length) {
+          this.emailBodyCords.elementIdx = el.childNodes.length - 1;
+        } else {
+          this.emailBodyCords.elementIdx++;
+        }
+      }
+      if (event.keyCode == 38) {
+        if (this.emailBodyCords.elementIdx == 0) {
+          this.emailBodyCords.elementIdx = 0;
+        } else {
+          this.emailBodyCords.elementIdx--;
+        }
+      }
+    }
   }
 
   ngAfterViewInit(): void {
-    const quill = new Quill("#editor", {
+    this.quill = new Quill("#editor", {
       theme: "snow",
       modules: {
         toolbar: [
@@ -70,6 +134,146 @@ export class SendMailComponent implements OnInit, AfterViewInit {
         ]
       }
     });
+
+    document.addEventListener('keydown', this.handleGlobalKeyDown.bind(this));
+  }
+
+  handleGlobalKeyDown(event) {
+    if (event.keyCode == 9) {
+      event.preventDefault();
+
+      const str = "-|-sanath-|-";
+
+      const target = document.createTextNode("\u0001");
+      let setpos = document.createRange();
+      let selection = window.getSelection();
+      let el = document.querySelector(".ql-editor");
+      const offset = selection.focusOffset;
+      selection.getRangeAt(0).insertNode(target);
+      target.replaceWith(str);
+      selection.focusNode['innerHTML'] = selection.focusNode['innerHTML'].replaceAll("\t", "");
+
+      el.childNodes.forEach((node) => {
+        node['classList'].remove("elmInFocus");
+        node['classList'].add(`emailBodyChild`);
+      });
+
+      selection.focusNode['classList'].add("elmInFocus");
+      for (let i = 0; i < el.childNodes.length; i++) {
+        if (el.childNodes[i]['classList'].contains("elmInFocus")) {
+          this.emailBodyCords.elementIdx = i;
+          this.emailBodyCords.cursorPos = offset + str.length - 1;
+        }
+      }
+      setpos.setStart(el.childNodes[this.emailBodyCords.elementIdx].childNodes[0], this.emailBodyCords.cursorPos);
+      setpos.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(setpos);
+    }
+  }
+
+  onTextChange(delta: Delta, oldDelta: Delta, source: string) {
+    console.log('onTextChange ');
+    // Get the raw HTML content
+    const htmlContent = this.quill.root.innerHTML;
+    console.log('onTextChange htmlContent ' + htmlContent);
+    // Use a DOM parser to parse the HTML
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+
+    // Check if the body is not null before accessing its textContent
+    const body = doc.body;
+    if (body) {
+      // Remove any inline suggestions (or placeholders)
+      // Example: Remove all spans with a specific class used for suggestions
+      const suggestionElements = body.querySelectorAll('.suggestion-class'); // Change this selector based on your actual class
+      suggestionElements.forEach((el) => {
+        el.remove(); // Remove the suggestion element
+      });
+
+      // Now get the text without suggestions
+      const cleanedText = body.textContent?.trim() || ''; // Handle case when textContent is null
+      console.log('Cleaned text: ' + cleanedText);
+
+      // Prevent recursion if suggestions are being added
+      if (this.isAddingSuggestions || !cleanedText) {
+        return;
+      }
+
+      // this.analyzeText(cleanedText);
+    } else {
+      console.error('Error: Body element is null');
+    }
+  }
+
+  async analyzeText(text: string) {
+    if (text === this.lastAnalyzedText) {
+      return; // Don't analyze again if the text hasn't changed
+    }
+
+    this.lastAnalyzedText = text; // Update the last analyzed text
+    try {
+      // Mock the response to simulate the API call
+      const mockSuggestionsData = this.mockSuggestionsResponse; // Use mock response
+
+      // Format the mock response like the actual API response
+      const formattedSuggestions = mockSuggestionsData.map((item: any) => ({
+        token_str: item.token_str.trim(), // Token text (the word or fragment to insert)
+        sequence: item.sequence // The sequence or context for the token
+      }));
+
+      // Pass the mock formatted suggestions to addSuggestionsToEditor
+      // this.suggestions = formattedSuggestions;
+      // this.addSuggestionsToEditor(formattedSuggestions);
+
+      // Set the suggestion after 3 seconds (as in your original code)
+      setTimeout(() => {
+        this.inlineSuggestion = this.suggestions[0] || {
+          token_str: '',
+          sequence: ''
+        };; // Set the first suggestion or empty string
+
+        // Reset the suggestion after 27 seconds if no new action occurs
+        this.resetTimeout = setTimeout(() => {
+          //this.inlineSuggestion = ''; // Set suggestion to empty after 30 seconds
+        }, 27000); // 27000ms = 27 seconds after setting the suggestion
+      }, 3000); // 3000ms = 3 seconds
+    } catch (error) {
+      console.error('Error fetching analysis:', error);
+    }
+  }
+
+  addSuggestionsToEditor(
+    suggestions: { token_str: string; sequence: string }[]
+  ) {
+    this.isAddingSuggestions = true; // Prevent recursion while adding suggestions
+
+    const { token_str, sequence } = suggestions[0];
+    const start = sequence.indexOf(token_str);
+    const end = start + token_str.length;
+
+    // Insert the suggestion text as grayed-out (inline-suggestion)
+    this.quill.insertText(start, token_str);
+
+    // Move the cursor after the inserted suggestion
+    this.quill.setSelection(end, end);
+
+    this.isAddingSuggestions = false; // Re-enable text-change event listener
+
+    // Set timeout to hide the suggestion after 5 seconds
+    this.hideSuggestionAfterTimeout();
+  }
+
+  hideSuggestionAfterTimeout() {
+    if (this.suggestionTimeout) {
+      clearTimeout(this.suggestionTimeout); // Clear any previous timeout
+    }
+
+    this.suggestionTimeout = setTimeout(() => {
+      // Remove the suggestion (or hide it in the editor)
+      this.suggestions = []; // Reset suggestions
+      this.isSuggestionVisible = false;
+    }, 5000); // Hide suggestion after 5 seconds
   }
 
   sendEmail(): void {
@@ -138,38 +342,6 @@ export class SendMailComponent implements OnInit, AfterViewInit {
 
   toggleUnderline(event: Event) {
     document.execCommand('underline');
-  }
-
-  onContentEditableInput(event: Event) {
-    this.inlineSuggestion = '';
-    //uncomment code 136
-    // const target = event.target as HTMLElement;
-    // this.emailtoSend.bodyPreview = target.innerHTML.trim();
-    // const inputText = this.emailtoSend.bodyPreview;
-    console.log('inside onContentedit');
-    const target = event.target as HTMLElement;
-    const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
-    //const inputText = this.emailtoSend.bodyPreview;
-
-    // Clear previous analysis if no input
-    if (sanitizedText.length === 0) {
-      this.inlineSuggestion = '';
-      return;
-    }
-
-    // Adjust suggestion position with offset for normal typing
-    const selection = window.getSelection();
-    const rect = selection?.getRangeAt(0).getBoundingClientRect();
-
-    if (rect) {
-      this.suggestionPosition = {
-        top: rect.bottom + window.scrollY, // 5px offset for regular input
-        left: rect.left + window.scrollX
-      };
-      console.log(this.suggestionPosition);
-    }
-    console.log('inside onContentedit 170');
-    this.inlineSuggestion = this.getRandomSuggestion();
   }
 
   getRandomSuggestion() {
@@ -264,83 +436,6 @@ export class SendMailComponent implements OnInit, AfterViewInit {
     console.log('Sanitized Text:', sanitizedText); // Log the final sanitized text
 
     return sanitizedText;
-  }
-
-  onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Tab' && this.inlineSuggestion) {
-      event.preventDefault(); // Stop default behavior (Tab behavior)
-
-      // Get the target element and sanitize its HTML content
-      const target = event.target as HTMLElement;
-      console.log('target.innerHTML.trim() before ' + target.innerHTML.trim());
-      const sanitizedText = this.sanitizeInput(target.innerHTML.trim());
-
-      console.log('sanitizedText after ' + sanitizedText);
-
-      const textBefore = sanitizedText;
-      const { row, column } = this.caretPosition;
-      const lines = textBefore.split('\n');
-      console.log('row in final is ' + row);
-      console.log('lines in final is ' + JSON.stringify(lines));
-      console.log('lines length is ' + lines.length);
-
-      // Adjust row based on the caret position
-      let lineRow = 0;
-
-      // Ensure row is within bounds (preventing it from being negative or out of bounds)
-      if (row < 0) {
-        lineRow = 0; // If row is negative, default to the first line
-      } else if (row >= lines.length) {
-        lineRow = lines.length - 1; // If row exceeds the available lines, use the last line
-      } else {
-        lineRow = row; // Otherwise, use the row as it is
-      }
-
-      // Update the line where the suggestion will be inserted
-      if (lineRow >= 0 && lineRow < lines.length) {
-        const currentLine = lines[lineRow];
-        const beforeCaret = currentLine.substring(0, column); // Text before the caret
-        const afterCaret = currentLine.substring(column); // Text after the caret
-
-        // Insert the suggestion text in the correct position
-        lines[lineRow] =
-          beforeCaret + ' ' + this.inlineSuggestion + ' ' + afterCaret;
-      }
-
-      let result = lines.map(
-        (str) =>
-          str
-            .replaceAll('replace_as_bold_start', '<b>') // Replace start bold marker with <b>
-            .replaceAll('replace_as_bold_end', '</b>') // Replace end bold marker with </b>
-      );
-
-      // Join lines back and log the updated text
-      const updatedText = result.join('\n');
-      console.log('Updated Text with Suggestion:', updatedText);
-
-      const formattedHTML = result
-        .map((line) => {
-          // For empty lines, return <div><br></div>
-          return line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`;
-        })
-        .join('');
-
-      // Update the target innerHTML with the new lines
-      target.innerHTML = formattedHTML;
-      // target.innerHTML = lines
-      //   .map((line) => {
-      //     // Preserve empty lines by checking explicitly for empty strings
-      //     return line.trim() === '' ? '<div><br></div>' : `<div>${line}</div>`;
-      //   })
-      //   .join('');
-
-      // Reset inline suggestion and suggestions array
-      this.inlineSuggestion = '';
-      this.suggestions = [];
-
-      // Move caret to the end of the inserted text
-      this.moveCaretToEnd(target);
-    }
   }
 
   moveCaretToEnd(target: HTMLElement) {
