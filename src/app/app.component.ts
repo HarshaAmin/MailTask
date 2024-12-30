@@ -35,10 +35,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   handleReload() {
     window.onunload = (event) => {
-      window.location.href = window.location.origin;
-      return '';
+      console.log(`https://${event.target.domain}/`, 'dsfdsfds');
+      window.location.href = `https://${event.target.domain}/`;
+      return "";
     };
-
   }
 
   ngOnDestroy(): void { }
