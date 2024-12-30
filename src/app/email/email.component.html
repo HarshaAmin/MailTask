@@ -1,5 +1,15 @@
 @if (selectedEmail) {
-  <h3 class="mb-3">Email Details</h3>
+  <div class="email-action-section">
+    <div>
+      <i class="fa-solid fa-reply"></i>
+    </div>
+    <div>
+      <i class="fa-solid fa-reply-all"></i>
+    </div>
+    <div>
+      <i class="fa-solid fa-share"></i>
+    </div>
+  </div>
   <p>
     <b>Subject: </b>
     {{ selectedEmail.subject }}

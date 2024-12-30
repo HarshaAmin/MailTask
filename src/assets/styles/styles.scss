@@ -526,3 +526,14 @@ ul.sidebar-menu-items {
 .ql-editor {
   height: 200px !important;
 }
+
+.email-action-section {
+  display: flex;
+  gap: 10px;
+  justify-content: end;
+  margin: 5px 0 25px 0;
+
+  & i {
+    cursor: pointer;
+  }
+}
