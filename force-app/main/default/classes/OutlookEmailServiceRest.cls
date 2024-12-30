@@ -177,28 +177,49 @@ global with sharing class OutlookEmailServiceRest {
       );
 
       // Extract parameters
-      String toAddress = (String) params.get('toAddress');
+      String toAddress = (String) params.get('to');
       String subject = (String) params.get('subject');
-      String bodyContent = (String) params.get('bodyContent');
+      String bodyContent = (String) params.get('body');
       String fileName = (String) params.get('fileName');
       String fileType = (String) params.get('fileType');
       String base64Content = (String) params.get('base64Content');
       String accessToken = OutlookEmailService.getAccessToken();
       String endpoint = 'https://graph.microsoft.com/v1.0/users/Send.Tech@novigo-solutions.com/sendMail';
 
-      // Construct the email payload
+      List<String> emailList = toAddress.split(';');
+
       Map<String, Object> message = new Map<String, Object>{
         'subject' => subject,
         'body' => new Map<String, Object>{
           'contentType' => 'html',
           'content' => bodyContent
         },
-        'toRecipients' => new List<Object>{
-          new Map<String, Object>{
-            'emailAddress' => new Map<String, Object>{ 'address' => toAddress }
-          }
-        }
-      };
+    'toRecipients' => new List<Object>()
+    };
+
+// Loop through the list of email addresses and add them to the 'toRecipients' array
+for (String email : emailList) {
+    Map<String, Object> recipient = new Map<String, Object>{
+        'emailAddress' => new Map<String, Object>{ 'address' => email }
+    };
+    List<Object> toRecipients = (List<Object>)message.get('toRecipients');
+    toRecipients.add(recipient); 
+}
+
+
+      // // Construct the email payload
+      // Map<String, Object> message = new Map<String, Object>{
+      //   'subject' => subject,
+      //   'body' => new Map<String, Object>{
+      //     'contentType' => 'html',
+      //     'content' => bodyContent
+      //   },
+      //   'toRecipients' => new List<Object>{
+      //     new Map<String, Object>{
+      //       'emailAddress' => new Map<String, Object>{ 'address' => toAddress }
+      //     }
+      //   }
+      // };
 
       // Attachments are added if base64Content exists
       if (String.isNotBlank(base64Content)) {
