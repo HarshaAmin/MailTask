@@ -1,4 +1,4 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { SideMenuComponent } from '../side-menu/side-menu.component';
 import { EmailListComponent } from '../email-list/email-list.component';
 import { EmailComponent } from '../email/email.component';
@@ -9,6 +9,7 @@ import { environment } from '../../environments/environment';
 import { SendMailComponent } from '../send-mail/send-mail.component';
 import { NgClass } from '@angular/common';
 import { SpinnerComponent } from '../spinner/spinner.component';
+import { Subscription } from 'rxjs';
 
 interface Email {
   subject: string;
@@ -34,7 +35,7 @@ interface Email {
   ],
   templateUrl: './home.component.html'
 })
-export class HomeComponent implements AfterViewInit {
+export class HomeComponent implements AfterViewInit, OnDestroy {
   records: any;
   userInfo: any;
   errorMessage: string | null = null;
@@ -47,6 +48,7 @@ export class HomeComponent implements AfterViewInit {
   currentTypeSelection: string = 'all';
   currentCategorySelection: string = 'primary';
   categories: string[] = [];
+  loadEmailsSub: Subscription;
 
   selectedFilter = 'all'; // Default filter
   uEmail = 'SendTech@novigosolutions.com'; // Default email if needed
@@ -78,6 +80,11 @@ export class HomeComponent implements AfterViewInit {
         this.currentCategorySelection = item.id;
       })
     );
+
+
+    this.loadEmailsSub = this.commonService.loadEmail.subscribe((data: string) => {
+      this.loadEmails(data);
+    });
   }
 
   markAsRead(email: Email): void {
@@ -228,7 +235,7 @@ export class HomeComponent implements AfterViewInit {
     });
 
     const userId = 'Send.Tech@novigo-solutions.com';
-
+    this.commonService.activeSpinner = true;
     this.http
       .get(`${endpoint}?userId=${userId}&folder=${folder}`, { headers })
       .subscribe(
@@ -243,16 +250,21 @@ export class HomeComponent implements AfterViewInit {
               console.log('Emails loaded:', data);
               console.log('Categories:', data); // Assuming the response is an array or object of categories
               this.categories = data;
+              this.commonService.activeSpinner = false;
+
             },
             (error) => {
               console.error('Error loading emails:', error);
               this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
+              this.commonService.activeSpinner = false;
+
             }
           );
         },
         (error) => {
           console.error('Error loading emails:', error);
           this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
+          this.commonService.activeSpinner = false;
         }
       );
   }
@@ -262,5 +274,9 @@ export class HomeComponent implements AfterViewInit {
     e.stopPropagation();
     console.log(e.target['id'])
     document.querySelector(".dropdown-selector").classList.toggle("active");
+  }
+
+  ngOnDestroy(): void {
+    this.loadEmailsSub.unsubscribe();
   }
 }

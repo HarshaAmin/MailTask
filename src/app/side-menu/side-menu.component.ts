@@ -1,6 +1,5 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonService } from '../../shared/services/common.service';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-side-menu',
@@ -11,30 +10,27 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 export class SideMenuComponent {
   accessToken = localStorage.getItem('accessToken');
 
-  @Output() loadEmailEmit = new EventEmitter<string>();
-
   constructor(
-    public commonService: CommonService,
-    private http: HttpClient
-  ) {}
+    public commonService: CommonService
+  ) { }
 
   openEmailModal() {
     this.commonService.openEmailModal = true;
   }
 
   loadInbox(): void {
-    this.loadEmailEmit.emit('Inbox');
+    this.commonService.loadEmail.next('Inbox');
   }
 
   loadSent(): void {
-    this.loadEmailEmit.emit('SentItems');
+    this.commonService.loadEmail.next('SentItems');
   }
 
   loadDraft(): void {
-    this.loadEmailEmit.emit('Drafts');
+    this.commonService.loadEmail.next('Drafts');
   }
 
   loadTrash(): void {
-    this.loadEmailEmit.emit('DeletedItems');
+    this.commonService.loadEmail.next('DeletedItems');
   }
 }

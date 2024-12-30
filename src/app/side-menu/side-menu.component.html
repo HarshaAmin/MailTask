@@ -5,7 +5,9 @@
     <li class="mb-3"><a (click)="loadDraft()">Draft</a></li>
     <li class="mb-3"><a (click)="loadTrash()">Trash</a></li>
   </ul>
-  <button class="btn btn-outline-primary mt-5" (click)="openEmailModal()">
-    Compose Email
-  </button>
+  @if (!commonService.isMobile) {
+    <button class="btn btn-outline-primary mt-5" (click)="openEmailModal()">
+      Compose Email
+    </button>
+  }
 </div>

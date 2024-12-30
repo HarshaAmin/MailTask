@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
@@ -8,6 +9,8 @@ export class CommonService {
   openEmailModal: boolean = false;
   toggleEmailSection: boolean = false;
   activeSpinner: boolean = false;
+
+  loadEmail = new Subject;
 
   constructor() { }
 
