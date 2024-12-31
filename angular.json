@@ -26,11 +26,9 @@
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.scss",
-              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-              "node_modules/quill/dist/quill.snow.css",
-              "node_modules/quill/dist/quill.snow.css"
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css"
             ],
-            "scripts": []
+            "scripts": ["src/app/assets/js/esw.min.js"]
           },
           "configurations": {
             "production": {

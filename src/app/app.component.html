@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script type="text/javascript" src="https://service.force.com/embeddedservice/5.0/esw.min.js"></script>
     <title>Responsive Outlook-like UI</title>
     <link
       rel="stylesheet"
@@ -15,601 +16,101 @@
         padding: 0;
         box-sizing: border-box;
       }
-      .inline-suggestion {
-  color: gray;  /* Graying out the text */
-  font-style: italic; /* Optional: Makes the text italic */
-  font-weight: normal; /* Optional: Makes the text not bold */
-  cursor: pointer; /* Optional: Make it appear clickable */
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
 
-      .color-picker-popup {
-        position: absolute;
-        display: flex;
-        flex-wrap: wrap;
-        border: 1px solid #ccc;
-        background-color: #fff;
-        padding: 10px;
-        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
-        z-index: 999;
-      }
+header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: #333;
+}
 
-      .color-swatch {
-        width: 30px;
-        height: 30px;
-        margin: 5px;
-        cursor: pointer;
-        border: 1px solid #ccc;
-      }
 
-      .color-swatch:hover {
-        border: 2px solid #333;
-      }
+.hero {
+    color: #fff;
+    text-align: center;
+}
 
-      .filter-buttons button {
-        margin-right: 5px;
-        padding: 5px 10px;
-        cursor: pointer;
-        border: 1px solid #ccc;
-        background-color: #f3f4f6;
-        border-radius: 4px;
-      }
 
-      .filter-buttons button.active {
-        background-color: #0078d4;
-        color: #000;
-      }
+#services {
+    background: #f9f9f9;
+}
 
-      /* Modal Styles */
-      .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-      }
 
-      .modal-content {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        max-width: 90%;
-        width: 500px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
+#about {
+    background: #fff;
+}
 
-      h3 {
-        margin-top: 0;
-      }
 
-      .emoji-picker-popup {
-        position: absolute; /* Absolute positioning based on parent element */
-        background-color: white;
-        border: 1px solid #ddd;
-        padding: 5px; /* Adjust padding to give some space */
-        z-index: 1000;
-        display: block; /* Ensure it's displayed when emojiPickerVisible is true */
-        width: 200px; /* Define a fixed width for the square box */
-        height: 200px; /* Define a fixed height for the square box */
-        border-radius: 8px; /* Optional: round the corners for a slight curve */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: add shadow for better visibility */
-        overflow: auto; /* Add scrollbars if content exceeds the container */
-        display: flex;
-        flex-wrap: wrap; /* Allow emojis to wrap inside the container */
-        justify-content: space-between; /* Distribute emojis evenly */
-        align-items: flex-start; /* Align emojis at the top of the container */
-      }
+footer {
+    background: #222;
+    color: #fff;
+}
 
-      .emoji-picker-popup button {
-        font-size: 24px;
-        border: none;
-        background: none;
-        cursor: pointer;
-        width: 40px; /* Adjust button size to fit in the container */
-        height: 40px; /* Adjust button size to fit in the container */
-        margin: 5px; /* Space between emoji buttons */
-      }
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+}
 
-      .emoji-picker-popup button:hover {
-        background-color: #f0f0f0;
-      }
 
-      .form-group {
-        margin-bottom: 15px;
-      }
+header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: #333;
+}
 
-      .form-group label {
-        display: block;
-        font-weight: bold;
-        margin-bottom: 5px;
-      }
 
-      .form-group input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
+.hero {
+    color: #fff;
+    text-align: center;
+}
 
-      .form-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 20px;
-      }
 
-      .btn {
-        padding: 10px 15px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
+#services {
+    background: #f9f9f9;
+}
 
-      .attach-btn {
-        position: relative;
-        overflow: hidden;
-      }
 
-      .attach-btn input[type="file"] {
-        position: absolute;
-        top: 0;
-        left: 0;
-        opacity: 0;
-        width: 100%;
-        height: 100%;
-        cursor: pointer;
-      }
+#about {
+    background: #fff;
+}
 
-      .close-button {
-        margin-top: 15px;
-        background-color: transparent;
-        border: none;
-        color: #007bff;
-        cursor: pointer;
-        font-size: 14px;
-      }
 
-      body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #f9f9f9;
-      }
+footer {
+    background: #222;
+    color: #fff;
+}
 
-      .container {
-        display: flex;
-        height: 100vh;
-      }
 
-      .email-list {
-        flex: 2;
-        max-width: 300px;
-        background-color: #f3f4f6;
-        border-radius: 8px;
-        overflow-y: auto;
-      }
+.hidden {
+    display: none;
+}
 
-      /* Adjust for small screen */
-      @media (max-width: 768px) {
-        .container {
-          flex-direction: column;
-        }
+      /* Custom styling for the Embedded Service Help button */
+.embeddedServiceHelpButton .helpButton .uiButton {
+  background-color: #005290; /* Change button color */
+  font-family: Arial, sans-serif;
+}
 
-        .sidebar {
-          width: 100%;
-          padding: 10px;
-        }
+.embeddedServiceHelpButton .helpButton .uiButton:focus {
+  outline: 1px solid #005290; /* Focus effect for the button */
+}
 
-        .main-content {
-          padding: 10px;
-        }
-
-        .content-wrapper {
-          flex-direction: column;
-        }
-
-        .compose-email {
-          padding: 10px;
-          width: 100%;
-        }
-      }
-
-      /* Modal Styles for better appearance */
-      .modal-container {
-        position: relative;
-        display: inline-block;
-        padding: 20px;
-        background: white;
-        border-radius: 8px;
-        width: 100%;
-        max-width: 400px;
-      }
-
-     
-
-      /* Compose Email Button */
-      .btn-primary {
-        background-color: #0078d4;
-        font-weight: bold;
-        padding: 12px;
-        margin-top: 10px;
-        border-radius: 5px;
-        cursor: pointer;
-      }
-
-      .no-emails {
-        text-align: center;
-        color: #6b7280;
-      }
-
-      .btn-primary:hover {
-        background-color: #0056b3;
-      }
-
-      /* Secondary Button (Attach) */
-      .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-        text-align: center;
-        border: none;
-        padding: 10px;
-        width: 100%;
-        margin-bottom: 10px;
-        font-size: 1rem;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-
-      .btn-secondary:hover {
-        background-color: #5a6268;
-      }
-
-      /* Compose Button */
-      .compose-button {
-        margin-bottom: 20px;
-        background-color: #007bff;
-        color: rgb(228, 15, 15);
-      }
-
-      /* Responsive Design */
-      @media (max-width: 576px) {
-        .modal-content {
-          width: 90%;
-        }
-
-        .btn {
-          width: 100%;
-          margin-top: 10px;
-        }
-      }
-
-      .email-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #d1d5db;
-        padding: 10px 0;
-      }
-
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 10px;
-        background-color: #e5e7eb;
-        border-radius: 8px;
-      }
-
-      .header .logo-section {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .header .logo {
-        width: 50px;
-        height: 50px;
-      }
-
-      .sidebar {
-        flex: 0 0 250px;
-        background-color: #f3f4f6;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        border-right: 1px solid #d1d5db;
-      }
-
-      .sidebar-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .sidebar-header .logo {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-
-      .sidebar button:hover {
-        background-color: #135fd2;
-      }
-
-      .main-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
-      }
-
-      .content-wrapper {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-      }
-      @media (max-width: 768px) {
-        .container {
-          flex-direction: column;
-        }
-
-        .content-wrapper {
-          flex-direction: column;
-        }
-
-        .email-list {
-          max-width: 100%;
-        }
-      }
-
-      .action-button {
-        background: none;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        font-size: 18px; /* Icon size */
-        transition:
-          transform 0.2s ease,
-          color 0.2s ease;
-      }
-
-      /* Hover effect */
-      .action-button:hover i {
-        transform: scale(1.1);
-        color: #0056b3; /* Darker blue on hover */
-      }
-
-      .sidebar.btn-primary {
-        background-color: #0078d4;
-        font-weight: bold;
-        border-radius: 5px;
-        padding: 12px;
-        margin-top: 10px;
-      }
-
-      .logo {
-        width: 40px;
-        margin-bottom: 10px;
-      }
-
-      .sidebar h2 {
-        font-size: 1.5rem;
-        font-weight: bold;
-      }
-      .button {
-        text-align: center;
-        border: none;
-        padding: 10px;
-        width: 100%;
-        margin-bottom: 10px;
-        font-size: 1rem;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-      .sidebar button {
-        background-color: #ffff;
-        text-align: center;
-        border: none;
-        padding: 10px;
-        width: 100%;
-        margin-bottom: 10px;
-        font-size: 1rem;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-
-      .logo-section {
-        display: flex;
-        align-items: center;
-      }
-
-      .logo-section img {
-        width: 40px;
-        margin-right: 10px;
-      }
-
-      .content-wrapper {
-        display: flex;
-        flex-direction: row; /* Arrange email list and details side-by-side */
-        flex: 5;
-      }
-
-      .compose-email {
-        flex: 2; /* Take half of the space */
-        overflow-y: auto; /* Scroll if needed */
-        border-right: 1px solid #ccc; /* Optional: Adds a separation */
-        padding-right: 10px;
-      }
-
-      .email-details {
-        flex: 3; /* Take the remaining space */
-        padding-left: 10px;
-        overflow-y: auto; /* Scroll for long content */
-      }
-
-      .email-item {
-        padding: 3px 5px;
-      }
-
-      .email-item:hover {
-        background-color: #f0f0f0;
-      }
-
-      .email-sender {
-        width: 100%;
-        text-align: justify;
-        font-weight: bold;
-      }
-      .email-subject,
-      .email-date {
-        width: 100%;
-        text-align: justify;
-      }
-
-      .email-status {
-        color: red;
-        font-size: 0.9rem;
-      }
-
-      .email-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px;
-        border-top: 1px solid #ddd;
-        background-color: #f9f9f9;
-        border-radius: 0 0 8px 8px;
-      }
-
-      .actions1 {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px;
-      }
-      .formatting-options,
-      .attachments {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 1rem;
-        padding: 5px 10px;
-        border-radius: 4px;
-        transition: background-color 0.3s;
-      }
-
-      button:hover {
-        background-color: #e0e0e0;
-      }
-
-      .btn-send {
-        background-color: #1a73e8;
-        color: white;
-        font-weight: bold;
-        padding: 8px 15px;
-      }
-
-      .btn-send:hover {
-        background-color: #185abc;
-      }
-
-      .btn-draft,
-      .btn-discard {
-        color: #555;
-      }
-
-      .btn-format i,
-      .btn-attach i,
-      .btn-emoji i,
-      .btn-schedule i {
-        font-size: 1.2rem;
-        color: #555;
-      }
-
-      .btn-format:hover i,
-      .btn-attach:hover i,
-      .btn-emoji:hover i,
-      .btn-schedule:hover i {
-        color: #1a73e8;
-      }
-
-      .textarea-container-modal {
-        overflow: visible;
-      }
-
-      textarea {
-        position: relative;
-        z-index: 2;
-        background: transparent;
-        color: black;
-        font-size: 1rem;
-        line-height: 1.5;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        width: 100%;
-        overflow: auto;
-      }
-
-      .mirror-textarea {
-        overflow: visible;
-    
-      }
-
-      .content-text {
-        color: #0000; /* Visible input text */
-      }
-
-      textarea::placeholder {
-        color: #ccc;
-      }
-
-      .rich-text-area {
-        position: relative;
-        min-height: 150px;
-        height: auto;
-        padding: 10px;
-        font-size: 14px;
-        line-height: 1.5;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        overflow: auto;
-        width: 100%;
-      }
-
-      .email-actions {
-        font-size: 1.2rem;
-        padding-right: 10px;
-      }
-      .action-button {
-        padding-right: 2px;
-      }
-      .btn-action {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 1.2rem; /* Adjust size of icons */
-        color: #555; /* Default icon color */
-        transition: color 0.2s;
-      }
-
-      .btn-action:hover {
-        color: #007bff; /* Change color on hover */
-      }
-
+/* Additional styles for the chat interface, if necessary */
+.chat-widget-container {
+  /* Add custom styles for the chat window or UI */
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
       /* Media Queries for Responsiveness */
       @media (max-width: 768px) {
         .container {
@@ -618,180 +119,39 @@
       }
     </style>
   </head>
-  <body>
-    <div class="container">
-      <!-- Sidebar -->
-      <div class="sidebar">
-        <div class="sidebar-header">
-          <img src="/resource/AngularAppNew/logo.png" alt="Logo" class="logo" />
-          <h2>Outlook</h2>
-        </div>
-        <button (click)="loadInbox()">Inbox</button>
-        <button (click)="loadSent()">Sent</button>
-        <button (click)="loadDraft()">Draft</button>
-        <button (click)="loadTrash()">Trash</button>
-        <button
-          class="btn-primary"
-          style="background-color: #0078d4"
-          (click)="openCompose()"
-        >
-          Compose
-        </button>
-      </div>
+    <body>
+     <nav class="navbar navbar-expand-sm navbar-dark bg-primary">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+    <a class="navbar-brand" href="#">Novigo Solutions</a>
+    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+      <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" routerLink="home">Home <span class="sr-only">(current)</span></a>
+      </li>
+      <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" routerLink="blog">Blog</a>
+      </li>
+      <li class="nav-item" routerLinkActive="active">
+        <a class="nav-link" routerLink="contact">Contact</a>
+      </li>
+    </ul>
+    <form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    </form>
+  </div>
+</nav>
+<router-outlet></router-outlet>
 
-      <!-- Main Content -->
-      <div class="main-content">
-        <!-- <div class="header">
-          <div class="logo-section">
-            <img
-              src="/resource/AngularAppNew/logo.png"
-              alt="User Logo"
-              class="logo"
-            />
-            <div>
-              <h3>Send Tech</h3>
-              <p>{{ uEmail }}</p>
-            </div>
-          </div>
-        </div> -->
+       <!-- Optional: Custom HTML container for the embedded service button -->
+<div id="embeddedServiceHelpButton"></div>  <!-- This is where the Help Button will be displayed -->
 
-        <div class="content-wrapper">
-          <!-- Email List -->
-          <div class="email-list">
-            <div class="filter-buttons">
-              <button
-                (click)="filterEmails('all')"
-                [class.active]="selectedFilter === 'all'"
-              >
-                All
-              </button>
-              <button
-                (click)="filterEmails('read')"
-                [class.active]="selectedFilter === 'read'"
-              >
-                Read
-              </button>
-              <button
-                (click)="filterEmails('unread')"
-                [class.active]="selectedFilter === 'unread'"
-              >
-                Unread
-              </button>
-            </div>
-
-            <div
-              *ngFor="let email of filteredEmails"
-              class="email-item"
-              (click)="viewEmailDetails(email)"
-            >
-              <div class="email-header">
-                <div class="email-item">
-                  <br />
-                  <div class="email-subject">{{ email.subject }}</div>
-                  <br />
-                  <div class="email-sender">{{ email.sender }}</div>
-                  <br />
-                  <div class="email-date">
-                    {{ email.receivedDateTime | date: "short" }}
-                  </div>
-                  <div class="delete-item">
-                    <button class="action-button" (click)="deleteEmail(email)">
-                      <i class="fa fa-trash"></i>
-                    </button>
-                  </div>
-                </div>
-                <div class="email-actions">
-                  <button class="action-button" (click)="toggleRead(email)">
-                    <i
-                      class="fas"
-                      [ngClass]="{
-                        'fa-envelope-open': email.isRead,
-                        'fa-envelope': !email.isRead,
-                        active: email.isRead,
-                        inactive: !email.isRead
-                      }"
-                    ></i>
-                  </button>
-
-                  <button class="action-button" (click)="toggleFlag(email)">
-                    <i
-                      class="fas"
-                      [ngClass]="{
-                        'fa-flag active': email.flagStatus === 'flagged',
-                        'fa-flag inactive': email.flagStatus === 'notFlagged'
-                      }"
-                    ></i>
-                  </button>
-
-                  <!-- <button class="action-button">
-  <i
-    class="fas"
-    [ngClass]="{
-      'fa-thumbtack': email.categories.includes('Pinned'),
-      'fa-thumbtack active': email.categories.includes('Pinned'),
-      'fa-thumbtack inactive': !email.categories.includes('Pinned')
-    }"
-  ></i>
-</button> -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-       <div *ngIf="isComposeMode; else emailDetails" class="compose-email">
-  <h3>Compose Email</h3>
-  <form (ngSubmit)="sendEmail()">
-    <div class="form-group">
-      <label for="to">To:</label>
-      <input type="email" id="to" name="to" [(ngModel)]="emailtoSend.to" required />
-    </div>
-    <div class="form-group">
-      <label for="subject">Subject:</label>
-      <input type="text" id="subject" name="subject" [(ngModel)]="emailtoSend.subject" required />
-    </div>
-
-    <div class="form-group">
-      <label for="body">Body:</label>
-      <!-- Quill editor with ngModel binding -->
-      <quill-editor [(ngModel)]="emailtoSend.bodyPreview" [ngModelOptions]="{standalone: true}" style="height: 300px; border: 1px solid #ccc;"></quill-editor>
-    </div>
-
-    <button type="submit">Send</button>
-
-    <div class="actions">
-      <button class="btn-send" type="submit">Send</button>
-      <button class="btn-draft" type="button">Save as Draft</button>
-      <button class="btn-discard" type="button">Discard</button>
-    </div>
-  </form>
+<!-- Other components or HTML content for your page -->
+<div class="chat-widget-container">
+  <!-- You can add custom chat window or other UI elements here -->
 </div>
 
-
-
-
-
-          <!-- Email Details -->
-          <ng-template #emailDetails>
-            <div *ngIf="selectedEmail" class="email-details">
-              <br /><br /><br />
-              <h3>{{ selectedEmail.subject }}</h3>
-              <br /><br />
-              <p><strong>From:</strong> {{ selectedEmail.senderEmail }}</p>
-              <br /><br />
-              <p><strong>To:</strong> {{ selectedEmail.recipientEmails }}</p>
-              <br /><br />
-              <p>
-                <strong>Received:</strong>
-                {{ selectedEmail.receivedDateTime | date: "short" }}
-              </p>
-              <br /><br />
-              <div [innerHTML]="selectedEmail.body"></div>
-            </div>
-          </ng-template>
-        </div>
-      </div>
-    </div>
-
-    <!-- Compose Email Modal -->
-  </body>
+</body>
 </html>

@@ -1,21 +1,28 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { AppComponent } from './app.component'; // Ensure the correct path
-import { HttpClientModule } from '@angular/common/http';
-import { CommonModule } from '@angular/common'; // Ensure this is imported
-import { SalesforceService } from '../services/salesforce.service'; // Correct path to your service
-import { FormsModule } from '@angular/forms'; // <-- Add this import
-import { QuillModule } from 'ngx-quill';
+import { FormsModule } from '@angular/forms';
+import { RouterModule, Routes } from '@angular/router';
+import { AppComponent } from './app.component';
+import { HelloComponent } from './hello.component';
+import { HomeComponent } from './home/home.component';
+import { BlogComponent } from './blog/blog.component';
+import { ContactComponent } from './contact/contact.component';
+
+const Routs: Routes = [
+  { path: 'home', component: HomeComponent },
+  { path: 'blog', component: BlogComponent },
+  { path: 'contact', component: ContactComponent }
+];
+
 @NgModule({
-  declarations: [AppComponent],
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-    FormsModule,
-    CommonModule, // Ensure CommonModule is here for ngClass
-    QuillModule.forRoot()
+  imports: [BrowserModule, FormsModule, RouterModule.forRoot(Routs)],
+  declarations: [
+    AppComponent,
+    HelloComponent,
+    HomeComponent,
+    BlogComponent,
+    ContactComponent
   ],
-  providers: [SalesforceService],
   bootstrap: [AppComponent]
 })
 export class AppModule {}
