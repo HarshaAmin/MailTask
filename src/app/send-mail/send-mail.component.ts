@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import $ from 'jquery';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { NgxFileDropEntry } from 'ngx-file-drop';
 import { SalesforceService } from '../../shared/services/salesforce.service';
@@ -59,6 +58,7 @@ export class SendMailComponent implements OnInit, AfterViewInit {
       cursorPos: 0
     }
   target: string;
+  suggestionText = "suggestion1";
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
   @Input() openSendEmailModal: boolean = false;
@@ -148,7 +148,7 @@ export class SendMailComponent implements OnInit, AfterViewInit {
     if (event.keyCode == 9) {
       event.preventDefault();
 
-      const str = "-|-sanath-|-";
+      const str = this.suggestionText;
 
       const target = document.createTextNode("\u0001");
       let setpos = document.createRange();
@@ -528,8 +528,4 @@ export class SendMailComponent implements OnInit, AfterViewInit {
       range.insertNode(emojiNode);
     }
   }
-
-
-
-
 }

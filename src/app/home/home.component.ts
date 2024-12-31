@@ -236,6 +236,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
     const userId = 'Send.Tech@novigo-solutions.com';
     this.commonService.activeSpinner = true;
+    this.commonService.openEmailModal = false;
+    this.selectedEmail = null;
+
     this.http
       .get(`${endpoint}?userId=${userId}&folder=${folder}`, { headers })
       .subscribe(

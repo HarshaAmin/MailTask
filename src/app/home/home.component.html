@@ -6,8 +6,8 @@
       </div>
     }
     <div class="wrapper-mail-section">
-      <h3 class="my-3">Email Dashboad</h3>
-      <div class="social-group">
+      <!-- <h3 class="my-3 hide-block">Email Dashboad</h3>
+      <div class="social-group hide-block">
         <div class="social-item active" id="primary">
           <div class="social-items-header">
             <i class="fa-regular fa-comment"></i>
@@ -36,7 +36,7 @@
           </div>
           <div class="bottom"></div>
         </div>
-      </div>
+      </div> -->
 
       <div class="dropdown-wrapper">
         @if (commonService.isMobile) {
@@ -127,8 +127,8 @@
     </div>
   </div>
   @if (commonService.activeSpinner) {
-  <div class="spinner-section" [ngClass]="{ active: true }">
-    <app-spinner></app-spinner>
-  </div>
+    <div class="spinner-section" [ngClass]="{ active: true }">
+      <app-spinner></app-spinner>
+    </div>
   }
 </div>

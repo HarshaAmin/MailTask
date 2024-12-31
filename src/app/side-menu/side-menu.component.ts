@@ -9,28 +9,15 @@ import { CommonService } from '../../shared/services/common.service';
 })
 export class SideMenuComponent {
   accessToken = localStorage.getItem('accessToken');
+  activeMenuItem: string = 'Inbox'; 
+  constructor(public commonService: CommonService) {}
 
-  constructor(
-    public commonService: CommonService
-  ) { }
+  setActiveMenu(item: string): void {
+    this.activeMenuItem = item;
+    this.commonService.loadEmail.next(item);
+  }
 
-  openEmailModal() {
+  openEmailModal(): void {
     this.commonService.openEmailModal = true;
-  }
-
-  loadInbox(): void {
-    this.commonService.loadEmail.next('Inbox');
-  }
-
-  loadSent(): void {
-    this.commonService.loadEmail.next('SentItems');
-  }
-
-  loadDraft(): void {
-    this.commonService.loadEmail.next('Drafts');
-  }
-
-  loadTrash(): void {
-    this.commonService.loadEmail.next('DeletedItems');
   }
 }

@@ -40,6 +40,11 @@
           <div class="textarea-header-section">
             <label for="body">Body:</label>
             <div id="editor" (keyup)="calcCursorPos($event)"></div>
+            <div class="suggestion-block">
+              <span class="suggestion-block-span">
+                {{ suggestionText }}
+              </span>
+            </div>
           </div>
         </div>
 

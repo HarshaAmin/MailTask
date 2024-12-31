@@ -1,5 +1,5 @@
 @import "@fortawesome/fontawesome-free/css/all.css";
-@import "../../../node_modules/bootstrap/scss/bootstrap.scss";
+// @import "../../../node_modules/bootstrap/scss/bootstrap.scss";
 
 $overFlow: unset;
 
@@ -12,8 +12,13 @@ button {
   font-size: 10px !important;
 }
 
+.content-section {
+  height: 90vh;
+}
+
 .nav-container {
   background: #212b86;
+  height: 10vh;
 }
 
 .bg-light {
@@ -33,6 +38,7 @@ button {
 .app-sidemenu {
   border-right: 1px solid lightgray;
   width: 20%;
+  height: 90vh;
 }
 
 .app-sidemenu a {
@@ -40,7 +46,6 @@ button {
 }
 
 .home-body {
-  height: 100vh;
   display: flex;
 }
 
@@ -48,9 +53,9 @@ button {
   border: 1px solid lightgrey;
   border-radius: 5px;
   height: max-content;
-  margin: 10px;
   width: 80%;
   padding: 10px 25px;
+  height: 90vh;
 
   @media (max-width: 450px) {
     width: 100%;
@@ -85,8 +90,7 @@ ul.sidebar-menu-items {
   border: 1px solid lightgray;
   border-radius: 5px;
   width: 64%;
-  max-height: 500px;
-  height: max-content;
+  height: 100%;
   overflow-y: scroll;
 
   &::-webkit-scrollbar {
@@ -114,6 +118,7 @@ ul.sidebar-menu-items {
 .mail-section {
   display: flex;
   gap: 1%;
+  height: 80vh;
 }
 
 .email-header-p {
@@ -530,10 +535,73 @@ ul.sidebar-menu-items {
 .email-action-section {
   display: flex;
   gap: 15px;
-  justify-content: end;
+  justify-content: space-between;
   margin: 5px 0 25px 0;
+  border-bottom: 0.5px solid lightgray;
+  & div {
+    display: flex;
+    gap: 10px;
 
-  & i {
-    cursor: pointer;
+    & i {
+      cursor: pointer;
+    }
   }
+}
+
+.suggestion-block {
+  height: 50px;
+  border: 1px dashed lightgray;
+  padding: 5px;
+  display: flex;
+  gap: 5px;
+}
+
+span.suggestion-block-span {
+  padding: 2px;
+  border: 0.5px solid lightgray;
+  background: lightgray;
+  height: max-content;
+  cursor: pointer;
+}
+
+.sidebar-menu-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+  border-radius: 5px;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+.menu-item:hover {
+  background-color: #e5e5e5;
+}
+
+.menu-item.active {
+  background-color: #212b86;
+  color: #fff;
+}
+
+.menu-icon {
+  font-size: 18px;
+  margin-right: 10px;
+  color: #212b86;
+}
+
+.menu-item.active .menu-icon {
+  color: #fff;
+}
+
+.menu-item span {
+  flex-grow: 1;
 }

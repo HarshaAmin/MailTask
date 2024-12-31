@@ -1,13 +1,53 @@
-<div class="mt-5">
+<div class="side-menu">
+  <button class="compose-btn" (click)="openEmailModal()">+ Compose</button>
   <ul class="sidebar-menu-items">
-    <li class="mb-3"><a (click)="loadInbox()">Inbox</a></li>
-    <li class="mb-3"><a (click)="loadSent()">Sent</a></li>
-    <li class="mb-3"><a (click)="loadDraft()">Draft</a></li>
-    <li class="mb-3"><a (click)="loadTrash()">Trash</a></li>
+    <li
+      class="menu-item"
+      [class.active]="activeMenuItem === 'Inbox'"
+      (click)="setActiveMenu('Inbox')"
+    >
+      <i class="fa fa-inbox menu-icon"></i>
+      <span>Inbox</span>
+    </li>
+    <li
+      class="menu-item"
+      [class.active]="activeMenuItem === 'SentItems'"
+      (click)="setActiveMenu('SentItems')"
+    >
+      <i class="fa fa-paper-plane menu-icon"></i>
+      <span>Sent</span>
+    </li>
+    <li
+      class="menu-item"
+      [class.active]="activeMenuItem === 'Drafts'"
+      (click)="setActiveMenu('Drafts')"
+    >
+      <i class="fa fa-file-alt menu-icon"></i>
+      <span>Drafts</span>
+    </li>
+    <li
+      class="menu-item"
+      [class.active]="activeMenuItem === 'DeletedItems'"
+      (click)="setActiveMenu('DeletedItems')"
+    >
+      <i class="fa fa-trash menu-icon"></i>
+      <span>Trash</span>
+    </li>
+    <li
+      class="menu-item"
+      [class.active]="activeMenuItem === 'JunkEmail'"
+      (click)="setActiveMenu('JunkEmail')"
+    >
+      <i class="fa fa-exclamation-circle menu-icon"></i>
+      <span>Junk Email</span>
+    </li>
+    <li
+      class="menu-item"
+      [class.active]="activeMenuItem === 'Archive'"
+      (click)="setActiveMenu('Archive')"
+    >
+      <i class="fa fa-archive menu-icon"></i>
+      <span>Archive</span>
+    </li>
   </ul>
-  @if (!commonService.isMobile) {
-    <button class="btn btn-outline-primary mt-5" (click)="openEmailModal()">
-      Compose Email
-    </button>
-  }
 </div>
