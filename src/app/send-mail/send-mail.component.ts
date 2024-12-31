@@ -82,10 +82,13 @@ export class SendMailComponent implements OnInit, AfterViewInit {
     });
   }
 
-  handleKeyDown(event) {
-    console.log(event);
+  calcCursorPos(event) {
+    console.log(event, "fdgdf");
     let isFocusElSet = false;
     if (event.keyCode == 9) return;
+
+    this.email.body = event.target["innerHTML"];
+    console.log(event.target["innerHTML"]);
 
     let el = document.querySelector(".ql-editor");
     let selection = window.getSelection();
@@ -93,7 +96,8 @@ export class SendMailComponent implements OnInit, AfterViewInit {
       node['classList'].remove("elmInFocus");
       node['classList'].add(`emailBodyChild`);
     });
-    console.log(el.childNodes, "CHILD NODES")
+    console.log(el.childNodes, "CHILD NODES");
+    console.log(selection.getRangeAt(0), "selection");
     selection.focusNode.parentElement.classList.add("elmInFocus");
     for (let i = 0; i < el.childNodes.length; i++) {
       if (el.childNodes[i]['classList'].contains("elmInFocus")) {
@@ -101,7 +105,7 @@ export class SendMailComponent implements OnInit, AfterViewInit {
         this.emailBodyCords.cursorPos = selection.focusOffset;
       }
     }
-
+    console.log(this.emailBodyCords);
     if (!isFocusElSet) {
       if (event.keyCode == 13 || event.keyCode == 40) {
         if (this.emailBodyCords.elementIdx >= el.childNodes.length) {
@@ -125,17 +129,19 @@ export class SendMailComponent implements OnInit, AfterViewInit {
       theme: "snow",
       modules: {
         toolbar: [
-          [{ header: '1' }, { header: '2' }, { font: [] }],
-          [{ list: 'ordered' }, { list: 'bullet' }],
-          ['bold', 'italic', 'underline'],
-          [{ align: [] }],
-          ['link', 'blockquote', 'code-block'],
-          ['image', 'video']
+          ['bold', 'italic', 'underline', { header: '1' }, { header: '2' }, 'link', 'blockquote']
         ]
       }
     });
 
     document.addEventListener('keydown', this.handleGlobalKeyDown.bind(this));
+    document.addEventListener('click', this.handleGlobalClick.bind(this));
+  }
+
+  handleGlobalClick(event) {
+    if (event.target['parentElement'].classList.contains("ql-editor")) {
+      this.calcCursorPos(event);
+    }
   }
 
   handleGlobalKeyDown(event) {
