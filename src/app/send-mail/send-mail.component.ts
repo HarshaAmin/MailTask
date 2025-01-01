@@ -161,15 +161,15 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   handleGlobalKeyDown(event) {
-    if (event.keyCode == 9 || event.keyCode == 13) {
+    if (event.keyCode == 9 || (event.keyCode == 13 && this.commonService.isNative)) {
       event.preventDefault();
-
       const str = this.suggestionText;
 
       const target = document.createTextNode("\u0001");
       let setpos = document.createRange();
       let el = document.querySelector(".ql-editor");
       let selection = window.getSelection();
+      if (selection.focusNode.parentNode['offsetParent'].id !== 'editor') return;
       const offset = selection.focusOffset;
       selection.getRangeAt(0).insertNode(target);
       target.replaceWith(str);
