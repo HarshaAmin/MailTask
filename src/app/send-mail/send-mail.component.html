@@ -38,7 +38,7 @@
             (keyup)="handleEmailAddressEntries($event, 'to')"
           />
         </div>
-        @if (type === "send") {
+        @if (type !== "reply") {
           <div class="form-group form-input-section">
             <label for="subject">Subject:</label>
             <input
@@ -54,16 +54,24 @@
         <div class="form-group" style="position: relative">
           <div class="textarea-header-section">
             <label for="body">Body:</label>
-            <div id="editor" (keyup)="calcCursorPos($event)"></div>
-            <div class="suggestion-block">
-              <span class="suggestion-block-span">
-                {{ suggestionText }}
-              </span>
-            </div>
+            @if (type === "forward") {
+              <div class="plain-body-txt" [innerHTML]="email.body"></div>
+            } @else {
+              <div id="editor" (keyup)="calcCursorPos($event)"></div>
+              <div class="suggestion-block">
+                <span class="suggestion-block-span">
+                  {{ suggestionText }}
+                </span>
+              </div>
+            }
           </div>
         </div>
 
-        <app-file-upload (uploadedFilesEmit)="files = $event"></app-file-upload>
+        @if (type !== "forward") {
+          <app-file-upload
+            (uploadedFilesEmit)="files = $event"
+          ></app-file-upload>
+        }
         <div class="mt-3">
           <button type="submit" class="btn btn-success">Send</button>
         </div>

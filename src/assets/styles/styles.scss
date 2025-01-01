@@ -120,7 +120,7 @@ ul.sidebar-menu-items {
 .mail-section {
   display: flex;
   gap: 1%;
-  height: 80vh;
+  height: 72vh;
 }
 
 .email-header-p {
@@ -659,4 +659,12 @@ a img {
 
 .nav-logo {
   width: 30%;
+}
+
+.plain-body-txt {
+  word-break: break-word;
+
+  & img {
+    width: 100%;
+  }
 }
