@@ -566,4 +566,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       })
     }
   }
+
+  reply() {
+    console.log("reply")
+  }
 }

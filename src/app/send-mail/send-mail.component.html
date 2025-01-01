@@ -16,7 +16,7 @@
       </div>
     </div>
     <div class="modal-body">
-      <form (submit)="sendEmail()">
+      <form (submit)="type === 'send' ? sendEmail() : reply()">
         <div class="form-group form-input-section">
           <label for="to">To:</label>
           <span class="d-flex gap-2" (click)="handleEmailStack($event, 'to')">
