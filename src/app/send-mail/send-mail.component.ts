@@ -549,10 +549,9 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
   handleEmailAddressEntries(e: Event, type = 'to') {
     e.preventDefault();
-    console.log(e);
-    if (e['keyCode'] == 59) {
+    if (e['keyCode'] == 186 || e['keyCode'] == 59) {
       const recp = this.email.to;
-      this.emailRecp.to.push({ id: this.emailRecp.to.length, recp: recp.replace(";", "") });
+      this.emailRecp[type].push({ id: this.emailRecp.to.length, recp: recp.replace(";", "") });
       this.email.to = '';
       console.log(this.emailRecp.to);
     }
