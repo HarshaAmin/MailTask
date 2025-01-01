@@ -1,7 +1,11 @@
 <div class="modal-dialog" role="document">
   <div class="modal-content">
     <div class="modal-header justify-content-between">
-      <h5 class="modal-title" id="exampleModalLabel">Compose Email</h5>
+      @if (type === "send") {
+        <h5 class="modal-title" id="exampleModalLabel">Compose Email</h5>
+      } @else {
+        <h5>{{ selectedEmail.subject }}</h5>
+      }
       <div
         class="close close-btn"
         data-dismiss="modal"
@@ -24,22 +28,23 @@
             class="form-control"
           />
         </div>
-        <div class="form-group form-input-section">
-          <label for="subject">Subject:</label>
-          <input
-            type="text"
-            id="subject"
-            name="subject"
-            [(ngModel)]="email.subject"
-            required
-            class="form-control"
-          />
-        </div>
-
+        @if (type === "send") {
+          <div class="form-group form-input-section">
+            <label for="subject">Subject:</label>
+            <input
+              type="text"
+              id="subject"
+              name="subject"
+              [(ngModel)]="email.subject"
+              required
+              class="form-control"
+            />
+          </div>
+        }
         <div class="form-group" style="position: relative">
           <div class="textarea-header-section">
             <label for="body">Body:</label>
-            <div id="editor" (keyup)="calcCursorPos($event)"></div>
+            <div id="editor"></div>
             <div class="suggestion-block">
               <span class="suggestion-block-span">
                 {{ suggestionText }}
