@@ -17,8 +17,6 @@
 </nav>
 @if (commonService.isNative) {
   <div class="dropdown-nav" [ngClass]="{ active: showDropdown }">
-    <app-side-menu
-      (openEmailModalEmitter)="commonService.openEmailModal = $event"
-    ></app-side-menu>
+    <app-side-menu (closeMenu)="showDropdown = $event"></app-side-menu>
   </div>
 }

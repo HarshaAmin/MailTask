@@ -53,6 +53,8 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   selectedFilter = 'all'; // Default filter
   uEmail = 'SendTech@novigosolutions.com'; // Default email if needed
   socialItem;
+  type: string = 'send';
+
 
   constructor(
     public commonService: CommonService,

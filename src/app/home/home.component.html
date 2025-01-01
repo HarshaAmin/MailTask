@@ -77,10 +77,15 @@
           </div>
           <div class="email-section p-3">
             @if (!commonService.openEmailModal) {
-              <app-email [selectedEmail]="selectedEmail"></app-email>
+              <app-email
+                [selectedEmail]="selectedEmail"
+                (replyEmit)="type = $event"
+              ></app-email>
             } @else if (commonService.openEmailModal) {
               <app-send-mail
                 (openEmailModalEmitter)="commonService.openEmailModal = $event"
+                [type]="type"
+                [selectedEmail]="selectedEmail"
               >
               </app-send-mail>
             }

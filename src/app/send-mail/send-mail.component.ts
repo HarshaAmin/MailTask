@@ -62,6 +62,8 @@ export class SendMailComponent implements OnInit, AfterViewInit {
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
   @Input() openSendEmailModal: boolean = false;
+  @Input() type = 'send';
+  @Input() selectedEmail: any;
 
   constructor(
     private salesforceService: SalesforceService,
@@ -72,6 +74,7 @@ export class SendMailComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+
     this.emojiService.isEmojiPickerVisible.subscribe((isVisible) => {
       this.emojiPickerVisible = isVisible;
     });
@@ -125,6 +128,11 @@ export class SendMailComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+
+    if (this.type === "reply") {
+      this.email.to = this.selectedEmail.sender;
+    }
+
     this.quill = new Quill("#editor", {
       theme: "snow",
       modules: {
@@ -133,6 +141,8 @@ export class SendMailComponent implements OnInit, AfterViewInit {
         ]
       }
     });
+
+    const el = document.querySelector("#editor");
 
     document.addEventListener('keydown', this.handleGlobalKeyDown.bind(this));
     document.addEventListener('click', this.handleGlobalClick.bind(this));
@@ -152,8 +162,8 @@ export class SendMailComponent implements OnInit, AfterViewInit {
 
       const target = document.createTextNode("\u0001");
       let setpos = document.createRange();
-      let selection = window.getSelection();
       let el = document.querySelector(".ql-editor");
+      let selection = window.getSelection();
       const offset = selection.focusOffset;
       selection.getRangeAt(0).insertNode(target);
       target.replaceWith(str);
