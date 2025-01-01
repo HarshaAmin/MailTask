@@ -4,7 +4,7 @@
       @if (type === "send") {
         <h5 class="modal-title" id="exampleModalLabel">Compose Email</h5>
       } @else {
-        <h5>{{ selectedEmail.subject }}</h5>
+        <h5>{{ selectedEmail?.subject }}</h5>
       }
       <div
         class="close close-btn"
@@ -19,6 +19,15 @@
       <form (submit)="sendEmail()">
         <div class="form-group form-input-section">
           <label for="to">To:</label>
+          <span class="d-flex gap-2" (click)="handleEmailStack($event, 'to')">
+            @for (emailR of emailRecp.to; track $index) {
+              <span class="to-email" id="{{ emailR.id }}">
+                {{ emailR.recp }}
+                <i class="fa-solid fa-xmark" id="{{ emailR.id }}"></i>
+              </span>
+            }
+          </span>
+
           <input
             type="email"
             id="to"
@@ -26,6 +35,7 @@
             [(ngModel)]="email.to"
             required
             class="form-control"
+            (keyup)="handleEmailAddressEntries($event, 'to')"
           />
         </div>
         @if (type === "send") {
@@ -44,7 +54,7 @@
         <div class="form-group" style="position: relative">
           <div class="textarea-header-section">
             <label for="body">Body:</label>
-            <div id="editor"></div>
+            <div id="editor" (keyup)="calcCursorPos($event)"></div>
             <div class="suggestion-block">
               <span class="suggestion-block-span">
                 {{ suggestionText }}

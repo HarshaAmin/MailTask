@@ -12,12 +12,6 @@ export class EmailComponent {
   uEmail = 'SendTech@novigosolutions.com';
   receipientsList: string = 'sanathshetty986@gmail.com';
 
-<<<<<<< HEAD
-  constructor(private salesforceService: SalesforceService) {}
-
-  @Input() selectedEmail: any;
-
-=======
   @Input() selectedEmail: any;
   @Output() replyEmit = new EventEmitter<string>();
 
@@ -25,7 +19,6 @@ export class EmailComponent {
 
   }
 
->>>>>>> e853f05db286b54de53365ec617a591e9da8ffab
   forwardEmail(emailData = this.selectedEmail): void {
     this.salesforceService
       .forwardEmail(emailData.Id, this.receipientsList)

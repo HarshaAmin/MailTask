@@ -6,8 +6,8 @@
       </div>
     }
     <div class="wrapper-mail-section">
-      <!-- <h3 class="my-3 hide-block">Email Dashboad</h3>
-      <div class="social-group hide-block">
+      <!-- <h3 class="my-3 hide-block">Email Dashboad</h3>-->
+      <div class="social-group">
         <div class="social-item active" id="primary">
           <div class="social-items-header">
             <i class="fa-regular fa-comment"></i>
@@ -36,7 +36,7 @@
           </div>
           <div class="bottom"></div>
         </div>
-      </div> -->
+      </div>
 
       <div class="dropdown-wrapper">
         @if (commonService.isMobile) {
@@ -79,12 +79,12 @@
             @if (!commonService.openEmailModal) {
               <app-email
                 [selectedEmail]="selectedEmail"
-                (replyEmit)="type = $event"
+                (replyEmit)="commonService.type = $event"
               ></app-email>
             } @else if (commonService.openEmailModal) {
               <app-send-mail
                 (openEmailModalEmitter)="commonService.openEmailModal = $event"
-                [type]="type"
+                [type]="commonService.type"
                 [selectedEmail]="selectedEmail"
               >
               </app-send-mail>

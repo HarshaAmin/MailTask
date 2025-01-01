@@ -53,7 +53,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   selectedFilter = 'all'; // Default filter
   uEmail = 'SendTech@novigosolutions.com'; // Default email if needed
   socialItem;
-  type: string = 'send';
+
 
 
   constructor(
@@ -226,6 +226,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   openEmailModal() {
     this.commonService.openEmailModal = true;
     this.commonService.toggleEmailSection = true;
+    this.commonService.type = 'send';
   }
 
   loadEmails(folder: string = 'Inbox'): void {

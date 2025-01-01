@@ -22,5 +22,6 @@ export class SideMenuComponent {
 
   openEmailModal(): void {
     this.commonService.openEmailModal = true;
+    this.commonService.type = 'send';
   }
 }

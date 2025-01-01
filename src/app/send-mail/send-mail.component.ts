@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FileUploadComponent } from '../file-upload/file-upload.component';
 import { NgxFileDropEntry } from 'ngx-file-drop';
@@ -14,8 +14,9 @@ import Quill, { Delta } from 'quill';
   imports: [FormsModule, FileUploadComponent, NgIf],
   templateUrl: './send-mail.component.html'
 })
-export class SendMailComponent implements OnInit, AfterViewInit {
+export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   email = { to: '', subject: '', body: '' };
+  emailRecp = { to: [], cc: [], bcc: [] };
   files: NgxFileDropEntry[] = [];
   currentHighScoreSuggestion: string = '';
   cursorPosition: number = 0;
@@ -85,6 +86,13 @@ export class SendMailComponent implements OnInit, AfterViewInit {
     });
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['type'] && this.type === 'send') {
+      this.email = { to: '', subject: '', body: '' };
+      this.emailRecp = { to: [], cc: [], bcc: [] };
+    }
+  }
+
   calcCursorPos(event) {
     console.log(event, "fdgdf");
     let isFocusElSet = false;
@@ -128,9 +136,9 @@ export class SendMailComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-
     if (this.type === "reply") {
-      this.email.to = this.selectedEmail.sender;
+      this.emailRecp.to = this.selectedEmail.sender.split(";");
+      this.emailRecp.to = this.emailRecp.to.map((recp, ind) => ({ id: ind, recp }));
     }
 
     this.quill = new Quill("#editor", {
@@ -141,8 +149,6 @@ export class SendMailComponent implements OnInit, AfterViewInit {
         ]
       }
     });
-
-    const el = document.querySelector("#editor");
 
     document.addEventListener('keydown', this.handleGlobalKeyDown.bind(this));
     document.addEventListener('click', this.handleGlobalClick.bind(this));
@@ -155,7 +161,7 @@ export class SendMailComponent implements OnInit, AfterViewInit {
   }
 
   handleGlobalKeyDown(event) {
-    if (event.keyCode == 9) {
+    if (event.keyCode == 9 || event.keyCode == 13) {
       event.preventDefault();
 
       const str = this.suggestionText;
@@ -295,7 +301,9 @@ export class SendMailComponent implements OnInit, AfterViewInit {
   sendEmail(): void {
     this.salesforceService
       .sendEmail({
-        ...this.email,
+        to: this.emailRecp['to'].map(e => e.recp).join(";"),
+        subject: this.email.subject,
+        body: this.email.body,
         fileName: this.files?.[0]?.['fileName'] || '',
         fileType: this.files?.[0]?.['fileType'] || '',
         base64Content: this.files?.[0]?.['base64Content'] || ''
@@ -536,6 +544,26 @@ export class SendMailComponent implements OnInit, AfterViewInit {
       range.deleteContents();
       const emojiNode = document.createTextNode(emoji);
       range.insertNode(emojiNode);
+    }
+  }
+
+  handleEmailAddressEntries(e: Event, type = 'to') {
+    e.preventDefault();
+    console.log(e);
+    if (e['keyCode'] == 59) {
+      const recp = this.email.to;
+      this.emailRecp.to.push({ id: this.emailRecp.to.length, recp: recp.replace(";", "") });
+      this.email.to = '';
+      console.log(this.emailRecp.to);
+    }
+  }
+
+  handleEmailStack(event, type = 'to') {
+    if (event.target.tagName === "I") {
+      this.emailRecp[type] = this.emailRecp[type].filter((email) => email.id !== Number(event.target.id));
+      this.emailRecp[type].forEach((_, ind) => {
+        this.emailRecp[type].id = ind;
+      })
     }
   }
 }

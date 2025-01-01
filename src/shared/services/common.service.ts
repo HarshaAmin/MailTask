@@ -9,6 +9,7 @@ export class CommonService {
   openEmailModal: boolean = false;
   toggleEmailSection: boolean = false;
   activeSpinner: boolean = false;
+  type: string = 'send';
 
   loadEmail = new Subject;
 
