@@ -184,6 +184,24 @@ export class SalesforceService extends CommonService {
     );
   }
 
+  replyEmail(payload: {
+    to: string;
+    subject: string;
+    body: string;
+    reSubject: any;
+    contentType: any;
+    content: any;
+    selectedEmailId: any;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(
+      map((response) => response),
+      catchError((error) => {
+        console.error('Error correcting grammar:', error);
+        return throwError(() => new Error('Failed to correct grammar.'));
+      })
+    );
+  }
+
   sendEmail(payload: {
     to: string;
     subject: string;
@@ -228,23 +246,6 @@ export class SalesforceService extends CommonService {
     return this.http.post<any>(url, payload).pipe(
       catchError((error) => {
         console.error('Email formward failed:', error);
-        return throwError(error);
-      })
-    );
-  }
-
-  replyEmail(emailId: string, payload: any): Observable<any> {
-    console.log(emailId);
-    const emailData = {
-      emailId: emailId,
-      payload: payload
-    };
-    console.log('payload is ' + JSON.stringify(emailData));
-    const url = `${this.baseReplyUrl}`;
-
-    return this.http.post<any>(url, emailData).pipe(
-      catchError((error) => {
-        console.error('Email Reply failed:', error);
         return throwError(error);
       })
     );

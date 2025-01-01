@@ -52,14 +52,14 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   suggestionTimeout: any;
   resetTimeout: any;
   emailBodyCords: {
-    elementIdx: number,
-    cursorPos: number
+    elementIdx: number;
+    cursorPos: number;
   } = {
-      elementIdx: 0,
-      cursorPos: 0
-    }
+    elementIdx: 0,
+    cursorPos: 0
+  };
   target: string;
-  suggestionText = "suggestion1";
+  suggestionText = 'suggestion1';
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
   @Input() openSendEmailModal: boolean = false;
@@ -75,7 +75,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   ngOnInit(): void {
-
     this.emojiService.isEmojiPickerVisible.subscribe((isVisible) => {
       this.emojiPickerVisible = isVisible;
     });
@@ -93,25 +92,64 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     }
   }
 
+  reply() {
+    const senderEmails = this.selectedEmail.sender
+      .split(';')
+      .map((email) => email.trim());
+    const reSubject = 'Re: ' + this.selectedEmail.subject;
+    const contentType = 'html';
+    const content = this.email.body;
+
+    const toRecipients = this.selectedEmail.sender
+      .split(';')
+      .map((email) => email.trim());
+    // const ccRecipients = this.selectedEmail.ccRecipient
+    //   .split(';')
+    //   .map((email) => email.trim());
+    const emailId = this.selectedEmail.Id;
+    console.log();
+    this.salesforceService
+      .replyEmail({
+        to: this.emailRecp['to'].map((e) => e.recp).join(';'),
+        subject: 'Re: ' + this.selectedEmail.subject,
+        body: this.email.body,
+        reSubject: reSubject || '',
+        contentType: contentType || '',
+        content: content || '',
+        selectedEmailId: emailId || ''
+      })
+      .subscribe(
+        (response) => {
+          console.log(
+            'Replied to Email successfully! ' + JSON.stringify(response)
+          );
+          console.log('Replied to Email successfully! ' + response);
+        },
+        (error) => {
+          console.error('Error:', JSON.stringify(error));
+        }
+      );
+  }
+
   calcCursorPos(event) {
-    console.log(event, "fdgdf");
+    console.log(event, 'fdgdf');
     let isFocusElSet = false;
     if (event.keyCode == 9) return;
 
-    this.email.body = event.target["innerHTML"];
-    console.log(event.target["innerHTML"]);
+    this.email.body = event.target['innerHTML'];
+    console.log(event.target['innerHTML']);
 
-    let el = document.querySelector(".ql-editor");
+    let el = document.querySelector('.ql-editor');
     let selection = window.getSelection();
     el.childNodes.forEach((node) => {
-      node['classList'].remove("elmInFocus");
+      node['classList'].remove('elmInFocus');
       node['classList'].add(`emailBodyChild`);
     });
-    console.log(el.childNodes, "CHILD NODES");
-    console.log(selection.getRangeAt(0), "selection");
-    selection.focusNode.parentElement.classList.add("elmInFocus");
+    console.log(el.childNodes, 'CHILD NODES');
+    console.log(selection.getRangeAt(0), 'selection');
+    selection.focusNode.parentElement.classList.add('elmInFocus');
     for (let i = 0; i < el.childNodes.length; i++) {
-      if (el.childNodes[i]['classList'].contains("elmInFocus")) {
+      if (el.childNodes[i]['classList'].contains('elmInFocus')) {
         this.emailBodyCords.elementIdx = i;
         this.emailBodyCords.cursorPos = selection.focusOffset;
       }
@@ -136,16 +174,27 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   ngAfterViewInit(): void {
-    if (this.type === "reply") {
-      this.emailRecp.to = this.selectedEmail.sender.split(";");
-      this.emailRecp.to = this.emailRecp.to.map((recp, ind) => ({ id: ind, recp }));
+    if (this.type === 'reply') {
+      this.emailRecp.to = this.selectedEmail.sender.split(';');
+      this.emailRecp.to = this.emailRecp.to.map((recp, ind) => ({
+        id: ind,
+        recp
+      }));
     }
 
-    this.quill = new Quill("#editor", {
-      theme: "snow",
+    this.quill = new Quill('#editor', {
+      theme: 'snow',
       modules: {
         toolbar: [
-          ['bold', 'italic', 'underline', { header: '1' }, { header: '2' }, 'link', 'blockquote']
+          [
+            'bold',
+            'italic',
+            'underline',
+            { header: '1' },
+            { header: '2' },
+            'link',
+            'blockquote'
+          ]
         ]
       }
     });
@@ -155,39 +204,48 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   handleGlobalClick(event) {
-    if (event.target['parentElement'].classList.contains("ql-editor")) {
+    if (event.target['parentElement'].classList.contains('ql-editor')) {
       this.calcCursorPos(event);
     }
   }
 
   handleGlobalKeyDown(event) {
-    if (event.keyCode == 9 || (event.keyCode == 13 && this.commonService.isNative)) {
+    if (
+      event.keyCode == 9 ||
+      (event.keyCode == 13 && this.commonService.isNative)
+    ) {
       event.preventDefault();
       const str = this.suggestionText;
 
-      const target = document.createTextNode("\u0001");
+      const target = document.createTextNode('\u0001');
       let setpos = document.createRange();
-      let el = document.querySelector(".ql-editor");
+      let el = document.querySelector('.ql-editor');
       let selection = window.getSelection();
-      if (selection.focusNode.parentNode['offsetParent'].id !== 'editor') return;
+      if (selection.focusNode.parentNode['offsetParent'].id !== 'editor')
+        return;
       const offset = selection.focusOffset;
       selection.getRangeAt(0).insertNode(target);
       target.replaceWith(str);
-      selection.focusNode['innerHTML'] = selection.focusNode['innerHTML'].replaceAll("\t", "");
+      selection.focusNode['innerHTML'] = selection.focusNode[
+        'innerHTML'
+      ].replaceAll('\t', '');
 
       el.childNodes.forEach((node) => {
-        node['classList'].remove("elmInFocus");
+        node['classList'].remove('elmInFocus');
         node['classList'].add(`emailBodyChild`);
       });
 
-      selection.focusNode['classList'].add("elmInFocus");
+      selection.focusNode['classList'].add('elmInFocus');
       for (let i = 0; i < el.childNodes.length; i++) {
-        if (el.childNodes[i]['classList'].contains("elmInFocus")) {
+        if (el.childNodes[i]['classList'].contains('elmInFocus')) {
           this.emailBodyCords.elementIdx = i;
           this.emailBodyCords.cursorPos = offset + str.length - 1;
         }
       }
-      setpos.setStart(el.childNodes[this.emailBodyCords.elementIdx].childNodes[0], this.emailBodyCords.cursorPos);
+      setpos.setStart(
+        el.childNodes[this.emailBodyCords.elementIdx].childNodes[0],
+        this.emailBodyCords.cursorPos
+      );
       setpos.collapse(true);
       selection.removeAllRanges();
       selection.addRange(setpos);
@@ -253,7 +311,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
         this.inlineSuggestion = this.suggestions[0] || {
           token_str: '',
           sequence: ''
-        };; // Set the first suggestion or empty string
+        }; // Set the first suggestion or empty string
 
         // Reset the suggestion after 27 seconds if no new action occurs
         this.resetTimeout = setTimeout(() => {
@@ -301,7 +359,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   sendEmail(): void {
     this.salesforceService
       .sendEmail({
-        to: this.emailRecp['to'].map(e => e.recp).join(";"),
+        to: this.emailRecp['to'].map((e) => e.recp).join(';'),
         subject: this.email.subject,
         body: this.email.body,
         fileName: this.files?.[0]?.['fileName'] || '',
@@ -552,21 +610,23 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     if (e['keyCode'] == 186 || e['keyCode'] == 59) {
       const recp = this.email.to;
       this.emailRecp[type].push({ id: this.emailRecp.to.length, recp: recp.replace(";", "") });
+      this.emailRecp.to.push({
+        id: this.emailRecp.to.length,
+        recp: recp.replace(';', '')
+      });
       this.email.to = '';
       console.log(this.emailRecp.to);
     }
   }
 
   handleEmailStack(event, type = 'to') {
-    if (event.target.tagName === "I") {
-      this.emailRecp[type] = this.emailRecp[type].filter((email) => email.id !== Number(event.target.id));
+    if (event.target.tagName === 'I') {
+      this.emailRecp[type] = this.emailRecp[type].filter(
+        (email) => email.id !== Number(event.target.id)
+      );
       this.emailRecp[type].forEach((_, ind) => {
         this.emailRecp[type].id = ind;
-      })
+      });
     }
-  }
-
-  reply() {
-    console.log("reply")
   }
 }
