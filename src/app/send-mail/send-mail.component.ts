@@ -26,6 +26,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   selectedEmoji: string = '';
   popupPosition: any = {};
   isSuggestionVisible = false;
+  suggestionText: string = 'sug';
   mockSuggestionsResponse = [
     {
       token_str: 'died',
@@ -59,7 +60,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     cursorPos: 0
   };
   target: string;
-  suggestionText = 'suggestion1';
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
   @Input() openSendEmailModal: boolean = false;
@@ -131,6 +131,111 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       );
   }
 
+  async analyzeText(text: string) {
+    try {
+      const accessToken = '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'; // Replace with your token
+      const sentimentResponse = await fetch(
+        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`
+          },
+          body: JSON.stringify({ text })
+        }
+      );
+      if (!sentimentResponse.ok) {
+        throw new Error('Failed to fetch sentiment analysis');
+      }
+      const sentimentData = await sentimentResponse.json();
+      const inputData = `{ inputs: '${text} [MASK].' }`;
+      const suggestionResponse = await fetch(
+        'https://api-inference.huggingface.co/models/bert-base-uncased',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`
+          },
+          body: inputData
+        }
+      );
+      if (!suggestionResponse.ok) {
+        throw new Error('Failed to fetch suggestions');
+      }
+      const suggestionsData = await suggestionResponse.json();
+      const formattedSuggestions = suggestionsData.map((item: any) => ({
+        token_str: item.token_str.trim(), // Token text (the word or fragment to insert)
+        sequence: item.sequence // The sequence or context for the token
+      }));
+      // Use setTimeout to delay the update of suggestionText
+      this.suggestionText =
+        formattedSuggestions.length > 0
+          ? ' ' + formattedSuggestions[0].token_str + ' '
+          : '';
+      // setTimeout(() => {
+      //   // Only update if there are suggestions
+      //   this.suggestionText = 'No suggestion available';
+      // }, 3000); // 3000ms = 3 seconds delay
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error fetching analysis:', error.message); // Safely accessing `message`
+        //this.errorMessage = `Analysis failed: ${error.message}`;
+      } else {
+        console.error('Unknown error:', error); // In case it's not an instance of Error
+        //this.errorMessage = `Analysis failed: An unknown error occurred.`;
+      }
+    }
+  }
+  sanitizeInput(input: string): string {
+    console.log('sanitized input ' + input);
+    // Clean up the input string by removing unnecessary spaces around tags
+    const cleanedInput = input
+      .replace(/\s*<\s*/g, '<')
+      .replace(/\s*>\s*/g, '>')
+      .replace(/\s+/g, ' ');
+
+    // Now pass the cleaned input to the DOMParser
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(cleanedInput, 'text/html');
+
+    const traverseNode = (node: ChildNode): string => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node.textContent?.trim() || '';
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+
+        if (element.tagName === 'BR') {
+          return '\n';
+        } else if (element.tagName === 'DIV') {
+          const content = traverseChildren(element);
+          return content.trim() ? `${content}\n` : '\n';
+        } else if (element.tagName === 'B' || element.tagName === 'STRONG') {
+          return ` <b>${traverseChildren(element)}</b> `;
+        } else if (element.tagName === 'I' || element.tagName === 'EM') {
+          return ` <i>${traverseChildren(element)}</i> `;
+        } else if (element.tagName === 'U') {
+          return ` <u>${traverseChildren(element)}</u> `;
+        } else if (element.tagName === 'S' || element.tagName === 'STRIKE') {
+          return ` <s>${traverseChildren(element)}</s> `;
+        } else if (element.tagName === 'SPAN') {
+          return ` <span>${traverseChildren(element)}</span> `;
+        } else {
+          return traverseChildren(element);
+        }
+      }
+      return '';
+    };
+
+    const traverseChildren = (node: HTMLElement): string => {
+      return Array.from(node.childNodes).map(traverseNode).join('');
+    };
+
+    let sanitizedText = traverseChildren(doc.body).trim();
+    return sanitizedText;
+  }
+
   calcCursorPos(event) {
     console.log(event, 'fdgdf');
     let isFocusElSet = false;
@@ -138,7 +243,11 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
     this.email.body = event.target['innerHTML'];
     console.log(event.target['innerHTML']);
-
+    const sanitizedText = this.sanitizeInput(event.target['innerHTML'].trim());
+    if (sanitizedText.length > 0) {
+      this.analyzeText(sanitizedText);
+    }
+    //this.analyzeText(event.target['innerHTML'].trim());
     let el = document.querySelector('.ql-editor');
     let selection = window.getSelection();
     el.childNodes.forEach((node) => {
@@ -285,77 +394,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       console.error('Error: Body element is null');
     }
   }
-
-  async analyzeText(text: string) {
-    if (text === this.lastAnalyzedText) {
-      return; // Don't analyze again if the text hasn't changed
-    }
-
-    this.lastAnalyzedText = text; // Update the last analyzed text
-    try {
-      // Mock the response to simulate the API call
-      const mockSuggestionsData = this.mockSuggestionsResponse; // Use mock response
-
-      // Format the mock response like the actual API response
-      const formattedSuggestions = mockSuggestionsData.map((item: any) => ({
-        token_str: item.token_str.trim(), // Token text (the word or fragment to insert)
-        sequence: item.sequence // The sequence or context for the token
-      }));
-
-      // Pass the mock formatted suggestions to addSuggestionsToEditor
-      // this.suggestions = formattedSuggestions;
-      // this.addSuggestionsToEditor(formattedSuggestions);
-
-      // Set the suggestion after 3 seconds (as in your original code)
-      setTimeout(() => {
-        this.inlineSuggestion = this.suggestions[0] || {
-          token_str: '',
-          sequence: ''
-        }; // Set the first suggestion or empty string
-
-        // Reset the suggestion after 27 seconds if no new action occurs
-        this.resetTimeout = setTimeout(() => {
-          //this.inlineSuggestion = ''; // Set suggestion to empty after 30 seconds
-        }, 27000); // 27000ms = 27 seconds after setting the suggestion
-      }, 3000); // 3000ms = 3 seconds
-    } catch (error) {
-      console.error('Error fetching analysis:', error);
-    }
-  }
-
-  addSuggestionsToEditor(
-    suggestions: { token_str: string; sequence: string }[]
-  ) {
-    this.isAddingSuggestions = true; // Prevent recursion while adding suggestions
-
-    const { token_str, sequence } = suggestions[0];
-    const start = sequence.indexOf(token_str);
-    const end = start + token_str.length;
-
-    // Insert the suggestion text as grayed-out (inline-suggestion)
-    this.quill.insertText(start, token_str);
-
-    // Move the cursor after the inserted suggestion
-    this.quill.setSelection(end, end);
-
-    this.isAddingSuggestions = false; // Re-enable text-change event listener
-
-    // Set timeout to hide the suggestion after 5 seconds
-    this.hideSuggestionAfterTimeout();
-  }
-
-  hideSuggestionAfterTimeout() {
-    if (this.suggestionTimeout) {
-      clearTimeout(this.suggestionTimeout); // Clear any previous timeout
-    }
-
-    this.suggestionTimeout = setTimeout(() => {
-      // Remove the suggestion (or hide it in the editor)
-      this.suggestions = []; // Reset suggestions
-      this.isSuggestionVisible = false;
-    }, 5000); // Hide suggestion after 5 seconds
-  }
-
   sendEmail(): void {
     this.salesforceService
       .sendEmail({
@@ -440,84 +478,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
     const index = Math.floor(Math.random() * dummySuggestions.length);
     return dummySuggestions[index];
-  }
-
-  sanitizeInput(input: string): string {
-    console.log('Original Input:', input); // Log the original input
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(input, 'text/html');
-    console.log('Parsed HTML Document:', doc.body.innerHTML); // Log the parsed HTML content
-
-    // Function to process each node
-    const traverseNode = (node: ChildNode): string => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        console.log('Text Node:', node.textContent?.trim()); // Log text nodes
-        return node.textContent?.trim() || '';
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as HTMLElement;
-        console.log('Element Tag:', element.tagName); // Log element tags for processing
-
-        // Handle <br> as newlines
-        if (element.tagName === 'BR') {
-          console.log('Found <BR> Tag'); // Log when <br> is found
-          return '\n';
-        }
-
-        // Handle <div> as newlines
-        else if (element.tagName === 'DIV') {
-          const content = traverseChildren(element);
-          console.log('Content inside <div>:', content); // Log content inside <div>
-          return content.trim() ? `${content}\n` : '\n';
-        }
-
-        // Handle <b>, <strong>, <i>, <em>, and other formatting tags
-        else if (element.tagName === 'B' || element.tagName === 'STRONG') {
-          console.log('Found <b> or <strong> Tag'); // Log when <b> or <strong> is found
-          return ` <b>${traverseChildren(element)}</b> `;
-        } else if (element.tagName === 'I' || element.tagName === 'EM') {
-          console.log('Found <i> or <em> Tag'); // Log when <i> or <em> is found
-          return ` <i>${traverseChildren(element)}</i> `;
-        }
-
-        // Handle <u> and other tags
-        else if (element.tagName === 'U') {
-          console.log('Found <u> Tag'); // Log when <u> is found
-          return ` <u>${traverseChildren(element)}</u> `;
-        }
-
-        // Handle <s> or <strike> for strikethrough
-        else if (element.tagName === 'S' || element.tagName === 'STRIKE') {
-          console.log('Found <s> or <strike> Tag'); // Log when <s> or <strike> is found
-          return ` <s>${traverseChildren(element)}</s> `;
-        }
-
-        // Handle <span> or other inline elements
-        else if (element.tagName === 'SPAN') {
-          console.log('Found <span> Tag'); // Log when <span> is found
-          return ` <span>${traverseChildren(element)}</span> `;
-        }
-
-        // Traverse any unhandled tags
-        else {
-          console.log('Traversing Other Tag:', element.tagName); // Log for other tags
-          return traverseChildren(element);
-        }
-      }
-      return '';
-    };
-
-    // Function to process all children of an element
-    const traverseChildren = (node: HTMLElement): string => {
-      console.log('Traversing Children of:', node.tagName); // Log when traversing children
-      return Array.from(node.childNodes).map(traverseNode).join('');
-    };
-
-    // Start sanitizing and processing the input
-    let sanitizedText = traverseChildren(doc.body).trim();
-    console.log('Sanitized Text:', sanitizedText); // Log the final sanitized text
-
-    return sanitizedText;
   }
 
   moveCaretToEnd(target: HTMLElement) {
@@ -609,7 +569,10 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     e.preventDefault();
     if (e['keyCode'] == 186 || e['keyCode'] == 59) {
       const recp = this.email.to;
-      this.emailRecp[type].push({ id: this.emailRecp.to.length, recp: recp.replace(";", "") });
+      this.emailRecp[type].push({
+        id: this.emailRecp.to.length,
+        recp: recp.replace(';', '')
+      });
       this.emailRecp.to.push({
         id: this.emailRecp.to.length,
         recp: recp.replace(';', '')
