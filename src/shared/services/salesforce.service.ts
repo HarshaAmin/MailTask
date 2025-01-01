@@ -6,10 +6,8 @@ import { environment } from '../../environments/environment';
 import { CommonService } from './common.service';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
-
-
 export class SalesforceService extends CommonService {
   private baseUrl =
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailService';
@@ -30,6 +28,8 @@ export class SalesforceService extends CommonService {
   private baseForwardUrl =
     'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookForwardEmailService';
 
+  private baseReplyUrl =
+    'https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailReplyEmailService';
 
   private accessToken: string | null = null;
 
@@ -49,7 +49,10 @@ export class SalesforceService extends CommonService {
   setAccessToken(token: string): void {
     this.accessToken = token;
     localStorage.setItem('accessToken', token);
-    console.log('Access token set and saved to localStorage:', this.accessToken);
+    console.log(
+      'Access token set and saved to localStorage:',
+      this.accessToken
+    );
   }
 
   // Check if user is authenticated (i.e., has a valid access token)
@@ -69,7 +72,7 @@ export class SalesforceService extends CommonService {
     return this.http
       .get(this.getSentEmailsUrl, {
         headers: { Authorization: `Bearer ${this.accessToken}` },
-        responseType: 'json',
+        responseType: 'json'
       })
       .pipe(
         catchError((error) => {
@@ -88,7 +91,7 @@ export class SalesforceService extends CommonService {
     return this.http
       .get(this.getEmailsUrl, {
         headers: { Authorization: `Bearer ${this.accessToken}` },
-        responseType: 'json',
+        responseType: 'json'
       })
       .pipe(
         catchError((error) => {
@@ -110,7 +113,7 @@ export class SalesforceService extends CommonService {
 
     const url = `${environment.salesforce.loginUrl}/services/data/${environment.salesforce.apiVersion}/sobjects/${objectName}`;
     const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`,
+      Authorization: `Bearer ${this.accessToken}`
     });
 
     return this.http.get(url, { headers }).pipe(
@@ -143,8 +146,8 @@ export class SalesforceService extends CommonService {
     return this.http
       .post(url, body.toString(), {
         headers: new HttpHeaders({
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }),
+          'Content-Type': 'application/x-www-form-urlencoded'
+        })
       })
       .pipe(
         switchMap((response: any) => {
@@ -166,7 +169,7 @@ export class SalesforceService extends CommonService {
   getUserInfo(): Observable<any> {
     const url = `${environment.salesforce.loginUrl}/services/oauth2/userinfo`;
     const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`,
+      Authorization: `Bearer ${this.accessToken}`
     });
 
     return this.http.get(url, { headers }).pipe(
@@ -182,15 +185,16 @@ export class SalesforceService extends CommonService {
   }
 
   sendEmail(payload: {
-    to: string,
-    subject: string,
-    body: string,
-    fileName: any,
-    fileType: any,
-    base64Content: any
+    to: string;
+    subject: string;
+    body: string;
+    fileName: any;
+    fileType: any;
+    base64Content: any;
   }): Observable<any> {
     console.log(payload);
-    return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(map((response) => response),
+    return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(
+      map((response) => response),
       catchError((error) => {
         console.error('Error correcting grammar:', error);
         return throwError(() => new Error('Failed to correct grammar.'));
@@ -221,13 +225,28 @@ export class SalesforceService extends CommonService {
     console.log('payload is ' + payload);
     const url = `${this.baseForwardUrl}/forwardEmail/${emailId}`;
 
-    return this.http
-      .post<any>(url, payload)
-      .pipe(
-        catchError((error) => {
-          console.error('Email formward failed:', error);
-          return throwError(error);
-        })
-      );
+    return this.http.post<any>(url, payload).pipe(
+      catchError((error) => {
+        console.error('Email formward failed:', error);
+        return throwError(error);
+      })
+    );
+  }
+
+  replyEmail(emailId: string, payload: any): Observable<any> {
+    console.log(emailId);
+    const emailData = {
+      emailId: emailId,
+      payload: payload
+    };
+    console.log('payload is ' + JSON.stringify(emailData));
+    const url = `${this.baseReplyUrl}`;
+
+    return this.http.post<any>(url, emailData).pipe(
+      catchError((error) => {
+        console.error('Email Reply failed:', error);
+        return throwError(error);
+      })
+    );
   }
 }
