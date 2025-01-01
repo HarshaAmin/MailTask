@@ -571,10 +571,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
         id: this.emailRecp.to.length,
         recp: recp.replace(';', '')
       });
-      this.emailRecp.to.push({
-        id: this.emailRecp.to.length,
-        recp: recp.replace(';', '')
-      });
       this.email.to = '';
       console.log(this.emailRecp.to);
     }
