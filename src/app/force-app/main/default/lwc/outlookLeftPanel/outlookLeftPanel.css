@@ -1,8 +1,0 @@
-/* Optional Custom Styles */
-.slds-col {
-    min-height: 100vh; /* Ensures full-height panels */
-}
-
-.slds-scrollable_y {
-    overflow-y: auto;
-}

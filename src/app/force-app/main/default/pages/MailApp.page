@@ -1,5 +1,0 @@
-<apex:page controller="AngularAppController">
-  <script>
-    window.location.href = "{!$Page.EmailApp}";
-  </script>
-</apex:page>
