@@ -311,7 +311,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   handleGlobalClick(event) {
-    if (event.target['parentElement'].classList.contains('ql-editor')) {
+    if (event.target['parentElement']?.classList.contains('ql-editor')) {
       this.calcCursorPos(event);
     }
   }
@@ -565,7 +565,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
   handleEmailAddressEntries(e: Event, type = 'to') {
     e.preventDefault();
-    if (e.target['value'].includes(";")) {
+    if (e.target['value'].includes(";") && this.validateEmail(this.email.to.replace(';', ''))) {
       const recp = this.email.to;
       this.emailRecp[type].push({
         id: this.emailRecp.to.length,
@@ -601,5 +601,20 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
           console.error('Error:', JSON.stringify(error));
         }
       );
+  }
+
+  handleSubmit() {
+    if (this.type === 'send') {
+      this.sendEmail();
+    } else if (this.type === 'reply') {
+      this.reply();
+    } else if (this.type === 'forward') {
+      this.forward();
+    }
+  }
+
+  validateEmail(email: string) {
+    const filter = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return filter.test(email.trim());
   }
 }

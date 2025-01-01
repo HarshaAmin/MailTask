@@ -29,7 +29,7 @@ export class AppComponent implements OnInit, OnDestroy {
   handleGlobalClick(e: Event) {
     const id = e.target['id'];
     if (id !== "dropdown-selector-id") {
-      document.querySelector(".dropdown-selector").classList.remove("active");
+      document.querySelector(".dropdown-selector")?.classList.remove("active");
     }
   }
 
