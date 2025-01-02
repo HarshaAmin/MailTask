@@ -136,7 +136,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
   async analyzeText(text: string) {
     try {
-      this.suggestionText = 'suggestion';
+      this.suggestionText = 'suggest';
       return;
       const accessToken = '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'; // Replace with your token
       const sentimentResponse = await fetch(
@@ -240,12 +240,14 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   correctGrammar(event): void {
     this.email.body = event.target['innerHTML'];
     console.log(event.target['innerHTML']);
-    //const sanitizedText = this.sanitizeInput(event.target['innerHTML'].trim());
-    const sanitizedText = 'i wan to tst these grmmr funtion';
+    const el = document.querySelector(".ql-editor ").innerHTML;
+    const sanitizedText = this.sanitizeInput(el.trim());
+    // const sanitizedText = 'i wan to tst these grmmr funtion';
     if (sanitizedText.length > 0) {
       this.salesforceService.correctGrammar(sanitizedText).subscribe({
         next: (response) => {
           this.correctedText = JSON.stringify(response);
+          document.querySelector(".ql-editor ").innerHTML = this.correctedText;
           //this.errorMessage = '';
         },
         error: (err) => {
