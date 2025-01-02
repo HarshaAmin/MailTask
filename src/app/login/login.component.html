@@ -1,1 +1,39 @@
-<p>login works!</p>
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <p>{{ "Username - user@sendtech.com --- Password - password" }}</p>
+
+      <div class="card">
+        <div class="card-body">
+          <form id="registrationForm" (submit)="login()">
+            <div class="form-group">
+              <label for="email"> Email </label>
+              <input
+                type="email"
+                class="form-control"
+                id="username"
+                name="username"
+                placeholder="Email"
+                required
+                [(ngModel)]="loginCred.username"
+              />
+            </div>
+            <div class="form-group">
+              <label for="password"> Password </label>
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                placeholder="Password"
+                required
+                [(ngModel)]="loginCred.password"
+              />
+            </div>
+            <button class="btn btn-success mt-3">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

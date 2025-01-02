@@ -7,7 +7,6 @@ import { CommonService } from '../../shared/services/common.service';
 import { NgIf } from '@angular/common';
 import { EmojiService } from '../../shared/services/emoji.service';
 import Quill, { Delta } from 'quill';
-import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-send-mail',
@@ -16,7 +15,7 @@ import { environment } from '../../environments/environment';
   templateUrl: './send-mail.component.html'
 })
 export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
-  email = { to: '', subject: '', body: '' };
+  email = { to: '', subject: '', body: '', cc: '', bcc: '' };
   emailRecp = { to: [], cc: [], bcc: [] };
   files: NgxFileDropEntry[] = [];
   currentHighScoreSuggestion: string = '';
@@ -59,10 +58,11 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     elementIdx: number;
     cursorPos: number;
   } = {
-    elementIdx: 0,
-    cursorPos: 0
-  };
+      elementIdx: 0,
+      cursorPos: 0
+    };
   target: string;
+  ccBcc = { cc: false, bcc: false };
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
   @Input() openSendEmailModal: boolean = false;
@@ -90,7 +90,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['type'] && this.type === 'send') {
-      this.email = { to: '', subject: '', body: '' };
+      this.email = { to: '', subject: '', body: '', cc: '', bcc: '' };
       this.emailRecp = { to: [], cc: [], bcc: [] };
     }
   }
@@ -114,6 +114,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     this.salesforceService
       .replyEmail({
         to: this.emailRecp['to'].map((e) => e.recp).join(';'),
+        cc: this.emailRecp['cc'].map((e) => e.recp).join(';'),
+        bcc: this.emailRecp['bcc'].map((e) => e.recp).join(';'),
         subject: 'Re: ' + this.selectedEmail.subject,
         body: this.email.body,
         reSubject: reSubject || '',
@@ -386,6 +388,10 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       this.email.body = this.selectedEmail.body;
       this.email.subject = `Fw: ${this.selectedEmail.subject}`;
     }
+
+    if (this.type === 'send') {
+
+    }
   }
 
   handleGlobalClick(event) {
@@ -474,6 +480,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     this.salesforceService
       .sendEmail({
         to: this.emailRecp['to'].map((e) => e.recp).join(';'),
+        cc: this.emailRecp['cc'].map((e) => e.recp).join(';'),
+        bcc: this.emailRecp['bcc'].map((e) => e.recp).join(';'),
         subject: this.email.subject,
         body: this.email.body,
         fileName: this.files?.[0]?.['fileName'] || '',
@@ -645,15 +653,17 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     e.preventDefault();
     if (
       e.target['value'].includes(';') &&
-      this.validateEmail(this.email.to.replace(';', ''))
+      this.validateEmail(this.email[type].replace(';', ''))
     ) {
-      const recp = this.email.to;
+      const recp = this.email[type];
       this.emailRecp[type].push({
-        id: this.emailRecp.to.length,
+        id: this.emailRecp[type].length,
         recp: recp.replace(';', '')
       });
-      this.email.to = '';
-      console.log(this.emailRecp.to);
+      this.email[type] = '';
+      console.log(this.emailRecp[type]);
+    } else {
+      this.email[type] = this.email[type].replaceAll(';', '');
     }
   }
 
@@ -673,6 +683,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       .forwardEmail({
         emailId: this.selectedEmail.Id,
         toRecipients: this.emailRecp['to'].map((e) => e.recp).join(';'),
+        cc: this.emailRecp['cc'].map((e) => e.recp).join(';'),
+        bcc: this.emailRecp['bcc'].map((e) => e.recp).join(';'),
         emailSubject: this.email.subject
       })
       .subscribe(
@@ -701,5 +713,15 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   validateEmail(email: string) {
     const filter = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return filter.test(email.trim());
+  }
+
+  handleCcBccClick(e: Event) {
+    console.log(e, "sdsds")
+    if (e.target['attributes'].action.value === 'cc') {
+      this.ccBcc.cc = true;
+    }
+    if (e.target['attributes'].action.value === 'bcc') {
+      this.ccBcc.bcc = true;
+    }
   }
 }

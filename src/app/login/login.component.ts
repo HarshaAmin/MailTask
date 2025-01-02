@@ -9,9 +9,12 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
+  loginCred = { username: "", password: "" };
+
   constructor(private authService: AuthService) { }
 
-  login(): void {
-    this.authService.login();
+  login() {
+    console.log(this.loginCred)
+    this.authService.login(this.loginCred);
   }
 }

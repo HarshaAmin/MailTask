@@ -2,12 +2,29 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { OAuthService } from 'angular-oauth2-oidc';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  constructor(private oauthService: OAuthService, private http: HttpClient) {}
+  isLoggedIn = false;
+
+  constructor(private http: HttpClient, public router: Router) { }
+
+  isAuthenticated() {
+    return this.isLoggedIn;
+  }
+
+  login(data: { username: string; password: string; }): boolean {
+    console.log(data);
+    if (data.username.trim() === 'user@sendtech.com', data.password.trim() === 'password') {
+      this.isLoggedIn = true;
+      this.router.navigate(['/']);
+      return true;
+    }
+    return false;
+  }
 
   // OAuth settings for Salesforce
   private oauthSettings = {
@@ -18,32 +35,4 @@ export class AuthService {
     responseType: 'code',
     showDebugInformation: true,  // Useful for debugging
   };
-
-  initOAuth() {
-    this.oauthService.configure(this.oauthSettings);
-    this.oauthService.loadDiscoveryDocumentAndTryLogin();
-  }
-
-  login() {
-    this.oauthService.initCodeFlow();
-  }
-
-  logout() {
-    this.oauthService.logOut();
-  }
-
-  getAccessToken() {
-    return this.oauthService.getAccessToken();
-  }
-
-  // Optionally, you can get the user's profile information
-  getUserInfo() {
-    const headers = new HttpHeaders().set(
-      'Authorization',
-      `Bearer ${this.getAccessToken()}`
-    );
-    return this.http.get('https://your-instance.salesforce.com/services/data/vXX.0/sobjects/Account/', {
-      headers,
-    });
-  }
 }

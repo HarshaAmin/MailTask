@@ -224,6 +224,8 @@ export class SalesforceService extends CommonService {
 
   replyEmail(payload: {
     to: string;
+    cc: string;
+    bcc: string;
     subject: string;
     body: string;
     reSubject: any;
@@ -242,6 +244,8 @@ export class SalesforceService extends CommonService {
 
   sendEmail(payload: {
     to: string;
+    cc: string;
+    bcc: string;
     subject: string;
     body: string;
     fileName: any;
@@ -276,6 +280,8 @@ export class SalesforceService extends CommonService {
   forwardEmail(email: {
     emailId: string;
     toRecipients: any;
+    cc: string;
+    bcc: string;
     emailSubject: string;
   }): Observable<any> {
     const url = `${this.baseForwardUrl}/forwardEmail/${email.emailId}`;

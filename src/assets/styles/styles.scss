@@ -244,7 +244,6 @@ ul.sidebar-menu-items {
   cursor: pointer;
   height: 35px;
   position: relative;
-  border-bottom: 0.5px solid lightgray;
 
   & .bottom {
     height: 0;
@@ -616,7 +615,9 @@ a img {
   width: 100%;
 }
 
-.to-email {
+.to-email,
+.cc-email,
+.bcc-email {
   border: 0.5px solid lightgray;
   padding: 2px;
   border-radius: 5px;
@@ -682,4 +683,18 @@ a img {
 span.filter-crit-item.active {
   background: #212b86;
   color: #fff;
+}
+
+.cc-bcc-btn-sec {
+  display: flex;
+  justify-content: end;
+  gap: 15px;
+
+  & span {
+    width: 35px;
+    text-align: center;
+    border: 0.5px solid gray;
+    padding: 1px;
+    cursor: pointer;
+  }
 }

@@ -1,7 +1,7 @@
 <div class="modal-dialog" role="document">
   <div class="modal-content">
-    <button (click)="correctGrammar($event)" >Correct Grammar</button>
-    <button (click)="Summarize($event)" >Summarize</button>
+    <button (click)="correctGrammar($event)">Correct Grammar</button>
+    <button (click)="Summarize($event)">Summarize</button>
     <div class="modal-header justify-content-between">
       @if (type === "send") {
         <h5 class="modal-title" id="exampleModalLabel">Compose Email</h5>
@@ -17,6 +17,16 @@
         &#x2715;
       </div>
     </div>
+
+    <div class="cc-bcc-btn-sec" (click)="handleCcBccClick($event)">
+      @if (!ccBcc.cc) {
+        <span action="cc" id="cc">CC</span>
+      }
+      @if (!ccBcc.bcc) {
+        <span action="bcc" id="bcc">BCC</span>
+      }
+    </div>
+
     <div class="modal-body">
       <form (submit)="handleSubmit()">
         <div class="form-group form-input-section">
@@ -40,6 +50,56 @@
             (keyup)="handleEmailAddressEntries($event, 'to')"
           />
         </div>
+        @if (ccBcc.cc) {
+          <div class="form-group form-input-section">
+            <label for="cc">CC:</label>
+            <span class="d-flex gap-2" (click)="handleEmailStack($event, 'cc')">
+              @for (emailR of emailRecp.cc; track $index) {
+                <span class="cc-email" id="{{ emailR.id }}">
+                  {{ emailR.recp }}
+                  <i class="fa-solid fa-xmark" id="{{ emailR.id }}"></i>
+                </span>
+              }
+            </span>
+
+            <input
+              type="email"
+              id="cc"
+              name="cc"
+              [(ngModel)]="email.cc"
+              required
+              class="form-control"
+              (keyup)="handleEmailAddressEntries($event, 'cc')"
+            />
+          </div>
+        }
+        @if (ccBcc.bcc) {
+          <div class="form-group form-input-section">
+            <label for="bcc">BCC:</label>
+            <span
+              class="d-flex gap-2"
+              (click)="handleEmailStack($event, 'bcc')"
+            >
+              @for (emailR of emailRecp.bcc; track $index) {
+                <span class="bcc-email" id="{{ emailR.id }}">
+                  {{ emailR.recp }}
+                  <i class="fa-solid fa-xmark" id="{{ emailR.id }}"></i>
+                </span>
+              }
+            </span>
+
+            <input
+              type="email"
+              id="bcc"
+              name="bcc"
+              [(ngModel)]="email.bcc"
+              required
+              class="form-control"
+              (keyup)="handleEmailAddressEntries($event, 'bcc')"
+            />
+          </div>
+        }
+
         @if (type !== "reply") {
           <div class="form-group form-input-section">
             <label for="subject">Subject:</label>
@@ -80,7 +140,6 @@
         <div>correctedText:{{ correctedText }}</div>
         <div>summarizet Input : {{ sumarizedText }}</div>
       </form>
-      
     </div>
   </div>
 </div>
