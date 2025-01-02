@@ -10,6 +10,8 @@ import { CommonService } from '../../shared/services/common.service';
 })
 export class EmailComponent {
   uEmail = 'SendTech@novigosolutions.com';
+  summarizedText: string = '';
+  showSummarizedModal: boolean = false;
 
   @Input() selectedEmail: any;
   @Output() replyEmit = new EventEmitter<string>();
@@ -17,7 +19,7 @@ export class EmailComponent {
   constructor(
     private salesforceService: SalesforceService,
     public commonService: CommonService
-  ) {}
+  ) { }
 
   forwardEmail(emailData = this.selectedEmail): void {
     this.commonService.openEmailModal = true;
@@ -27,5 +29,76 @@ export class EmailComponent {
   reply() {
     this.commonService.openEmailModal = true;
     this.replyEmit.emit('reply');
+  }
+
+  replyAll() {
+    this.commonService.openEmailModal = true;
+    this.replyEmit.emit('replyAll');
+  }
+
+  summarize(): void {
+    const body = this.selectedEmail.body;
+    const sanitizedText = this.sanitizeInput(body.trim());
+
+    if (sanitizedText.length > 0) {
+      this.salesforceService
+        .summarizetGrammar(sanitizedText.length > 600 ? sanitizedText.substring(0, 600) : sanitizedText)
+        .subscribe({
+          next: (response) => {
+            this.summarizedText = JSON.stringify(response);
+            this.showSummarizedModal = true;
+          },
+          error: (err) => {
+            console.error('Error during grammar correction:', err);
+          }
+        });
+    }
+  }
+
+  sanitizeInput(input: string): string {
+    console.log('sanitized input ' + input);
+
+    const cleanedInput = input
+      .replace(/\s*<\s*/g, '<')
+      .replace(/\s*>\s*/g, '>')
+      .replace(/\s+/g, ' ');
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(cleanedInput, 'text/html');
+
+    const traverseNode = (node: ChildNode): string => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node.textContent?.trim() || '';
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+
+        if (element.tagName === 'BR') {
+          return '\n';
+        } else if (element.tagName === 'DIV') {
+          const content = traverseChildren(element);
+          return content.trim() ? `${content}\n` : '\n';
+        } else if (element.tagName === 'B' || element.tagName === 'STRONG') {
+          return ` <b>${traverseChildren(element)}</b> `;
+        } else if (element.tagName === 'I' || element.tagName === 'EM') {
+          return ` <i>${traverseChildren(element)}</i> `;
+        } else if (element.tagName === 'U') {
+          return ` <u>${traverseChildren(element)}</u> `;
+        } else if (element.tagName === 'S' || element.tagName === 'STRIKE') {
+          return ` <s>${traverseChildren(element)}</s> `;
+        } else if (element.tagName === 'SPAN') {
+          return ` <span>${traverseChildren(element)}</span> `;
+        } else {
+          return traverseChildren(element);
+        }
+      }
+      return '';
+    };
+
+    const traverseChildren = (node: HTMLElement): string => {
+      return Array.from(node.childNodes).map(traverseNode).join('');
+    };
+
+    let sanitizedText = traverseChildren(doc.body).trim();
+    return sanitizedText;
   }
 }

@@ -8,12 +8,17 @@
         <i class="fa-solid fa-reply" (click)="reply()"></i>
       </div>
       <div>
-        <i class="fa-solid fa-reply-all"></i>
+        <i class="fa-solid fa-reply-all" (click)="replyAll()"></i>
       </div>
       <div>
         <i class="fa-solid fa-share" (click)="forwardEmail()"></i>
       </div>
     </div>
+  </div>
+  <div class="summarize-btn-section">
+    <button class="btn btn-primary" (click)="summarize()">
+      Summarize Email
+    </button>
   </div>
   <p><b>From: </b> {{ selectedEmail.sender }}</p>
   <p><b>To: </b> {{ uEmail }}</p>
@@ -24,6 +29,17 @@
       [innerHTML]="selectedEmail.body"
     ></span>
   </p>
+  {{ sumarizedText }}
 } @else {
   <p>Please select a mail.</p>
+}
+
+@if (showSummarizedModal && summarizedText) {
+  <div class="summarize-outer-section">
+    <div class="close-modal-summarize" (click)="showSummarizedModal = false">
+      <i class="fa-solid fa-xmark"></i>
+    </div>
+    <h5>Email Summary</h5>
+    <div class="summarize-inner-section" [innerHTML]="summarizedText"></div>
+  </div>
 }

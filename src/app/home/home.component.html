@@ -102,7 +102,10 @@
                     <i class="fa-solid fa-arrow-left"></i>
                   </button>
                   <div class="pt-4">
-                    <app-email [selectedEmail]="selectedEmail"></app-email>
+                    <app-email
+                      [selectedEmail]="selectedEmail"
+                      (replyEmit)="commonService.type = $event"
+                    ></app-email>
                   </div>
                 </div>
               } @else if (commonService.openEmailModal) {

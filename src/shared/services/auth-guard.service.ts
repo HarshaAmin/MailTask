@@ -16,10 +16,23 @@ export class AuthGuardService {
     }
     return true;
   }
+
+  canActivateLogin(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
+    const status = this.authService.isAuthenticated();
+    if (status) {
+      return this.router.navigate(['/home']);
+    }
+    return true;
+  }
 }
 
 export const AuthGuard: CanActivateFn = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Observable<boolean> | Promise<boolean> => {
   console.log("dsfdsfdsfdsfdsfdsf00")
   return inject(AuthGuardService).canActivate(next, state);
+}
+
+export const AuthGuardLogin: CanActivateFn = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Observable<boolean> | Promise<boolean> => {
+  console.log("dsfdsfdsfdsfdsfdsf00")
+  return inject(AuthGuardService).canActivateLogin(next, state);
 }
 

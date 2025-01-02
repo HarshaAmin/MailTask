@@ -1,6 +1,8 @@
 <div class="nav-container">
   <div class="container">
-    <app-nav></app-nav>
+    @if (authService.isLoggedIn) {
+      <app-nav></app-nav>
+    }
   </div>
 </div>
 <div class="content-section w-100 d-flex justify-content-center">

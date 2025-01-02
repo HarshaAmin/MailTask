@@ -28,7 +28,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   isSuggestionVisible = false;
   suggestionText: string = 'sug';
   correctedText: any = {};
-  sumarizedText: string = '';
   mockSuggestionsResponse = [
     {
       token_str: 'died',
@@ -106,14 +105,49 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     const toRecipients = this.selectedEmail.sender
       .split(';')
       .map((email) => email.trim());
-    // const ccRecipients = this.selectedEmail.ccRecipient
-    //   .split(';')
-    //   .map((email) => email.trim());
     const emailId = this.selectedEmail.Id;
     console.log();
     this.salesforceService
       .replyEmail({
         to: this.emailRecp['to'].map((e) => e.recp).join(';'),
+        cc: this.emailRecp['cc'].map((e) => e.recp).join(';'),
+        bcc: this.emailRecp['bcc'].map((e) => e.recp).join(';'),
+        subject: 'Re: ' + this.selectedEmail.subject,
+        body: this.email.body,
+        reSubject: reSubject || '',
+        contentType: contentType || '',
+        content: content || '',
+        selectedEmailId: emailId || ''
+      })
+      .subscribe(
+        (response) => {
+          console.log(
+            'Replied to Email successfully! ' + JSON.stringify(response)
+          );
+          console.log('Replied to Email successfully! ' + response);
+        },
+        (error) => {
+          console.error('Error:', JSON.stringify(error));
+        }
+      );
+  }
+
+  replyAll() {
+    const senderEmails = this.selectedEmail.sender
+      .split(';')
+      .map((email) => email.trim());
+    const reSubject = 'Re: ' + this.selectedEmail.subject;
+    const contentType = 'html';
+    const content = this.email.body;
+
+    const toRecipients = this.selectedEmail.sender
+      .split(';')
+      .map((email) => email.trim());
+    const emailId = this.selectedEmail.Id;
+    console.log();
+    this.salesforceService
+      .replyEmail({
+        to: [...this.emailRecp['to'], ...this.emailRecp['cc'], ...this.emailRecp['bcc']].map((e) => e.recp).join(';'),
         cc: this.emailRecp['cc'].map((e) => e.recp).join(';'),
         bcc: this.emailRecp['bcc'].map((e) => e.recp).join(';'),
         subject: 'Re: ' + this.selectedEmail.subject,
@@ -278,25 +312,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
           document.querySelector('.ql-editor ').innerHTML =
             this.getFormattedInput(this.correctedText);
           //this.errorMessage = '';
-        },
-        error: (err) => {
-          console.error('Error during grammar correction:', err);
-          //this.errorMessage = 'Failed to correct grammar. Please try again.';
-        }
-      });
-    }
-  }
-
-  Summarize(event): void {
-    this.email.body = event.target['innerHTML'];
-    console.log(event.target['innerHTML']);
-    const el = document.querySelector('.ql-editor ').innerHTML;
-    const sanitizedText = this.sanitizeInput(el.trim());
-    // const sanitizedText = 'i wan to tst these grmmr funtion';
-    if (sanitizedText.length > 0) {
-      this.salesforceService.summarizetGrammar(sanitizedText).subscribe({
-        next: (response) => {
-          this.sumarizedText = JSON.stringify(response);
         },
         error: (err) => {
           console.error('Error during grammar correction:', err);
@@ -705,6 +720,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       this.sendEmail();
     } else if (this.type === 'reply') {
       this.reply();
+    } else if (this.type === 'replyAll') {
+      this.replyAll();
     } else if (this.type === 'forward') {
       this.forward();
     }

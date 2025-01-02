@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { CommonService } from '../shared/services/common.service';
 import { NavComponent } from './nav/nav.component';
+import { AuthService } from '../shared/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -11,7 +12,7 @@ import { NavComponent } from './nav/nav.component';
   templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit, OnDestroy {
-  constructor(private commonService: CommonService) {
+  constructor(private commonService: CommonService, public authService: AuthService) {
     window.addEventListener('resize', this.detectResize.bind(this));
     window.addEventListener('click', this.handleGlobalClick.bind(this));
     this.handleReload();
