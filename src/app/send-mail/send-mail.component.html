@@ -1,6 +1,7 @@
 <div class="modal-dialog" role="document">
   <div class="modal-content">
     <button (click)="correctGrammar($event)" >Correct Grammar</button>
+    <button (click)="Summarize($event)" >Summarize</button>
     <div class="modal-header justify-content-between">
       @if (type === "send") {
         <h5 class="modal-title" id="exampleModalLabel">Compose Email</h5>
@@ -76,8 +77,8 @@
         <div class="mt-3">
           <button type="submit" class="btn btn-success">Send</button>
         </div>
-        <div>{{ correctedText }}</div>
-
+        <div>correctedText:{{ correctedText }}</div>
+        <div>summarizet Input : {{ sumarizedText }}</div>
       </form>
       
     </div>

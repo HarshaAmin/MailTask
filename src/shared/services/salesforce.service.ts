@@ -33,6 +33,9 @@ export class SalesforceService extends CommonService {
 
   private accessToken: string | null = null;
 
+  private apiSummarizeUrl =
+    'https://api-inference.huggingface.co/models/facebook/bart-large-cnn'; // Hugging Face model URL
+
   constructor(private http: HttpClient) {
     // Try to load the access token from localStorage when service is initialized
     super();
@@ -116,6 +119,23 @@ export class SalesforceService extends CommonService {
 
     return this.http.post<any>(this.openAIapiUrl, body, { headers }).pipe(
       map((response) => response[0]?.generated_text),
+      catchError((error) => {
+        console.error('Error correcting grammar:', error);
+        return throwError(() => new Error('Failed to correct grammar.'));
+      })
+    );
+  }
+  summarizetGrammar(input: string): Observable<string> {
+    const apiKey = '';
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${environment.huggingFaceApiKey}`
+    });
+    const body = JSON.stringify({ inputs: input });
+
+    return this.http.post<any>(this.apiSummarizeUrl, body, { headers }).pipe(
+      map((response) => response[0]?.summary_text),
       catchError((error) => {
         console.error('Error correcting grammar:', error);
         return throwError(() => new Error('Failed to correct grammar.'));
@@ -253,7 +273,11 @@ export class SalesforceService extends CommonService {
       );
   }
 
-  forwardEmail(email: { emailId: string, toRecipients: any, emailSubject: string }): Observable<any> {
+  forwardEmail(email: {
+    emailId: string;
+    toRecipients: any;
+    emailSubject: string;
+  }): Observable<any> {
     const url = `${this.baseForwardUrl}/forwardEmail/${email.emailId}`;
     return this.http.post<any>(url, email).pipe(
       catchError((error) => {

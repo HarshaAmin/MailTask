@@ -29,7 +29,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   isSuggestionVisible = false;
   suggestionText: string = 'sug';
   correctedText: any = {};
-
+  sumarizedText: string = '';
   mockSuggestionsResponse = [
     {
       token_str: 'died',
@@ -59,9 +59,9 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     elementIdx: number;
     cursorPos: number;
   } = {
-      elementIdx: 0,
-      cursorPos: 0
-    };
+    elementIdx: 0,
+    cursorPos: 0
+  };
   target: string;
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
@@ -237,18 +237,64 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     return sanitizedText;
   }
 
+  getFormattedInput(input: string): string {
+    const tempText = input;
+    console.log('tempText ' + tempText);
+    const formattedHTML = tempText
+      .split(',') // Split the input by line breaks
+      .map((line, index, arr) => {
+        const trimmedLine = line.trim();
+        if (trimmedLine === '') {
+          return '<p class="emailBodyChild"><br></p>'; // If the line is empty, return a <br>
+        }
+        // Apply "elmInFocus" class to the last line
+        const isLastLine = index === arr.length - 1;
+        return `<p class="emailBodyChild${isLastLine ? ' elmInFocus' : ''}">${trimmedLine}</p>`;
+      })
+      .join(''); // Join all parts into one string
+    console.log('formattedHTML tempText ' + formattedHTML);
+    console.log(formattedHTML);
+    return formattedHTML;
+  }
   correctGrammar(event): void {
     this.email.body = event.target['innerHTML'];
     console.log(event.target['innerHTML']);
-    const el = document.querySelector(".ql-editor ").innerHTML;
+    const el = document.querySelector('.ql-editor ').innerHTML;
     const sanitizedText = this.sanitizeInput(el.trim());
     // const sanitizedText = 'i wan to tst these grmmr funtion';
     if (sanitizedText.length > 0) {
       this.salesforceService.correctGrammar(sanitizedText).subscribe({
         next: (response) => {
-          this.correctedText = JSON.stringify(response);
-          document.querySelector(".ql-editor ").innerHTML = this.correctedText;
+          this.correctedText = response;
+          const tempText = this.correctedText;
+          console.log('this.correctedText ' + this.correctedText);
+          // const formattedHTML = tempText
+          //   .map((line) => (line.trim() === '' ? '<br>' : `<p>${line}</p>`))
+          //   .join('');
+          //console.log('formattedHTML ' + this.getFormattedInput());
+          //target.innerHTML = formattedHTML;
+          document.querySelector('.ql-editor ').innerHTML =
+            this.getFormattedInput(this.correctedText);
           //this.errorMessage = '';
+        },
+        error: (err) => {
+          console.error('Error during grammar correction:', err);
+          //this.errorMessage = 'Failed to correct grammar. Please try again.';
+        }
+      });
+    }
+  }
+
+  Summarize(event): void {
+    this.email.body = event.target['innerHTML'];
+    console.log(event.target['innerHTML']);
+    const el = document.querySelector('.ql-editor ').innerHTML;
+    const sanitizedText = this.sanitizeInput(el.trim());
+    // const sanitizedText = 'i wan to tst these grmmr funtion';
+    if (sanitizedText.length > 0) {
+      this.salesforceService.summarizetGrammar(sanitizedText).subscribe({
+        next: (response) => {
+          this.sumarizedText = JSON.stringify(response);
         },
         error: (err) => {
           console.error('Error during grammar correction:', err);
@@ -305,28 +351,38 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   ngAfterViewInit(): void {
-    if (this.type !== "forward") {
-      this.quill = new Quill("#editor", {
-        theme: "snow",
+    if (this.type !== 'forward') {
+      this.quill = new Quill('#editor', {
+        theme: 'snow',
         modules: {
           toolbar: [
-            ['bold', 'italic', 'underline', { header: '1' }, { header: '2' }, 'link', 'blockquote']
+            [
+              'bold',
+              'italic',
+              'underline',
+              { header: '1' },
+              { header: '2' },
+              'link',
+              'blockquote'
+            ]
           ]
         }
       });
     }
 
-
     document.addEventListener('keydown', this.handleGlobalKeyDown.bind(this));
     document.addEventListener('click', this.handleGlobalClick.bind(this));
 
-    if (this.type === "reply") {
-      this.emailRecp.to = this.selectedEmail.sender.split(";");
-      this.emailRecp.to = this.emailRecp.to.map((recp, ind) => ({ id: ind, recp }));
+    if (this.type === 'reply') {
+      this.emailRecp.to = this.selectedEmail.sender.split(';');
+      this.emailRecp.to = this.emailRecp.to.map((recp, ind) => ({
+        id: ind,
+        recp
+      }));
     }
 
-    if (this.type === "forward") {
-      console.log(this.selectedEmail)
+    if (this.type === 'forward') {
+      console.log(this.selectedEmail);
       this.email.body = this.selectedEmail.body;
       this.email.subject = `Fw: ${this.selectedEmail.subject}`;
     }
@@ -587,7 +643,10 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
   handleEmailAddressEntries(e: Event, type = 'to') {
     e.preventDefault();
-    if (e.target['value'].includes(";") && this.validateEmail(this.email.to.replace(';', ''))) {
+    if (
+      e.target['value'].includes(';') &&
+      this.validateEmail(this.email.to.replace(';', ''))
+    ) {
       const recp = this.email.to;
       this.emailRecp[type].push({
         id: this.emailRecp.to.length,
@@ -611,7 +670,11 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
   forward() {
     this.salesforceService
-      .forwardEmail({ emailId: this.selectedEmail.Id, toRecipients: this.emailRecp['to'].map(e => e.recp).join(";"), emailSubject: this.email.subject })
+      .forwardEmail({
+        emailId: this.selectedEmail.Id,
+        toRecipients: this.emailRecp['to'].map((e) => e.recp).join(';'),
+        emailSubject: this.email.subject
+      })
       .subscribe(
         (response) => {
           console.log(
