@@ -54,7 +54,7 @@ export class EmailListComponent implements OnInit, OnChanges {
     private cd: ChangeDetectorRef,
     public salesforceService: SalesforceService,
     public commonService: CommonService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.generateNoOfPages();
@@ -207,7 +207,8 @@ export class EmailListComponent implements OnInit, OnChanges {
 
   selectedEmailClick(email: Email) {
     if (email.status === 'unread') {
-      this.updateEmail(email.Id, email.status);
+      this.updateEmail(email.Id, "read");
+      email.status = 'read';
     }
     this.selectedEmail.emit(email);
   }
