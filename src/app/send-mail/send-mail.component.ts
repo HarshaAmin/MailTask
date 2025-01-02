@@ -59,9 +59,9 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     elementIdx: number;
     cursorPos: number;
   } = {
-    elementIdx: 0,
-    cursorPos: 0
-  };
+      elementIdx: 0,
+      cursorPos: 0
+    };
   target: string;
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
@@ -303,37 +303,35 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   ngAfterViewInit(): void {
-    if (this.type === 'reply') {
-      this.emailRecp.to = this.selectedEmail.sender.split(';');
-      this.emailRecp.to = this.emailRecp.to.map((recp, ind) => ({
-        id: ind,
-        recp
-      }));
+    if (this.type !== "forward") {
+      this.quill = new Quill("#editor", {
+        theme: "snow",
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline', { header: '1' }, { header: '2' }, 'link', 'blockquote']
+          ]
+        }
+      });
     }
 
-    this.quill = new Quill('#editor', {
-      theme: 'snow',
-      modules: {
-        toolbar: [
-          [
-            'bold',
-            'italic',
-            'underline',
-            { header: '1' },
-            { header: '2' },
-            'link',
-            'blockquote'
-          ]
-        ]
-      }
-    });
 
     document.addEventListener('keydown', this.handleGlobalKeyDown.bind(this));
     document.addEventListener('click', this.handleGlobalClick.bind(this));
+
+    if (this.type === "reply") {
+      this.emailRecp.to = this.selectedEmail.sender.split(";");
+      this.emailRecp.to = this.emailRecp.to.map((recp, ind) => ({ id: ind, recp }));
+    }
+
+    if (this.type === "forward") {
+      console.log(this.selectedEmail)
+      this.email.body = this.selectedEmail.body;
+      this.email.subject = `Fw: ${this.selectedEmail.subject}`;
+    }
   }
 
   handleGlobalClick(event) {
-    if (event.target['parentElement'].classList.contains('ql-editor')) {
+    if (event.target['parentElement']?.classList.contains('ql-editor')) {
       this.calcCursorPos(event);
     }
   }
@@ -587,13 +585,9 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
   handleEmailAddressEntries(e: Event, type = 'to') {
     e.preventDefault();
-    if (e['keyCode'] == 186 || e['keyCode'] == 59) {
+    if (e.target['value'].includes(";") && this.validateEmail(this.email.to.replace(';', ''))) {
       const recp = this.email.to;
       this.emailRecp[type].push({
-        id: this.emailRecp.to.length,
-        recp: recp.replace(';', '')
-      });
-      this.emailRecp.to.push({
         id: this.emailRecp.to.length,
         recp: recp.replace(';', '')
       });
@@ -611,5 +605,36 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
         this.emailRecp[type].id = ind;
       });
     }
+  }
+
+  forward() {
+    this.salesforceService
+      .forwardEmail({ emailId: this.selectedEmail.Id, toRecipients: this.emailRecp['to'].map(e => e.recp).join(";"), emailSubject: this.email.subject })
+      .subscribe(
+        (response) => {
+          console.log(
+            'Email forward successfully! ' + JSON.stringify(response)
+          );
+          console.log('Email forward successfully! ' + response);
+        },
+        (error) => {
+          console.error('Error:', JSON.stringify(error));
+        }
+      );
+  }
+
+  handleSubmit() {
+    if (this.type === 'send') {
+      this.sendEmail();
+    } else if (this.type === 'reply') {
+      this.reply();
+    } else if (this.type === 'forward') {
+      this.forward();
+    }
+  }
+
+  validateEmail(email: string) {
+    const filter = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return filter.test(email.trim());
   }
 }

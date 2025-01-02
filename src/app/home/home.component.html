@@ -44,24 +44,12 @@
             Compose Email
           </button>
         }
-        <div
-          class="dropdown dropdown-selector"
-          id="dropdown-selector-id"
-          (click)="selectType($event)"
-        >
-          <div
-            class="d-flex justify-content-between align-items-center w-100 px-2"
-          >
-            <span>{{ getCurrentType }}</span>
-            <i class="fa-solid fa-caret-down"></i>
-          </div>
+      </div>
 
-          <div class="dropdown-content">
-            <p (click)="toggleType('all')">All</p>
-            <p (click)="toggleType('read')">Read</p>
-            <p (click)="toggleType('unread')">Unread</p>
-          </div>
-        </div>
+      <div class="filter-crit d-flex gap-2">
+        <span class="filter-crit-item active" id="all">All</span>
+        <span class="filter-crit-item" id="read">Read</span>
+        <span class="filter-crit-item" id="unread">Unread</span>
       </div>
 
       <div class="mail-section">

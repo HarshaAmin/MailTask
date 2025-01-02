@@ -49,10 +49,11 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   currentCategorySelection: string = 'primary';
   categories: string[] = [];
   loadEmailsSub: Subscription;
-  currentCategory: string = 'Primary';
-  selectedFilter = 'all'; // Default filter
-  uEmail = 'SendTech@novigosolutions.com'; // Default email if needed
-  socialItem;
+
+  selectedFilter = 'all';
+  uEmail = 'SendTech@novigosolutions.com';
+
+
 
   constructor(
     public commonService: CommonService,
@@ -71,50 +72,36 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.socialItem = document.querySelectorAll('.social-item');
-    this.socialItem.forEach((item: HTMLElement) =>
+    const socialItem = document.querySelectorAll('.social-item');
+    socialItem.forEach((item: HTMLElement) =>
       item.addEventListener('click', (e) => {
         e.preventDefault();
-        this.socialItem.forEach((item) => item.classList.remove('active'));
+        socialItem.forEach((item) => item.classList.remove('active'));
         item.classList.add('active');
         this.currentCategorySelection = item.id;
-      })
-    );
+        this.toggleType(this.currentTypeSelection);
+        // this.filterEmails(this.currentCategorySelection);
+      }));
 
-    this.loadEmailsSub = this.commonService.loadEmail.subscribe(
-      (data: string) => {
-        this.loadEmails(data);
-      }
-    );
-  }
-  setCurrentCategory(category: string) {
-    this.currentCategory = category;
-    this.filterEmailsByCategory();
-  }
+    const categoryItem = document.querySelectorAll('.filter-crit-item');
+    categoryItem.forEach((item: HTMLElement) =>
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        categoryItem.forEach((item) => item.classList.remove('active'));
+        item.classList.add('active');
+        this.currentTypeSelection = item.id;
+        console.log(item.id, "ID")
+        this.toggleType(this.currentTypeSelection);
+        // this.filterEmails(this.currentCategorySelection);
+      }));
 
-  filterEmailsByCategory() {
-    this.filteredEmails = this.filteredEmails.filter(
-      (email) => email.emailType === this.currentCategory
-    );
-  }
-  markAsRead(email: Email): void {
-    email.status = 'read';
-    this.filterEmails(this.selectedFilter); // Reapply the filter
+    this.loadEmailsSub = this.commonService.loadEmail.subscribe((data: string) => {
+      this.loadEmails(data);
+    });
   }
 
-  filterEmails(filter: string): void {
-    this.selectedFilter = filter;
-    if (filter === 'read') {
-      this.filteredEmails = this.emails.filter(
-        (email) => email.status === 'read'
-      );
-    } else if (filter === 'unread') {
-      this.filteredEmails = this.emails.filter(
-        (email) => email.status === 'unread'
-      );
-    } else {
-      this.filteredEmails = this.emails; // For 'all'
-    }
+  filterEmails(type: string): void {
+    this.filteredEmails = this.filteredEmails.filter((email) => email.category === type);
   }
 
   viewEmailDetails(email: any): void {
@@ -207,14 +194,16 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   toggleType(type) {
-    if (type === 'all') {
-      this.filteredEmails = this.emails;
-    } else {
-      this.filteredEmails = this.emails.filter(
-        (email) => email.status === type
-      );
+    if (type) {
+      if (type === 'all') {
+        this.filteredEmails = this.emails;
+      } else {
+        this.filteredEmails = this.emails.filter(
+          (email) => email.status === type
+        );
+      }
+      this.currentTypeSelection = type;
     }
-    this.currentTypeSelection = type;
   }
 
   get getCurrentType() {
@@ -257,7 +246,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
           console.log('Emails loaded:', data);
           this.emails = data.emails;
           this.filteredEmails = data.emails;
-
+          // this.filterEmails(this.currentCategorySelection);
           const endpointCategory = `${environment.salesforce.salesforceApiBaseUrl}/services/apexrest/api/parse-emails`;
           this.http.post(endpointCategory, data.emails, { headers }).subscribe(
             (data: any) => {

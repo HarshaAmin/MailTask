@@ -253,15 +253,9 @@ export class SalesforceService extends CommonService {
       );
   }
 
-  forwardEmail(emailId: string, toRecipients: any): Observable<any> {
-    const payload = {
-      emailId: emailId,
-      toRecipients: toRecipients
-    };
-    console.log('payload is ' + payload);
-    const url = `${this.baseForwardUrl}/forwardEmail/${emailId}`;
-
-    return this.http.post<any>(url, payload).pipe(
+  forwardEmail(email: { emailId: string, toRecipients: any, emailSubject: string }): Observable<any> {
+    const url = `${this.baseForwardUrl}/forwardEmail/${email.emailId}`;
+    return this.http.post<any>(url, email).pipe(
       catchError((error) => {
         console.error('Email formward failed:', error);
         return throwError(error);

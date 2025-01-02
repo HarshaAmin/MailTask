@@ -120,7 +120,7 @@ ul.sidebar-menu-items {
 .mail-section {
   display: flex;
   gap: 1%;
-  height: 80vh;
+  height: 72vh;
 }
 
 .email-header-p {
@@ -268,7 +268,7 @@ ul.sidebar-menu-items {
 }
 
 .social-item.active {
-  border: 0.5px solid lightgray;
+  // border: 0.5px solid lightgray;
   border-radius: 5px 5px 0 0;
 
   & i {
@@ -659,4 +659,27 @@ a img {
 
 .nav-logo {
   width: 30%;
+}
+
+.plain-body-txt {
+  word-break: break-word;
+
+  & img {
+    width: 100%;
+  }
+}
+
+.filter-crit > span {
+  margin: 10px 0;
+  cursor: pointer;
+  height: 20px;
+  position: relative;
+  border-bottom: 0.5px solid lightgray;
+  width: 10%;
+  text-align: center;
+}
+
+span.filter-crit-item.active {
+  background: #212b86;
+  color: #fff;
 }

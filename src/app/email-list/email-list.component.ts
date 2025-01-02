@@ -20,7 +20,7 @@ interface Email {
   receivedDateTime: string;
   bodyPreview: string;
   status: string;
-  id: string;
+  Id: string;
   isRead: string;
   isFlagged: string;
   isPinged: string;
@@ -135,9 +135,11 @@ export class EmailListComponent implements OnInit, OnChanges {
     }
   }
 
-  changeStatus(email: any, event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
+  changeStatus(email: any, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     email.status = email.status === 'unread' ? 'read' : 'unread';
     this.updateEmail(email.Id, email.status);
   }
@@ -200,10 +202,13 @@ export class EmailListComponent implements OnInit, OnChanges {
       dT.getHours() > 12
         ? String(Math.abs(dT.getHours() - 12)).padStart(2, '0')
         : String(Math.abs(dT.getHours())).padStart(2, '0');
-    return `${String(dT.getDate()).padStart(2, '0')}-${String(dT.getMonth()).padStart(2, '0')}-${dT.getFullYear()} | ${time}:${String(dT.getMinutes()).padStart(2, '0')} ${dT.getHours() > 12 ? 'PM' : 'AM'}`;
+    return `${String(dT.getDate()).padStart(2, '0')}-${String(dT.getMonth() + 1).padStart(2, '0')}-${dT.getFullYear()} | ${time}:${String(dT.getMinutes()).padStart(2, '0')} ${dT.getHours() > 12 ? 'PM' : 'AM'}`;
   }
 
   selectedEmailClick(email: Email) {
+    if (email.status === 'unread') {
+      this.updateEmail(email.Id, email.status);
+    }
     this.selectedEmail.emit(email);
   }
 

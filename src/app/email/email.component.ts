@@ -10,7 +10,6 @@ import { CommonService } from '../../shared/services/common.service';
 })
 export class EmailComponent {
   uEmail = 'SendTech@novigosolutions.com';
-  receipientsList: string = 'sanathshetty986@gmail.com';
 
   @Input() selectedEmail: any;
   @Output() replyEmit = new EventEmitter<string>();
@@ -21,19 +20,8 @@ export class EmailComponent {
   ) {}
 
   forwardEmail(emailData = this.selectedEmail): void {
-    this.salesforceService
-      .forwardEmail(emailData.Id, this.receipientsList)
-      .subscribe(
-        (response) => {
-          console.log(
-            'Email forward successfully! ' + JSON.stringify(response)
-          );
-          console.log('Email forward successfully! ' + response);
-        },
-        (error) => {
-          console.error('Error:', JSON.stringify(error));
-        }
-      );
+    this.commonService.openEmailModal = true;
+    this.replyEmit.emit('forward');
   }
 
   reply() {
