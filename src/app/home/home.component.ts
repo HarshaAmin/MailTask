@@ -49,12 +49,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   currentCategorySelection: string = 'primary';
   categories: string[] = [];
   loadEmailsSub: Subscription;
-
+  currentCategory: string = 'Primary';
   selectedFilter = 'all'; // Default filter
   uEmail = 'SendTech@novigosolutions.com'; // Default email if needed
   socialItem;
-
-
 
   constructor(
     public commonService: CommonService,
@@ -83,12 +81,22 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       })
     );
 
-
-    this.loadEmailsSub = this.commonService.loadEmail.subscribe((data: string) => {
-      this.loadEmails(data);
-    });
+    this.loadEmailsSub = this.commonService.loadEmail.subscribe(
+      (data: string) => {
+        this.loadEmails(data);
+      }
+    );
+  }
+  setCurrentCategory(category: string) {
+    this.currentCategory = category;
+    this.filterEmailsByCategory();
   }
 
+  filterEmailsByCategory() {
+    this.filteredEmails = this.filteredEmails.filter(
+      (email) => email.emailType === this.currentCategory
+    );
+  }
   markAsRead(email: Email): void {
     email.status = 'read';
     this.filterEmails(this.selectedFilter); // Reapply the filter
@@ -257,13 +265,11 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
               console.log('Categories:', data); // Assuming the response is an array or object of categories
               this.categories = data;
               this.commonService.activeSpinner = false;
-
             },
             (error) => {
               console.error('Error loading emails:', error);
               this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
               this.commonService.activeSpinner = false;
-
             }
           );
         },
@@ -278,8 +284,8 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   selectType(e: Event) {
     e.preventDefault();
     e.stopPropagation();
-    console.log(e.target['id'])
-    document.querySelector(".dropdown-selector").classList.toggle("active");
+    console.log(e.target['id']);
+    document.querySelector('.dropdown-selector').classList.toggle('active');
   }
 
   ngOnDestroy(): void {

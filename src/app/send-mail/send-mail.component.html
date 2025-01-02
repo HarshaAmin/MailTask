@@ -1,5 +1,6 @@
 <div class="modal-dialog" role="document">
   <div class="modal-content">
+    <button (click)="correctGrammar($event)" >Correct Grammar</button>
     <div class="modal-header justify-content-between">
       @if (type === "send") {
         <h5 class="modal-title" id="exampleModalLabel">Compose Email</h5>
@@ -67,7 +68,10 @@
         <div class="mt-3">
           <button type="submit" class="btn btn-success">Send</button>
         </div>
+        <div>{{ correctedText }}</div>
+
       </form>
+      
     </div>
   </div>
 </div>

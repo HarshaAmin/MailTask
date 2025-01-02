@@ -24,6 +24,7 @@ interface Email {
   isRead: string;
   isFlagged: string;
   isPinged: string;
+  emailType: string;
 }
 @Component({
   selector: 'app-email-list',
@@ -53,11 +54,38 @@ export class EmailListComponent implements OnInit, OnChanges {
     private cd: ChangeDetectorRef,
     public salesforceService: SalesforceService,
     public commonService: CommonService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.generateNoOfPages();
   }
+
+  //   // Function to call Hugging Face API and classify the email content
+  // async function categorizeEmail(text) {
+  //   try {
+  //     const response = await fetch('https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${accessToken}`
+  //       },
+  //       body: JSON.stringify({ text })
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch sentiment analysis');
+  //     }
+
+  //     const sentimentData = await response.json();
+  //     return sentimentData; // Return the classification result
+  //   } catch (error) {
+  //     console.error('Error fetching analysis:', error.message);
+  //   }
+  // }
+
+  // Function to classify based on content using simple heuristics
+
+  // Function to process all emails and categorize them
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['filteredEmails']) {
@@ -115,6 +143,23 @@ export class EmailListComponent implements OnInit, OnChanges {
   }
 
   toggleFlag(email: any, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    email.flagStatus === 'flagged' ? 'notFlagged' : 'flagged';
+    email.isFlagged = email.flagStatus === 'flagged' ? true : false;
+    console.log(email);
+    // navigator.clipboard.readText().then((clipText) => {
+    //   document.querySelector('#bodyPreview')['value'] += 'xcvcvxcvxcvxcv';
+    // });
+
+    // const textarea = document.getElementById('bodyPreview');
+    // const cursorPos = textarea['selectionStart'];
+    // const cursorEnd = textarea['selectionEnd'];
+    // console.log(cursorPos, cursorEnd);
+    this.updateEmail(email.Id, email.flagStatus);
+  }
+
+  togglePin(email: any, event: Event) {
     event.preventDefault();
     event.stopPropagation();
     email.flagStatus === 'flagged' ? 'notFlagged' : 'flagged';

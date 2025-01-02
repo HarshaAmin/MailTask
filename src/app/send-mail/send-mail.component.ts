@@ -7,6 +7,7 @@ import { CommonService } from '../../shared/services/common.service';
 import { NgIf } from '@angular/common';
 import { EmojiService } from '../../shared/services/emoji.service';
 import Quill, { Delta } from 'quill';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-send-mail',
@@ -27,6 +28,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   popupPosition: any = {};
   isSuggestionVisible = false;
   suggestionText: string = 'sug';
+  correctedText: any = {};
+
   mockSuggestionsResponse = [
     {
       token_str: 'died',
@@ -133,6 +136,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
   async analyzeText(text: string) {
     try {
+      this.suggestionText = 'suggestion';
+      return;
       const accessToken = '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'; // Replace with your token
       const sentimentResponse = await fetch(
         'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
@@ -174,10 +179,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
         formattedSuggestions.length > 0
           ? ' ' + formattedSuggestions[0].token_str + ' '
           : '';
-      // setTimeout(() => {
-      //   // Only update if there are suggestions
-      //   this.suggestionText = 'No suggestion available';
-      // }, 3000); // 3000ms = 3 seconds delay
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error('Error fetching analysis:', error.message); // Safely accessing `message`
@@ -234,6 +235,25 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
 
     let sanitizedText = traverseChildren(doc.body).trim();
     return sanitizedText;
+  }
+
+  correctGrammar(event): void {
+    this.email.body = event.target['innerHTML'];
+    console.log(event.target['innerHTML']);
+    //const sanitizedText = this.sanitizeInput(event.target['innerHTML'].trim());
+    const sanitizedText = 'i wan to tst these grmmr funtion';
+    if (sanitizedText.length > 0) {
+      this.salesforceService.correctGrammar(sanitizedText).subscribe({
+        next: (response) => {
+          this.correctedText = JSON.stringify(response);
+          //this.errorMessage = '';
+        },
+        error: (err) => {
+          console.error('Error during grammar correction:', err);
+          //this.errorMessage = 'Failed to correct grammar. Please try again.';
+        }
+      });
+    }
   }
 
   calcCursorPos(event) {

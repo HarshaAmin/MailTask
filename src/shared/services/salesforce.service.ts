@@ -105,6 +105,24 @@ export class SalesforceService extends CommonService {
       );
   }
 
+  correctGrammar(input: string): Observable<string> {
+    const apiKey = '';
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${environment.huggingFaceApiKey}`
+    });
+    const body = JSON.stringify({ inputs: input });
+
+    return this.http.post<any>(this.openAIapiUrl, body, { headers }).pipe(
+      map((response) => response[0]?.generated_text),
+      catchError((error) => {
+        console.error('Error correcting grammar:', error);
+        return throwError(() => new Error('Failed to correct grammar.'));
+      })
+    );
+  }
+
   // Get records (any Salesforce object) from Salesforce (GET request)
   getRecords(objectName: string): Observable<any> {
     if (!this.isAuthenticated()) {
