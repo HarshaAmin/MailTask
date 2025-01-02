@@ -12,7 +12,7 @@ export class AuthGuardService {
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
     const status = this.authService.isAuthenticated();
     if (!status) {
-      return this.router.navigate(['/login']);
+      return this.router.navigate(['/']);
     }
     return true;
   }

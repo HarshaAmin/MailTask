@@ -20,7 +20,7 @@ export class AuthService {
     console.log(data);
     if (data.username.trim() === 'user@sendtech.com', data.password.trim() === 'password') {
       this.isLoggedIn = true;
-      this.router.navigate(['/']);
+      this.router.navigate(['/home']);
       return true;
     }
     return false;
