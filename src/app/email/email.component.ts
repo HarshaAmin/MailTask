@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SalesforceService } from '../../shared/services/salesforce.service';
 import { CommonService } from '../../shared/services/common.service';
 
@@ -8,18 +8,29 @@ import { CommonService } from '../../shared/services/common.service';
   imports: [],
   templateUrl: './email.component.html'
 })
-export class EmailComponent {
+export class EmailComponent implements OnInit {
   uEmail = 'SendTech@novigosolutions.com';
   summarizedText: string = '';
   showSummarizedModal: boolean = false;
+  linkedEmail = {};
+  showLinkedEmail = false;
 
+  @Input() mailType: string = "Inbox";
+  @Input() emails: any;
   @Input() selectedEmail: any;
+  @Input() hideActions: boolean = false;
   @Output() replyEmit = new EventEmitter<string>();
 
   constructor(
     private salesforceService: SalesforceService,
     public commonService: CommonService
   ) { }
+
+  ngOnInit(): void {
+    if (this.mailType === 'SentItems') {
+      // this.selectedEmail.conversationId;
+    }
+  }
 
   forwardEmail(emailData = this.selectedEmail): void {
     this.commonService.openEmailModal = true;

@@ -731,3 +731,10 @@ span.filter-crit-item.active {
   display: flex;
   justify-content: right;
 }
+
+.to-email span {
+  width: 70px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

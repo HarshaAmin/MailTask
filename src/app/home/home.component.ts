@@ -49,6 +49,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   currentCategorySelection: string = 'primary';
   categories: string[] = [];
   loadEmailsSub: Subscription;
+  mailType = "Inbox";
 
   selectedFilter = 'all';
   uEmail = 'SendTech@novigosolutions.com';
@@ -96,6 +97,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       }));
 
     this.loadEmailsSub = this.commonService.loadEmail.subscribe((data: string) => {
+      this.mailType = data;
       this.loadEmails(data);
     });
   }

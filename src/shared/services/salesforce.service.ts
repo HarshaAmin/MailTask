@@ -232,6 +232,7 @@ export class SalesforceService extends CommonService {
     contentType: any;
     content: any;
     selectedEmailId: any;
+    conversationId: string;
   }): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/sendEmail`, payload).pipe(
       map((response) => response),
@@ -283,6 +284,7 @@ export class SalesforceService extends CommonService {
     cc: string;
     bcc: string;
     emailSubject: string;
+    conversationId: string;
   }): Observable<any> {
     const url = `${this.baseForwardUrl}/forwardEmail/${email.emailId}`;
     return this.http.post<any>(url, email).pipe(

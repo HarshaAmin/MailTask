@@ -68,6 +68,8 @@
               <app-email
                 [selectedEmail]="selectedEmail"
                 (replyEmit)="commonService.type = $event"
+                [emails]="emails"
+                [mailType]="mailType"
               ></app-email>
             } @else if (commonService.openEmailModal) {
               <app-send-mail
@@ -104,7 +106,9 @@
                   <div class="pt-4">
                     <app-email
                       [selectedEmail]="selectedEmail"
+                      [emails]="emails"
                       (replyEmit)="commonService.type = $event"
+                      [mailType]="mailType"
                     ></app-email>
                   </div>
                 </div>

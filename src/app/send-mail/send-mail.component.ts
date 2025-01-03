@@ -117,7 +117,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
         reSubject: reSubject || '',
         contentType: contentType || '',
         content: content || '',
-        selectedEmailId: emailId || ''
+        selectedEmailId: emailId || '',
+        conversationId: this.selectedEmail.conversationId
       })
       .subscribe(
         (response) => {
@@ -155,7 +156,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
         reSubject: reSubject || '',
         contentType: contentType || '',
         content: content || '',
-        selectedEmailId: emailId || ''
+        selectedEmailId: emailId || '',
+        conversationId: this.selectedEmail.conversationId
       })
       .subscribe(
         (response) => {
@@ -391,8 +393,19 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     document.addEventListener('click', this.handleGlobalClick.bind(this));
 
     if (this.type === 'reply') {
-      this.emailRecp.to = this.selectedEmail.sender.split(';');
-      this.emailRecp.to = this.emailRecp.to.map((recp, ind) => ({
+      this.emailRecp.to = (this.selectedEmail.sender.split(';') || []).map((recp, ind) => ({
+        id: ind,
+        recp
+      }));
+    }
+
+    if (this.type === 'replyAll') {
+      console.log(this.selectedEmail)
+      this.emailRecp.to = [
+        ...(this.selectedEmail.sender.split(';') || []),
+        ...(this.selectedEmail?.cc?.split(';') || []),
+        ...(this.selectedEmail?.bcc?.split(';') || [])
+      ].map((recp, ind) => ({
         id: ind,
         recp
       }));
@@ -505,6 +518,9 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       })
       .subscribe(
         (response) => {
+          if (response.status === 'Accepted') {
+            this.clearFields();
+          }
           console.log('Email sent successfully! ' + JSON.stringify(response));
           console.log('Email sent successfully! ' + response);
         },
@@ -700,7 +716,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
         toRecipients: this.emailRecp['to'].map((e) => e.recp).join(';'),
         cc: this.emailRecp['cc'].map((e) => e.recp).join(';'),
         bcc: this.emailRecp['bcc'].map((e) => e.recp).join(';'),
-        emailSubject: this.email.subject
+        emailSubject: this.email.subject,
+        conversationId: this.selectedEmail.conversationId
       })
       .subscribe(
         (response) => {
@@ -740,5 +757,11 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     if (e.target['attributes'].action.value === 'bcc') {
       this.ccBcc.bcc = true;
     }
+  }
+
+  clearFields() {
+    this.email = { to: '', subject: '', body: '', cc: '', bcc: '' };
+    this.emailRecp = { to: [], cc: [], bcc: [] };
+    document.querySelector(".ql-editor").innerHTML = "";
   }
 }

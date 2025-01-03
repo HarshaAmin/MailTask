@@ -43,3 +43,18 @@
     <div class="summarize-inner-section" [innerHTML]="summarizedText"></div>
   </div>
 }
+
+@if (linkedEmail && mailType === "SentItems") {
+  @if (showLinkedEmail) {
+    <div class="w-100">
+      <p><b>From: </b> {{ linkedEmail.sender }}</p>
+      <p><b>To: </b> {{ uEmail }}</p>
+      <p><b>Body: </b></p>
+      <div [innerHTML]="linkedEmail.body"></div>
+    </div>
+  } @else {
+    <div class="dot-link-open" (click)="showLinkedEmail = true">
+      <span>.</span><span>.</span><span>.</span>
+    </div>
+  }
+}

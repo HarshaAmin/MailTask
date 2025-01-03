@@ -17,14 +17,16 @@
       </div>
     </div>
 
-    <div class="cc-bcc-btn-sec" (click)="handleCcBccClick($event)">
-      @if (!ccBcc.cc) {
-        <span action="cc" id="cc">CC</span>
-      }
-      @if (!ccBcc.bcc) {
-        <span action="bcc" id="bcc">BCC</span>
-      }
-    </div>
+    @if (type !== "reply" && type !== "replyAll") {
+      <div class="cc-bcc-btn-sec" (click)="handleCcBccClick($event)">
+        @if (!ccBcc.cc) {
+          <span action="cc" id="cc">CC</span>
+        }
+        @if (!ccBcc.bcc) {
+          <span action="bcc" id="bcc">BCC</span>
+        }
+      </div>
+    }
 
     <div class="modal-body">
       <form (submit)="handleSubmit()">
@@ -33,7 +35,7 @@
           <span class="d-flex gap-2" (click)="handleEmailStack($event, 'to')">
             @for (emailR of emailRecp.to; track $index) {
               <span class="to-email" id="{{ emailR.id }}">
-                {{ emailR.recp }}
+                <span>{{ emailR.recp }}</span>
                 <i class="fa-solid fa-xmark" id="{{ emailR.id }}"></i>
               </span>
             }
@@ -136,7 +138,6 @@
         <div class="mt-3">
           <button type="submit" class="btn btn-success">Send</button>
         </div>
-        <div>correctedText:{{ correctedText }}</div>
       </form>
     </div>
   </div>
