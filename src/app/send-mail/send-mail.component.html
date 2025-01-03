@@ -1,6 +1,5 @@
 <div class="modal-dialog" role="document">
   <div class="modal-content">
-    <button (click)="correctGrammar($event)">Correct Grammar</button>
     <div class="modal-header justify-content-between">
       @if (type === "send") {
         <h5 class="modal-title" id="exampleModalLabel">Compose Email</h5>
@@ -122,14 +121,24 @@
             } @else {
               <div id="editor" (keyup)="calcCursorPos($event)"></div>
               <div class="suggestion-block">
-                <span class="suggestion-block-span">
-                  {{ suggestionText }}
-                </span>
+                @if (suggestionText) {
+                  <span class="suggestion-block-span">
+                    {{ suggestionText }}
+                  </span>
+                }
               </div>
             }
           </div>
         </div>
-
+        <div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="correctGrammar($event)"
+          >
+            Correct Grammar
+          </button>
+        </div>
         @if (type !== "forward") {
           <app-file-upload
             (uploadedFilesEmit)="files = $event"

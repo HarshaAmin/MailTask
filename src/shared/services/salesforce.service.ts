@@ -37,23 +37,23 @@ export class SalesforceService extends CommonService {
     'https://api-inference.huggingface.co/models/facebook/bart-large-cnn'; // Hugging Face model URL
 
   constructor(private http: HttpClient) {
-    // Try to load the access token from localStorage when service is initialized
+    // Try to load the access token from sessionStorage when service is initialized
     super();
-    const savedToken = localStorage.getItem('accessToken');
+    const savedToken = sessionStorage.getItem('accessToken');
     if (savedToken) {
       this.accessToken = savedToken;
-      console.log('Access token loaded from localStorage:', this.accessToken);
+      console.log('Access token loaded from sessionStorage:', this.accessToken);
     } else {
-      console.log('No access token found in localStorage');
+      console.log('No access token found in sessionStorage');
     }
   }
 
-  // Save the access token to localStorage
+  // Save the access token to sessionStorage
   setAccessToken(token: string): void {
     this.accessToken = token;
-    localStorage.setItem('accessToken', token);
+    sessionStorage.setItem('accessToken', token);
     console.log(
-      'Access token set and saved to localStorage:',
+      'Access token set and saved to sessionStorage:',
       this.accessToken
     );
   }
@@ -66,8 +66,8 @@ export class SalesforceService extends CommonService {
   // Clear the access token (logout)
   clearAccessToken(): void {
     this.accessToken = null;
-    localStorage.removeItem('accessToken');
-    console.log('Access token cleared from localStorage');
+    sessionStorage.removeItem('accessToken');
+    console.log('Access token cleared from sessionStorage');
   }
 
   // Get sent emails from Salesforce (GET request)
@@ -79,7 +79,7 @@ export class SalesforceService extends CommonService {
       })
       .pipe(
         catchError((error) => {
-          if (error.status === 401 && localStorage.getItem('refreshToken')) {
+          if (error.status === 401 && sessionStorage.getItem('refreshToken')) {
             return this.refreshAccessToken().pipe(
               switchMap(() => this.getSentEmails()) // Retry after token refresh
             );
@@ -98,7 +98,7 @@ export class SalesforceService extends CommonService {
       })
       .pipe(
         catchError((error) => {
-          if (error.status === 401 && localStorage.getItem('refreshToken')) {
+          if (error.status === 401 && sessionStorage.getItem('refreshToken')) {
             return this.refreshAccessToken().pipe(
               switchMap(() => this.getUserEmails()) // Retry after token refresh
             );
@@ -156,7 +156,7 @@ export class SalesforceService extends CommonService {
 
     return this.http.get(url, { headers }).pipe(
       catchError((error) => {
-        if (error.status === 401 && localStorage.getItem('refreshToken')) {
+        if (error.status === 401 && sessionStorage.getItem('refreshToken')) {
           return this.refreshAccessToken().pipe(
             switchMap(() => this.getRecords(objectName)) // Retry after token refresh
           );
@@ -168,7 +168,7 @@ export class SalesforceService extends CommonService {
 
   // Refresh the access token using the stored refresh token
   private refreshAccessToken(): Observable<any> {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = sessionStorage.getItem('refreshToken');
     if (!refreshToken) {
       return throwError(() => new Error('Refresh token is not available.'));
     }
@@ -212,7 +212,7 @@ export class SalesforceService extends CommonService {
 
     return this.http.get(url, { headers }).pipe(
       catchError((error) => {
-        if (error.status === 401 && localStorage.getItem('refreshToken')) {
+        if (error.status === 401 && sessionStorage.getItem('refreshToken')) {
           return this.refreshAccessToken().pipe(
             switchMap(() => this.getUserInfo()) // Retry after token refresh
           );
@@ -263,13 +263,12 @@ export class SalesforceService extends CommonService {
     );
   }
 
-  deleteEmail(emailId: string): Observable<any> {
-    const url = `${this.baseUrl}/deleteEmail/${emailId}`;
+  deleteEmail(payload: {
+    emailId: string;
+  }): Observable<any> {
 
-    return this.http
-      .delete<any>(url, {
-        headers: { Authorization: `Bearer ${this.accessToken}` }
-      })
+    console.log("deleteEmail");
+    return this.http.delete<any>(`${this.baseUrl}/deleteEmail`, { body: payload })
       .pipe(
         catchError((error) => {
           console.error('Error deleting email:', error);

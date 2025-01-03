@@ -6,7 +6,6 @@
       </div>
     }
     <div class="wrapper-mail-section">
-      <!-- <h3 class="my-3 hide-block">Email Dashboad</h3>-->
       <div class="social-group">
         <div class="social-item active" id="primary">
           <div class="social-items-header">
@@ -46,11 +45,13 @@
         }
       </div>
 
-      <div class="filter-crit d-flex gap-2">
-        <span class="filter-crit-item active" id="all">All</span>
-        <span class="filter-crit-item" id="read">Read</span>
-        <span class="filter-crit-item" id="unread">Unread</span>
-      </div>
+      @if (mailType === "Inbox") {
+        <div class="filter-crit d-flex gap-2">
+          <span class="filter-crit-item active" id="all">All</span>
+          <span class="filter-crit-item" id="read">Read</span>
+          <span class="filter-crit-item" id="unread">Unread</span>
+        </div>
+      }
 
       <div class="mail-section">
         @if (!commonService.isMobile) {
@@ -59,8 +60,10 @@
               [emails]="emails"
               [filteredEmails]="filteredEmails"
               [currentTypeSelection]="currentTypeSelection"
-              (selectedEmail)="selectedEmailToggle($event)"
               [accessToken]="accessToken"
+              (selectedEmail)="selectedEmailToggle($event)"
+              (generateToken)="generateAccessToken()"
+              (updateEmailList)="loadEmails(mailType)"
             ></app-email-list>
           </div>
           <div class="email-section p-3">
@@ -73,6 +76,7 @@
               ></app-email>
             } @else if (commonService.openEmailModal) {
               <app-send-mail
+                (triggerSubmitRes)="commonService.openEmailModal = false"
                 (openEmailModalEmitter)="commonService.openEmailModal = $event"
                 [type]="commonService.type"
                 [selectedEmail]="selectedEmail"
@@ -87,9 +91,10 @@
                 [emails]="emails"
                 [filteredEmails]="filteredEmails"
                 [currentTypeSelection]="currentTypeSelection"
+                [accessToken]="accessToken"
                 (selectedEmail)="selectedEmailToggle($event)"
                 (generateToken)="generateAccessToken()"
-                [accessToken]="accessToken"
+                (updateEmailList)="loadEmails(mailType)"
               ></app-email-list>
             </div>
           } @else {
@@ -117,6 +122,7 @@
                   (openEmailModalEmitter)="
                     commonService.openEmailModal = $event
                   "
+                  (triggerSubmitRes)="commonService.openEmailModal = false"
                 >
                 </app-send-mail>
               }

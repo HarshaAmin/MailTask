@@ -34,13 +34,12 @@ interface Email {
 })
 export class EmailListComponent implements OnInit, OnChanges {
   pages: number = 0;
-  emailsToShow: Email[] = [];
+  emailsToShow: Email[] = null;
   pageIndex: number = 0;
   startIndex: number = 0;
   endIndex: number = 0;
   emailQty: number = 5;
 
-  @Output() selectedEmail = new EventEmitter<Email>();
 
   @Input() emails: Email[] = [];
   @Input() filteredEmails: Email[] = [];
@@ -48,6 +47,8 @@ export class EmailListComponent implements OnInit, OnChanges {
   @Input() currentTypeSelection: string;
 
   @Output() generateToken = new EventEmitter<any>();
+  @Output() selectedEmail = new EventEmitter<Email>();
+  @Output() updateEmailList = new EventEmitter<void>();
 
   constructor(
     private http: HttpClient,
@@ -216,21 +217,17 @@ export class EmailListComponent implements OnInit, OnChanges {
   deleteEmail(emailData: any, e: Event): void {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Delete button clicked for email:', emailData);
-    console.log('Delete button clicked for email:', emailData.Id);
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     if (token) {
       this.accessToken = token;
     } else {
       this.generateToken.emit();
     }
-    console.log('this.accessToken button clicked for email:', this.accessToken);
     const url = `https://novigosolutionspvtltd2-dev-ed.develop.my.salesforce-sites.com/services/apexrest/OutlookEmailService/deleteEmail/${emailData.Id}`;
 
-    this.salesforceService.deleteEmail(emailData.Id).subscribe(
+    this.salesforceService.deleteEmail({ emailId: emailData.Id }).subscribe(
       (response) => {
-        console.log('Email sent successfully! ' + JSON.stringify(response));
-        console.log('Email sent successfully! ' + response);
+        this.updateEmailList.emit();
       },
       (error) => {
         console.error('Error:', JSON.stringify(error));

@@ -50,10 +50,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   categories: string[] = [];
   loadEmailsSub: Subscription;
   mailType = "Inbox";
-
   selectedFilter = 'all';
   uEmail = 'SendTech@novigosolutions.com';
-
+  reRenderEmails;
 
 
   constructor(
@@ -61,15 +60,15 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     public salesforceService: SalesforceService,
     private http: HttpClient
   ) {
-    // Check for access token in localStorage first
-    const token = localStorage.getItem('accessToken');
+    // Check for access token in sessionStorage first
+    const token = sessionStorage.getItem('accessToken');
     if (token) {
       this.accessToken = token;
     } else {
       this.generateAccessToken();
     }
-
-    this.loadEmails('Inbox');
+    this.loadEmails(this.mailType);
+    this.reRenderEmails = setInterval(() => (this.loadEmails(this.mailType)), 60000);
   }
 
   ngAfterViewInit(): void {
@@ -79,7 +78,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         e.preventDefault();
         socialItem.forEach((item) => item.classList.remove('active'));
         item.classList.add('active');
-        this.currentCategorySelection = item.id;
+        if (item.id !== this.currentCategorySelection) {
+          this.selectedEmail = null;
+          this.currentCategorySelection = item.id;
+        }
         this.toggleType(this.currentTypeSelection);
         this.filterEmails(this.currentCategorySelection);
       }));
@@ -103,9 +105,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   filterEmails(type: string): void {
-    this.filteredEmails = this.filteredEmails.filter(
-      (email) => email.emailType === type
-    );
+    this.filteredEmails = this.filteredEmails.filter((email) => email.emailType === type);
   }
 
   viewEmailDetails(email: any): void {
@@ -113,14 +113,11 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   toggleRead(email: any): void {
-    // Implement your logic to mark an email as read or unread
     email.status = email.status === 'unread' ? 'read' : 'unread';
-    // Update the email status in the backend if necessary
     console.log('Email status changed:', email);
   }
 
   toggleFlag(email: any): void {
-    // Implement your logic to flag or unflag an email
     email.isFlagged = !email.isFlagged;
     console.log('Email flag changed:', email);
   }
@@ -155,7 +152,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
           this.commonService.activeSpinner = false;
           this.accessToken = response.access_token;
           console.log('Access token generated:', this.accessToken);
-          localStorage.setItem('accessToken', this.accessToken);
+          sessionStorage.setItem('accessToken', this.accessToken);
           this.salesforceService.setAccessToken(this.accessToken);
         },
         (error) => {
@@ -252,6 +249,8 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
           this.filteredEmails = data.emails;
           this.categories = data;
           this.commonService.activeSpinner = false;
+          this.toggleType(this.currentTypeSelection);
+          this.filterEmails(this.currentCategorySelection);
         },
         (error) => {
           console.error('Error loading emails:', error);
@@ -269,6 +268,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    clearInterval(this.reRenderEmails);
     this.loadEmailsSub.unsubscribe();
   }
 }

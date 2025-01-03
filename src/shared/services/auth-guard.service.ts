@@ -27,12 +27,10 @@ export class AuthGuardService {
 }
 
 export const AuthGuard: CanActivateFn = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Observable<boolean> | Promise<boolean> => {
-  console.log("dsfdsfdsfdsfdsfdsf00")
   return inject(AuthGuardService).canActivate(next, state);
 }
 
 export const AuthGuardLogin: CanActivateFn = (next: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Observable<boolean> | Promise<boolean> => {
-  console.log("dsfdsfdsfdsfdsfdsf00")
   return inject(AuthGuardService).canActivateLogin(next, state);
 }
 

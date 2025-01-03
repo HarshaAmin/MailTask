@@ -12,7 +12,7 @@ export class EmailComponent implements OnInit {
   uEmail = 'SendTech@novigosolutions.com';
   summarizedText: string = '';
   showSummarizedModal: boolean = false;
-  linkedEmail = {};
+  linkedEmail = null;
   showLinkedEmail = false;
 
   @Input() mailType: string = "Inbox";
@@ -111,5 +111,9 @@ export class EmailComponent implements OnInit {
 
     let sanitizedText = traverseChildren(doc.body).trim();
     return sanitizedText;
+  }
+
+  buildString(node) {
+    return (this.selectedEmail[node] || []).join(";");
   }
 }

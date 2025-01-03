@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
   providedIn: 'root',
 })
 export class AuthService {
-  isLoggedIn = false;
+  isLoggedIn = !!sessionStorage.getItem('accessToken');
 
   constructor(private http: HttpClient, public router: Router) { }
 
@@ -21,7 +21,6 @@ export class AuthService {
     if (data.username.trim() === 'user@sendtech.com', data.password.trim() === 'password') {
       this.isLoggedIn = true;
       this.router.navigate(['/home']);
-      return true;
     }
     return false;
   }

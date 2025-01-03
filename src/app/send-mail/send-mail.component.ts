@@ -26,7 +26,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
   selectedEmoji: string = '';
   popupPosition: any = {};
   isSuggestionVisible = false;
-  suggestionText: string = 'sug';
+  suggestionText: string = '';
   correctedText: any = {};
   mockSuggestionsResponse = [
     {
@@ -62,8 +62,10 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
     };
   target: string;
   ccBcc = { cc: false, bcc: false };
+  handler;
 
   @Output() openEmailModalEmitter = new EventEmitter<boolean>(true);
+  @Output() triggerSubmitRes = new EventEmitter<string>();
   @Input() openSendEmailModal: boolean = false;
   @Input() type = 'send';
   @Input() selectedEmail: any;
@@ -122,10 +124,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       })
       .subscribe(
         (response) => {
-          console.log(
-            'Replied to Email successfully! ' + JSON.stringify(response)
-          );
-          console.log('Replied to Email successfully! ' + response);
+          this.triggerSubmitRes.emit(this.type);
         },
         (error) => {
           console.error('Error:', JSON.stringify(error));
@@ -161,10 +160,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       })
       .subscribe(
         (response) => {
-          console.log(
-            'Replied to Email successfully! ' + JSON.stringify(response)
-          );
-          console.log('Replied to Email successfully! ' + response);
+          this.triggerSubmitRes.emit(this.type);
         },
         (error) => {
           console.error('Error:', JSON.stringify(error));
@@ -172,60 +168,64 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       );
   }
 
-  async analyzeText(text: string) {
-    try {
-      this.suggestionText = 'suggest';
-      return;
-      const accessToken = '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'; // Replace with your token
-      const sentimentResponse = await fetch(
-        'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({ text })
+  analyzeText(text: string) {
+    clearTimeout(this.handler);
+    this.handler = setTimeout(async () => {
+      try {
+        this.suggestionText = '';
+        // return;
+        const accessToken = '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'; // Replace with your token
+        const sentimentResponse = await fetch(
+          'https://api-inference.huggingface.co/models/nlptown/bert-base-multilingual-uncased-sentiment',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({ text })
+          }
+        );
+        if (!sentimentResponse.ok) {
+          throw new Error('Failed to fetch sentiment analysis');
         }
-      );
-      if (!sentimentResponse.ok) {
-        throw new Error('Failed to fetch sentiment analysis');
-      }
-      const sentimentData = await sentimentResponse.json();
-      const inputData = `{ inputs: '${text} [MASK].' }`;
-      const suggestionResponse = await fetch(
-        'https://api-inference.huggingface.co/models/bert-base-uncased',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`
-          },
-          body: inputData
+        const sentimentData = await sentimentResponse.json();
+        const inputData = `{ inputs: '${text} [MASK].' }`;
+        const suggestionResponse = await fetch(
+          'https://api-inference.huggingface.co/models/bert-base-uncased',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`
+            },
+            body: inputData
+          }
+        );
+        if (!suggestionResponse.ok) {
+          throw new Error('Failed to fetch suggestions');
         }
-      );
-      if (!suggestionResponse.ok) {
-        throw new Error('Failed to fetch suggestions');
+        const suggestionsData = await suggestionResponse.json();
+        const formattedSuggestions = suggestionsData.map((item: any) => ({
+          token_str: item.token_str.trim(), // Token text (the word or fragment to insert)
+          sequence: item.sequence // The sequence or context for the token
+        }));
+        // Use setTimeout to delay the update of suggestionText
+        this.suggestionText =
+          formattedSuggestions.length > 0
+            ? ' ' + formattedSuggestions[0].token_str + ' '
+            : '';
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error('Error fetching analysis:', error.message); // Safely accessing `message`
+          //this.errorMessage = `Analysis failed: ${error.message}`;
+        } else {
+          console.error('Unknown error:', error); // In case it's not an instance of Error
+          //this.errorMessage = `Analysis failed: An unknown error occurred.`;
+        }
       }
-      const suggestionsData = await suggestionResponse.json();
-      const formattedSuggestions = suggestionsData.map((item: any) => ({
-        token_str: item.token_str.trim(), // Token text (the word or fragment to insert)
-        sequence: item.sequence // The sequence or context for the token
-      }));
-      // Use setTimeout to delay the update of suggestionText
-      this.suggestionText =
-        formattedSuggestions.length > 0
-          ? ' ' + formattedSuggestions[0].token_str + ' '
-          : '';
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('Error fetching analysis:', error.message); // Safely accessing `message`
-        //this.errorMessage = `Analysis failed: ${error.message}`;
-      } else {
-        console.error('Unknown error:', error); // In case it's not an instance of Error
-        //this.errorMessage = `Analysis failed: An unknown error occurred.`;
-      }
-    }
+    }, 2000);
+
   }
   sanitizeInput(input: string): string {
     console.log('sanitized input ' + input);
@@ -403,8 +403,8 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       console.log(this.selectedEmail)
       this.emailRecp.to = [
         ...(this.selectedEmail.sender.split(';') || []),
-        ...(this.selectedEmail?.cc?.split(';') || []),
-        ...(this.selectedEmail?.bcc?.split(';') || [])
+        ...(this.selectedEmail?.ccRecipientsEmails?.split(';') || []),
+        ...(this.selectedEmail?.bccRecipientsEmails?.split(';') || [])
       ].map((recp, ind) => ({
         id: ind,
         recp
@@ -521,8 +521,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
           if (response.status === 'Accepted') {
             this.clearFields();
           }
-          console.log('Email sent successfully! ' + JSON.stringify(response));
-          console.log('Email sent successfully! ' + response);
+          this.triggerSubmitRes.emit(this.type);
         },
         (error) => {
           console.error('Error:', JSON.stringify(error));
@@ -721,10 +720,7 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       })
       .subscribe(
         (response) => {
-          console.log(
-            'Email forward successfully! ' + JSON.stringify(response)
-          );
-          console.log('Email forward successfully! ' + response);
+          this.triggerSubmitRes.emit(this.type);
         },
         (error) => {
           console.error('Error:', JSON.stringify(error));

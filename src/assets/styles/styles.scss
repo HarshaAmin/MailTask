@@ -39,6 +39,7 @@ button {
   border-right: 1px solid lightgray;
   width: 20%;
   height: 90vh;
+  padding-right: 20px;
 }
 
 .app-sidemenu a {
@@ -633,7 +634,7 @@ a img {
 }
 
 .compose-btn {
-  background-color: #212b86;
+  background: #212b86;
   color: #fff;
   border: none;
   padding: 10px 15px;
@@ -737,4 +738,50 @@ span.filter-crit-item.active {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.ql-container {
+  height: unset !important;
+}
+
+.btn-primary {
+  background: #212b86 !important;
+  color: #fff !important;
+  padding: 10px 10px !important;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    "Noto Sans",
+    "Liberation Sans",
+    Arial,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji" !important;
+  border-radius: 4px !important;
+}
+
+.btn-success {
+  background: #198754 !important;
+  color: #fff !important;
+  padding: 10px 10px !important;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    "Noto Sans",
+    "Liberation Sans",
+    Arial,
+    sans-serif,
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    "Noto Color Emoji" !important;
+  border-radius: 4px !important;
 }

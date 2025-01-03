@@ -8,7 +8,7 @@ import { CommonService } from '../../shared/services/common.service';
   templateUrl: './side-menu.component.html'
 })
 export class SideMenuComponent {
-  accessToken = localStorage.getItem('accessToken');
+  accessToken = sessionStorage.getItem('accessToken');
   activeMenuItem: string = 'Inbox';
 
   @Output() closeMenu = new EventEmitter<boolean>();
