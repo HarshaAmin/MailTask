@@ -1,3 +1,59 @@
-p {
-  font-family: Lato;
+/* General Styling */
+body {
+  font-family: 'Lato', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+/* Hero Section */
+.hero-section {
+  background: url('/assets/hero-bg.jpg') no-repeat center center / cover;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-section h1 {
+  font-size: 3.5rem;
+  font-weight: bold;
+}
+
+.hero-section p {
+  font-size: 1.2rem;
+  margin: 1rem 0;
+}
+
+/* Service Section */
+#services .service-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#services .service-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* CTA Section */
+.cta-section {
+  background: linear-gradient(to right, #007bff, #0056b3);
+}
+
+.cta-section h2 {
+  font-size: 2rem;
+}
+
+.cta-section p {
+  font-size: 1.2rem;
+  margin: 1rem 0;
+}
+
+footer {
+  background-color: #333;
+  color: #fff;
+  font-size: 0.9rem;
 }

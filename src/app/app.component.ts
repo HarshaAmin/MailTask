@@ -40,20 +40,19 @@ export class AppComponent {
     embedded_svc.settings.entryFeature = 'LiveAgent';
 
     embedded_svc.init(
-      'https://novigosolutionspvtltd4-dev-ed.develop.my.salesforce.com',
-      'https://novigosolutionspvtltd4-dev-ed.develop.my.salesforce-sites.com/',
+      'https://novigo9-dev-ed.develop.my.salesforce.com',
+      'https://novigo9-dev-ed.develop.my.site.com/defaulthelpcenter3Jan',
       'https://service.force.com',
-      '00DQy00000HrBQA',
-      'SendTechEmailChat',
+      '00DNS000009pWQT',
+      'Queue_Chat',
       {
         baseLiveAgentContentURL:
-          'https://c.la11-core1.sfdc-cehfhs.salesforceliveagent.com/content',
-        deploymentId: '572Qy00000ALBNh',
-        buttonId: '573Qy000002ucUT',
+          'https://c.la11-core1.sfdc-y37hzm.salesforceliveagent.com/content',
+        deploymentId: '572NS000006v0np',
+        buttonId: '573NS000001L43F',
         baseLiveAgentURL:
-          'https://d.la11-core1.sfdc-cehfhs.salesforceliveagent.com/chat',
-        eswLiveAgentDevName:
-          'EmbeddedServiceLiveAgent_Parent04IQy0000003iSjMAI_1941b59fe21',
+          'https://d.la11-core1.sfdc-y37hzm.salesforceliveagent.com/chat',
+        eswLiveAgentDevName: 'Queue_Chat',
         isOfflineSupportEnabled: false
       }
     );
