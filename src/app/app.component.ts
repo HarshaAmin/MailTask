@@ -36,7 +36,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   handleReload() {
     window.onunload = (event) => {
-      console.log(`https://${event.target.domain}/`, 'dsfdsfds');
       window.location.href = `https://${event.target.domain}/`;
       return "";
     };

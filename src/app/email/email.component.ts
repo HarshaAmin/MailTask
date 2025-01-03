@@ -67,8 +67,6 @@ export class EmailComponent implements OnInit {
   }
 
   sanitizeInput(input: string): string {
-    console.log('sanitized input ' + input);
-
     const cleanedInput = input
       .replace(/\s*<\s*/g, '<')
       .replace(/\s*>\s*/g, '>')

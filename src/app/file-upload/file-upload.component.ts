@@ -43,11 +43,11 @@ export class FileUploadComponent {
   }
 
   fileOver(event) {
-    console.log(event);
+    // console.log(event);
   }
 
   fileLeave(event) {
-    console.log(event);
+    // console.log(event);
   }
 
   uploadFile() {

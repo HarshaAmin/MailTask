@@ -22,8 +22,12 @@
   </div>
   <p><b>From: </b> {{ selectedEmail.sender }}</p>
   <p><b>To: </b> {{ uEmail }}</p>
-  <p><b>CC:</b> {{ buildString(ccRecipientsEmails) }}</p>
-  <p><b>BCC:</b> {{ buildString(bccRecipientsEmails) }}</p>
+  @if (buildString(ccRecipientsEmails)) {
+    <p><b>CC:</b> {{ buildString(ccRecipientsEmails) }}</p>
+  }
+  @if (buildString(bccRecipientsEmails)) {
+    <p><b>BCC:</b> {{ buildString(bccRecipientsEmails) }}</p>
+  }
   <p>
     <b>Body: </b>
     <span

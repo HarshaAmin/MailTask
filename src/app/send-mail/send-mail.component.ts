@@ -108,7 +108,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       .split(';')
       .map((email) => email.trim());
     const emailId = this.selectedEmail.Id;
-    console.log();
     this.salesforceService
       .replyEmail({
         to: this.emailRecp['to'].map((e) => e.recp).join(';'),
@@ -144,7 +143,6 @@ export class SendMailComponent implements OnInit, AfterViewInit, OnChanges {
       .split(';')
       .map((email) => email.trim());
     const emailId = this.selectedEmail.Id;
-    console.log();
     this.salesforceService
       .replyEmail({
         to: [...this.emailRecp['to'], ...this.emailRecp['cc'], ...this.emailRecp['bcc']].map((e) => e.recp).join(';'),

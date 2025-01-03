@@ -93,7 +93,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         categoryItem.forEach((item) => item.classList.remove('active'));
         item.classList.add('active');
         this.currentTypeSelection = item.id;
-        console.log(item.id, "ID")
         this.toggleType(this.currentTypeSelection);
         this.filterEmails(this.currentCategorySelection);
       }));
@@ -263,7 +262,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   selectType(e: Event) {
     e.preventDefault();
     e.stopPropagation();
-    console.log(e.target['id']);
     document.querySelector('.dropdown-selector').classList.toggle('active');
   }
 

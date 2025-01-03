@@ -150,15 +150,6 @@ export class EmailListComponent implements OnInit, OnChanges {
     event.stopPropagation();
     email.flagStatus === 'flagged' ? 'notFlagged' : 'flagged';
     email.isFlagged = email.flagStatus === 'flagged' ? true : false;
-    console.log(email);
-    // navigator.clipboard.readText().then((clipText) => {
-    //   document.querySelector('#bodyPreview')['value'] += 'xcvcvxcvxcvxcv';
-    // });
-
-    // const textarea = document.getElementById('bodyPreview');
-    // const cursorPos = textarea['selectionStart'];
-    // const cursorEnd = textarea['selectionEnd'];
-    // console.log(cursorPos, cursorEnd);
     this.updateEmail(email.Id, email.flagStatus);
   }
 
@@ -167,15 +158,6 @@ export class EmailListComponent implements OnInit, OnChanges {
     event.stopPropagation();
     email.flagStatus === 'flagged' ? 'notFlagged' : 'flagged';
     email.isFlagged = email.flagStatus === 'flagged' ? true : false;
-    console.log(email);
-    // navigator.clipboard.readText().then((clipText) => {
-    //   document.querySelector('#bodyPreview')['value'] += 'xcvcvxcvxcvxcv';
-    // });
-
-    // const textarea = document.getElementById('bodyPreview');
-    // const cursorPos = textarea['selectionStart'];
-    // const cursorEnd = textarea['selectionEnd'];
-    // console.log(cursorPos, cursorEnd);
     this.updateEmail(email.Id, email.flagStatus);
   }
 
