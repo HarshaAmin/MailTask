@@ -81,7 +81,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         item.classList.add('active');
         this.currentCategorySelection = item.id;
         this.toggleType(this.currentTypeSelection);
-        // this.filterEmails(this.currentCategorySelection);
+        this.filterEmails(this.currentCategorySelection);
       }));
 
     const categoryItem = document.querySelectorAll('.filter-crit-item');
@@ -93,7 +93,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         this.currentTypeSelection = item.id;
         console.log(item.id, "ID")
         this.toggleType(this.currentTypeSelection);
-        // this.filterEmails(this.currentCategorySelection);
+        this.filterEmails(this.currentCategorySelection);
       }));
 
     this.loadEmailsSub = this.commonService.loadEmail.subscribe((data: string) => {
@@ -103,7 +103,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   }
 
   filterEmails(type: string): void {
-    this.filteredEmails = this.filteredEmails.filter((email) => email.category === type);
+    this.filteredEmails = this.filteredEmails.filter(
+      (email) => email.emailType === type
+    );
   }
 
   viewEmailDetails(email: any): void {
@@ -248,21 +250,8 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
           console.log('Emails loaded:', data);
           this.emails = data.emails;
           this.filteredEmails = data.emails;
-          // this.filterEmails(this.currentCategorySelection);
-          const endpointCategory = `${environment.salesforce.salesforceApiBaseUrl}/services/apexrest/api/parse-emails`;
-          this.http.post(endpointCategory, data.emails, { headers }).subscribe(
-            (data: any) => {
-              console.log('Emails loaded:', data);
-              console.log('Categories:', data); // Assuming the response is an array or object of categories
-              this.categories = data;
-              this.commonService.activeSpinner = false;
-            },
-            (error) => {
-              console.error('Error loading emails:', error);
-              this.errorMessage = `Error loading emails: ${error.message || 'Unknown error'}`;
-              this.commonService.activeSpinner = false;
-            }
-          );
+          this.categories = data;
+          this.commonService.activeSpinner = false;
         },
         (error) => {
           console.error('Error loading emails:', error);
